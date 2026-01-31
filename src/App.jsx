@@ -123,6 +123,15 @@ const JURISDICTIONS = [
   "Virginia", "Massachusetts", "Pennsylvania", "Other"
 ];
 
+const INDUSTRY_OPTIONS = [
+  { value: 'general', label: 'General Business' },
+  { value: 'tech', label: 'Technology & Software' },
+  { value: 'creative', label: 'Creative & Design' },
+  { value: 'realestate', label: 'Real Estate' },
+  { value: 'healthcare', label: 'Healthcare & Life Sciences' },
+  { value: 'financial', label: 'Financial Services' }
+];
+
 function App() {
   const [formData, setFormData] = useState({
     disclosing: '',
@@ -210,17 +219,6 @@ function App() {
     
     // Trigger print dialog for PDF generation
     window.print();
-  };
-
-  const getIndustryOptions = () => {
-    return [
-      { value: 'general', label: 'General Business' },
-      { value: 'tech', label: 'Technology & Software' },
-      { value: 'creative', label: 'Creative & Design' },
-      { value: 'realestate', label: 'Real Estate' },
-      { value: 'healthcare', label: 'Healthcare & Life Sciences' },
-      { value: 'financial', label: 'Financial Services' }
-    ];
   };
 
   const generateDocument = () => {
@@ -383,7 +381,7 @@ function App() {
                     onChange={handleInputChange}
                     className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   >
-                    {getIndustryOptions().map(option => (
+                    {INDUSTRY_OPTIONS.map(option => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
