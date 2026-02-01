@@ -222,6 +222,7 @@ function App() {
     }
   };
 
+  // Memoize document generation to prevent unnecessary re-calculation
   const document = useMemo(() => {
     if (!formData.isPaid) return null;
 
