@@ -133,7 +133,7 @@ const INDUSTRY_OPTIONS = [
 ];
 
 function App() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     disclosing: '',
     receiving: '',
     industry: 'general',
@@ -144,7 +144,7 @@ function App() {
     isPaid: false,
     includeReturn: true,
     effectiveDate: new Date().toISOString().split('T')[0]
-  });
+  }));
 
   const [showCheckout, setShowCheckout] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
