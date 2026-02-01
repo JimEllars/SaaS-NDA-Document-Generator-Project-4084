@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from './common/SafeIcon';
 import './App.css';
@@ -221,7 +221,7 @@ function App() {
     window.print();
   };
 
-  const generateDocument = () => {
+  const document = useMemo(() => {
     const industry = CLAUSES[formData.industry];
     const isRobust = formData.strictness === 'robust';
     
@@ -260,9 +260,7 @@ function App() {
         }
       ]
     };
-  };
-
-  const document = generateDocument();
+  }, [formData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col items-center p-4 md:p-8 font-sans text-slate-900">
