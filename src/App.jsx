@@ -223,6 +223,8 @@ function App() {
   };
 
   const document = useMemo(() => {
+    if (!formData.isPaid) return null;
+
     const industry = CLAUSES[formData.industry];
     const isRobust = formData.strictness === 'robust';
     
