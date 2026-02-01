@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media print {
+  body * { visibility: hidden; }
+  #document-render, #document-render * { visibility: visible; }
+  #document-render {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 40px !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+  }
+  .no-print { display: none !important; }
+}
