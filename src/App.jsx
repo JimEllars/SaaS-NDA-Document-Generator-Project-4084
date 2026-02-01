@@ -4,7 +4,7 @@ import SafeIcon from './common/SafeIcon';
 import './App.css';
 import '@questlabs/react-sdk/dist/style.css';
 
-const { FiFileText, FiShield, FiDownload, FiLock, FiBriefcase, FiScale, FiCreditCard, FiCheckCircle, FiTrash2, FiGlobe, FiX, FiCheck } = FiIcons;
+const { FiFileText, FiShield, FiDownload, FiLock, FiBriefcase, FiCreditCard, FiCheckCircle, FiTrash2, FiGlobe, FiX, FiCheck, FiArrowLeft, FiPrinter } = FiIcons;
 
 // --- LEGAL CLAUSE LIBRARY ---
 const CLAUSES = {
@@ -212,13 +212,14 @@ function App() {
   };
 
   const handleDownload = () => {
-    if (!formData.isPaid) {
-      setShowCheckout(true);
-      return;
-    }
-    
     // Trigger print dialog for PDF generation
     window.print();
+  };
+
+  const handleStartOver = () => {
+    if (confirm("Are you sure? This will clear your current document.")) {
+      clearForm();
+    }
   };
 
   const document = useMemo(() => {
@@ -284,348 +285,361 @@ function App() {
       `}</style>
 
       {/* Header */}
-      <div className="max-w-7xl w-full flex justify-between items-center mb-8 no-print">
+      <div className="max-w-3xl w-full flex justify-between items-center mb-8 no-print">
         <div>
-          <h1 className="text-4xl font-extrabold text-blue-900 flex items-center gap-3">
-            <SafeIcon icon={FiShield} className="text-blue-600" size={36} />
+          <h1 className="text-3xl font-extrabold text-blue-900 flex items-center gap-3">
+            <SafeIcon icon={FiShield} className="text-blue-600" size={32} />
             AXiM NDA Generator
           </h1>
           <p className="text-slate-600 font-medium mt-1">Professional Legal Document Builder</p>
         </div>
-        <div className="flex items-center gap-4">
+        {!formData.isPaid && (
           <button 
             onClick={clearForm}
-            className="flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-red-500 transition px-4 py-2 rounded-lg hover:bg-red-50"
+            className="flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-red-500 transition px-3 py-2 rounded-lg hover:bg-red-50"
           >
             <SafeIcon icon={FiTrash2} size={16} /> Reset
           </button>
-          <span className="hidden md:flex items-center gap-2 text-xs font-bold px-4 py-2 bg-green-100 text-green-700 rounded-full">
-            <SafeIcon icon={FiCheckCircle} size={16} /> Secure & SSL Protected
-          </span>
-        </div>
+        )}
+        {formData.isPaid && (
+          <button
+            onClick={handleStartOver}
+            className="flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 transition px-3 py-2 rounded-lg hover:bg-blue-50"
+          >
+             Start Over
+          </button>
+        )}
       </div>
 
-      <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 mb-20 no-print">
+      <div className="max-w-3xl w-full no-print">
         
-        {/* Left: Control Panel */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Configuration Panel */}
-          <section className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <SafeIcon icon={FiBriefcase} size={20} className="text-blue-600" />
-              Document Configuration
-            </h2>
-            
-            <div className="space-y-5">
-              {/* Agreement Type Toggle */}
-              <div className="flex p-1 bg-slate-100 rounded-xl mb-6">
-                <button 
-                  onClick={() => setFormData(p => ({...p, type: 'unilateral'}))}
-                  className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
-                    formData.type === 'unilateral' 
-                      ? 'bg-white shadow-sm text-blue-600' 
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  Unilateral NDA
-                </button>
-                <button 
-                  onClick={() => setFormData(p => ({...p, type: 'mutual'}))}
-                  className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
-                    formData.type === 'mutual' 
-                      ? 'bg-white shadow-sm text-blue-600' 
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  Mutual NDA
-                </button>
-              </div>
-
-              {/* Party Information */}
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="text-sm font-bold text-slate-600 mb-2 block">
-                    Disclosing Party {formData.type === 'mutual' ? '(Party 1)' : ''}
-                  </label>
-                  <input 
-                    name="disclosing"
-                    value={formData.disclosing}
-                    onChange={handleInputChange}
-                    placeholder="Company or Individual Name" 
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-slate-600 mb-2 block">
-                    Receiving Party {formData.type === 'mutual' ? '(Party 2)' : ''}
-                  </label>
-                  <input 
-                    name="receiving"
-                    value={formData.receiving}
-                    onChange={handleInputChange}
-                    placeholder="Counterparty Name" 
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  />
-                </div>
-              </div>
-              
-              {/* Industry and Jurisdiction */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-bold text-slate-600 mb-2 block">Industry Sector</label>
-                  <select 
-                    name="industry"
-                    value={formData.industry}
-                    onChange={handleInputChange}
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  >
-                    {INDUSTRY_OPTIONS.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-slate-600 mb-2 block">Governing Law</label>
-                  <select 
-                    name="jurisdiction"
-                    value={formData.jurisdiction}
-                    onChange={handleInputChange}
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  >
-                    {JURISDICTIONS.map(state => (
-                      <option key={state} value={state}>{state}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Protection Level and Term */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-bold text-slate-600 mb-2 block">Protection Level</label>
-                  <select 
-                    name="strictness"
-                    value={formData.strictness}
-                    onChange={handleInputChange}
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  >
-                    <option value="standard">Standard Protection</option>
-                    <option value="robust">Enhanced (with Penalties)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-slate-600 mb-2 block">Confidentiality Term</label>
-                  <select 
-                    name="term"
-                    value={formData.term}
-                    onChange={handleInputChange}
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  >
-                    <option value="1">1 Year</option>
-                    <option value="2">2 Years</option>
-                    <option value="3">3 Years</option>
-                    <option value="5">5 Years</option>
-                    <option value="10">10 Years</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Additional Options */}
-              <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl">
-                <input 
-                  type="checkbox"
-                  name="includeReturn"
-                  checked={formData.includeReturn}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                />
-                <label className="text-sm font-medium text-slate-700">
-                  Include document return clause
-                </label>
-              </div>
-            </div>
-          </section>
-
-          {/* Download Section */}
-          <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold">Download Professional PDF</h3>
-                <span className="bg-blue-500 text-xs font-bold px-3 py-1 rounded-full">$12.99</span>
-              </div>
-              <p className="text-blue-100 text-sm mb-6 leading-relaxed">
-                Get a watermark-free, legally formatted document ready for digital signatures and immediate use.
+        {!formData.isPaid ? (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Instructions */}
+            <div className="bg-white/50 border border-blue-100 rounded-xl p-4 text-sm text-slate-600">
+              <p className="flex gap-2">
+                <SafeIcon icon={FiBriefcase} className="text-blue-500 mt-0.5" size={16} />
+                Please fill out the details below to generate your custom Non-Disclosure Agreement. Once completed, you can purchase and download the legally binding document in PDF format.
               </p>
-              
-              <ul className="text-blue-100 text-sm mb-6 space-y-2">
-                <li className="flex items-center gap-2">
-                  <SafeIcon icon={FiCheck} size={16} />
-                  Professional formatting
-                </li>
-                <li className="flex items-center gap-2">
-                  <SafeIcon icon={FiCheck} size={16} />
-                  Industry-specific clauses
-                </li>
-                <li className="flex items-center gap-2">
-                  <SafeIcon icon={FiCheck} size={16} />
-                  Instant download
-                </li>
-              </ul>
-              
-              <button 
-                onClick={handleDownload}
-                className="w-full bg-white text-blue-800 font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition transform active:scale-95 shadow-lg"
-              >
-                {formData.isPaid ? (
-                  <>
-                    <SafeIcon icon={FiDownload} size={20} />
-                    Download Document
-                  </>
-                ) : (
-                  <>
-                    <SafeIcon icon={FiLock} size={20} />
-                    Unlock & Download
-                  </>
-                )}
-              </button>
             </div>
-            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-700 rounded-full opacity-40 blur-3xl"></div>
-          </section>
-        </div>
 
-        {/* Right: Live Preview */}
-        <div className="lg:col-span-7 bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-          <div className="bg-slate-50 px-6 py-4 border-b flex justify-between items-center">
-            <span className="text-sm font-bold text-slate-600 flex items-center gap-2">
-              <SafeIcon icon={FiFileText} size={16} />
-              Live Document Preview
-            </span>
-            <div className="flex items-center gap-2">
-              <div className={`h-2 w-2 rounded-full animate-pulse ${
-                formData.disclosing && formData.receiving ? 'bg-green-500' : 'bg-amber-400'
-              }`}></div>
-              <span className="text-xs text-slate-500 font-medium">
-                {formData.disclosing && formData.receiving ? 'Ready' : 'Awaiting Input'}
-              </span>
-            </div>
-          </div>
-          
-          <div className="overflow-y-auto max-h-[800px]" id="document-render" ref={documentRef}>
-            <div className="p-8 md:p-12 max-w-4xl mx-auto space-y-8 text-sm leading-relaxed text-slate-800 font-serif relative">
+            {/* Configuration Panel */}
+            <section className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <SafeIcon icon={FiFileText} size={20} className="text-blue-600" />
+                Agreement Details
+              </h2>
               
-              {/* Title */}
-              <div className="text-center border-b border-slate-200 pb-8">
-                <h1 className="text-3xl font-bold uppercase tracking-wide mb-4">
-                  {document.title}
-                </h1>
-                <p className="text-slate-600 text-base">
-                  Effective Date: {new Date(formData.effectiveDate).toLocaleDateString()}
-                </p>
-              </div>
-              
-              {/* Introduction */}
-              <div className="space-y-4">
-                <h2 className="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2">
-                  RECITALS
-                </h2>
-                <p className="text-justify leading-relaxed">
-                  {document.intro}
-                </p>
-                <p className="text-justify leading-relaxed">
-                  NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, 
-                  and for other good and valuable consideration, the receipt and sufficiency of which are 
-                  hereby acknowledged, the parties agree as follows:
-                </p>
-              </div>
+              <div className="space-y-5">
+                {/* Agreement Type Toggle */}
+                <div className="flex p-1 bg-slate-100 rounded-xl mb-6">
+                  <button
+                    onClick={() => setFormData(p => ({...p, type: 'unilateral'}))}
+                    className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
+                      formData.type === 'unilateral'
+                        ? 'bg-white shadow-sm text-blue-600'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Unilateral NDA
+                  </button>
+                  <button
+                    onClick={() => setFormData(p => ({...p, type: 'mutual'}))}
+                    className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
+                      formData.type === 'mutual'
+                        ? 'bg-white shadow-sm text-blue-600'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Mutual NDA
+                  </button>
+                </div>
 
-              {/* Document Sections */}
-              {document.sections.map((section, index) => (
-                <section key={index} className="space-y-4">
-                  <h3 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase tracking-wide">
-                    {section.title}
-                  </h3>
-                  <div className="space-y-4">
-                    {section.content.map((item, itemIndex) => (
-                      <div key={itemIndex} className="space-y-2">
-                        {typeof item === 'string' ? (
-                          <p className="text-justify leading-relaxed">{item}</p>
-                        ) : (
-                          <div>
-                            <h4 className="font-semibold text-slate-800 mb-2">
-                              {itemIndex + 1}. {item.title}
-                            </h4>
-                            <p className="text-justify leading-relaxed pl-4 border-l-2 border-blue-100">
-                              {item.text}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                {/* Party Information */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="text-sm font-bold text-slate-600 mb-2 block">
+                      Disclosing Party {formData.type === 'mutual' ? '(Party 1)' : ''}
+                    </label>
+                    <input
+                      name="disclosing"
+                      value={formData.disclosing}
+                      onChange={handleInputChange}
+                      placeholder="Company or Individual Name"
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    />
                   </div>
-                </section>
-              ))}
+                  <div>
+                    <label className="text-sm font-bold text-slate-600 mb-2 block">
+                      Receiving Party {formData.type === 'mutual' ? '(Party 2)' : ''}
+                    </label>
+                    <input
+                      name="receiving"
+                      value={formData.receiving}
+                      onChange={handleInputChange}
+                      placeholder="Counterparty Name"
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    />
+                  </div>
+                </div>
 
-              {/* Signature Section */}
-              <div className="mt-16 pt-8 border-t-2 border-slate-200">
-                <h3 className="text-base font-bold text-slate-900 mb-8 uppercase tracking-wide">
-                  EXECUTION
-                </h3>
-                <p className="text-justify leading-relaxed mb-12">
-                  IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.
+                {/* Industry and Jurisdiction */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-bold text-slate-600 mb-2 block">Industry Sector</label>
+                    <select
+                      name="industry"
+                      value={formData.industry}
+                      onChange={handleInputChange}
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    >
+                      {INDUSTRY_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-bold text-slate-600 mb-2 block">Governing Law</label>
+                    <select
+                      name="jurisdiction"
+                      value={formData.jurisdiction}
+                      onChange={handleInputChange}
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    >
+                      {JURISDICTIONS.map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Protection Level and Term */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-bold text-slate-600 mb-2 block">Protection Level</label>
+                    <select
+                      name="strictness"
+                      value={formData.strictness}
+                      onChange={handleInputChange}
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    >
+                      <option value="standard">Standard Protection</option>
+                      <option value="robust">Enhanced (with Penalties)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-bold text-slate-600 mb-2 block">Confidentiality Term</label>
+                    <select
+                      name="term"
+                      value={formData.term}
+                      onChange={handleInputChange}
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    >
+                      <option value="1">1 Year</option>
+                      <option value="2">2 Years</option>
+                      <option value="3">3 Years</option>
+                      <option value="5">5 Years</option>
+                      <option value="10">10 Years</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Additional Options */}
+                <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl">
+                  <input
+                    type="checkbox"
+                    name="includeReturn"
+                    checked={formData.includeReturn}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                  />
+                  <label className="text-sm font-medium text-slate-700">
+                    Include document return clause
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            {/* Download/Purchase Section */}
+            <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-bold">Generate Professional PDF</h3>
+                  <span className="bg-blue-500 text-xs font-bold px-3 py-1 rounded-full">$12.99</span>
+                </div>
+                <p className="text-blue-100 text-sm mb-6 leading-relaxed">
+                  Get a watermark-free, legally formatted document ready for digital signatures and immediate use.
                 </p>
+
+                <ul className="text-blue-100 text-sm mb-6 space-y-2">
+                  <li className="flex items-center gap-2">
+                    <SafeIcon icon={FiCheck} size={16} />
+                    Professional formatting
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <SafeIcon icon={FiCheck} size={16} />
+                    Industry-specific clauses
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <SafeIcon icon={FiCheck} size={16} />
+                    Instant download
+                  </li>
+                </ul>
+
+                <button
+                  onClick={() => setShowCheckout(true)}
+                  className="w-full bg-white text-blue-800 font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition transform active:scale-95 shadow-lg"
+                >
+                  <SafeIcon icon={FiLock} size={20} />
+                  Purchase & Generate Document
+                </button>
+              </div>
+              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-700 rounded-full opacity-40 blur-3xl"></div>
+            </section>
+          </div>
+        ) : (
+          <div className="space-y-6 animate-in fade-in zoom-in duration-500">
+             {/* Success Message */}
+             <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center shadow-sm">
+                <div className="mx-auto bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+                  <SafeIcon icon={FiCheckCircle} className="text-green-600" size={24} />
+                </div>
+                <h2 className="text-xl font-bold text-green-900 mb-2">Payment Successful!</h2>
+                <p className="text-green-800">Your document is ready. You can now download or print your NDA.</p>
+
+                <button
+                  onClick={handleDownload}
+                  className="mt-6 w-full max-w-sm mx-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-lg"
+                >
+                  <SafeIcon icon={FiPrinter} size={20} />
+                  Print / Download PDF
+                </button>
+             </div>
+
+             {/* Document Display (Read Only View) */}
+             <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                <div className="bg-slate-50 px-6 py-4 border-b flex justify-between items-center">
+                  <span className="text-sm font-bold text-slate-600 flex items-center gap-2">
+                    <SafeIcon icon={FiFileText} size={16} />
+                    Document Preview
+                  </span>
+                  <span className="text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded">
+                    PAID - FINAL VERSION
+                  </span>
+                </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-                  <div className="space-y-8">
-                    <div className="border-b border-slate-800 pb-2">
-                      <div className="h-8"></div>
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900 mb-1">
-                        {formData.type === 'mutual' ? 'PARTY 1:' : 'DISCLOSING PARTY:'}
-                      </p>
-                      <p className="text-slate-700 font-medium">
-                        {formData.disclosing || '[Party Name]'}
-                      </p>
-                      <div className="mt-4 space-y-1">
-                        <p className="text-xs text-slate-500">Print Name: _________________________</p>
-                        <p className="text-xs text-slate-500">Title: _______________________________</p>
-                        <p className="text-xs text-slate-500">Date: _______________________________</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-8">
-                    <div className="border-b border-slate-800 pb-2">
-                      <div className="h-8"></div>
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900 mb-1">
-                        {formData.type === 'mutual' ? 'PARTY 2:' : 'RECEIVING PARTY:'}
-                      </p>
-                      <p className="text-slate-700 font-medium">
-                        {formData.receiving || '[Party Name]'}
-                      </p>
-                      <div className="mt-4 space-y-1">
-                        <p className="text-xs text-slate-500">Print Name: _________________________</p>
-                        <p className="text-xs text-slate-500">Title: _______________________________</p>
-                        <p className="text-xs text-slate-500">Date: _______________________________</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                <div className="overflow-y-auto max-h-[800px]" id="document-render" ref={documentRef}>
+                  <div className="p-8 md:p-12 max-w-4xl mx-auto space-y-8 text-sm leading-relaxed text-slate-800 font-serif relative">
 
-              {/* Watermark for unpaid version */}
-              {!formData.isPaid && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] rotate-[-35deg] text-9xl font-black select-none no-print">
-                  PREVIEW
+                    {/* Title */}
+                    <div className="text-center border-b border-slate-200 pb-8">
+                      <h1 className="text-3xl font-bold uppercase tracking-wide mb-4">
+                        {document.title}
+                      </h1>
+                      <p className="text-slate-600 text-base">
+                        Effective Date: {new Date(formData.effectiveDate).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    {/* Introduction */}
+                    <div className="space-y-4">
+                      <h2 className="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2">
+                        RECITALS
+                      </h2>
+                      <p className="text-justify leading-relaxed">
+                        {document.intro}
+                      </p>
+                      <p className="text-justify leading-relaxed">
+                        NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein,
+                        and for other good and valuable consideration, the receipt and sufficiency of which are
+                        hereby acknowledged, the parties agree as follows:
+                      </p>
+                    </div>
+
+                    {/* Document Sections */}
+                    {document.sections.map((section, index) => (
+                      <section key={index} className="space-y-4">
+                        <h3 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase tracking-wide">
+                          {section.title}
+                        </h3>
+                        <div className="space-y-4">
+                          {section.content.map((item, itemIndex) => (
+                            <div key={itemIndex} className="space-y-2">
+                              {typeof item === 'string' ? (
+                                <p className="text-justify leading-relaxed">{item}</p>
+                              ) : (
+                                <div>
+                                  <h4 className="font-semibold text-slate-800 mb-2">
+                                    {itemIndex + 1}. {item.title}
+                                  </h4>
+                                  <p className="text-justify leading-relaxed pl-4 border-l-2 border-blue-100">
+                                    {item.text}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+
+                    {/* Signature Section */}
+                    <div className="mt-16 pt-8 border-t-2 border-slate-200">
+                      <h3 className="text-base font-bold text-slate-900 mb-8 uppercase tracking-wide">
+                        EXECUTION
+                      </h3>
+                      <p className="text-justify leading-relaxed mb-12">
+                        IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.
+                      </p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+                        <div className="space-y-8">
+                          <div className="border-b border-slate-800 pb-2">
+                            <div className="h-8"></div>
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-900 mb-1">
+                              {formData.type === 'mutual' ? 'PARTY 1:' : 'DISCLOSING PARTY:'}
+                            </p>
+                            <p className="text-slate-700 font-medium">
+                              {formData.disclosing || '[Party Name]'}
+                            </p>
+                            <div className="mt-4 space-y-1">
+                              <p className="text-xs text-slate-500">Print Name: _________________________</p>
+                              <p className="text-xs text-slate-500">Title: _______________________________</p>
+                              <p className="text-xs text-slate-500">Date: _______________________________</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-8">
+                          <div className="border-b border-slate-800 pb-2">
+                            <div className="h-8"></div>
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-900 mb-1">
+                              {formData.type === 'mutual' ? 'PARTY 2:' : 'RECEIVING PARTY:'}
+                            </p>
+                            <p className="text-slate-700 font-medium">
+                              {formData.receiving || '[Party Name]'}
+                            </p>
+                            <div className="mt-4 space-y-1">
+                              <p className="text-xs text-slate-500">Print Name: _________________________</p>
+                              <p className="text-xs text-slate-500">Title: _______________________________</p>
+                              <p className="text-xs text-slate-500">Date: _______________________________</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+             </div>
           </div>
-        </div>
+        )}
+
       </div>
 
       {/* Payment Modal */}
