@@ -268,25 +268,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col items-center p-4 md:p-8 font-sans text-slate-900">
-      <style>{`
-        @media print {
-          body * { visibility: hidden; }
-          #document-render, #document-render * { visibility: visible; }
-          #document-render { 
-            position: absolute; 
-            left: 0; 
-            top: 0; 
-            width: 100%;
-            padding: 40px !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            border: none !important;
-            background: white !important;
-          }
-          .no-print { display: none !important; }
-        }
-      `}</style>
-
       {/* Header */}
       <div className="max-w-3xl w-full flex justify-between items-center mb-8 no-print">
         <div>
