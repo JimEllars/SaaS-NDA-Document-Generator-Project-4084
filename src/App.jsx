@@ -44,6 +44,7 @@ function App() {
   }, [formData]);
 
   const [showCheckout, setShowCheckout] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const clearForm = () => {
     setFormData({
@@ -67,6 +68,7 @@ function App() {
   const handleStartOver = () => {
     if (confirm("Are you sure? This will clear your current document.")) {
       clearForm();
+      setIsEditing(false);
     }
   };
 
@@ -74,6 +76,10 @@ function App() {
       setShowCheckout(false);
       setFormData(prev => ({ ...prev, isPaid: true }));
   }
+
+  const handleUpdate = () => {
+    setIsEditing(false);
+  };
 
   // Memoize document generation to prevent unnecessary re-calculation
   const documentData = useMemo(() => {
@@ -128,17 +134,20 @@ function App() {
       />
 
       <div className="max-w-3xl w-full no-print">
-        {!formData.isPaid ? (
+        {!formData.isPaid || isEditing ? (
           <NDAGeneratorForm
             formData={formData}
             setFormData={setFormData}
             onPurchase={() => setShowCheckout(true)}
+            isEditing={isEditing}
+            onUpdate={handleUpdate}
           />
         ) : (
           <DocumentPreview
             formData={formData}
             documentData={documentData}
             onDownload={handleDownload}
+            onEdit={() => setIsEditing(true)}
           />
         )}
       </div>

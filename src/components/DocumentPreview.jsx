@@ -2,9 +2,9 @@ import React, { useRef } from 'react';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const { FiCheckCircle, FiPrinter, FiFileText } = FiIcons;
+const { FiCheckCircle, FiPrinter, FiFileText, FiEdit } = FiIcons;
 
-const DocumentPreview = ({ formData, documentData, onDownload }) => {
+const DocumentPreview = ({ formData, documentData, onDownload, onEdit }) => {
   const documentRef = useRef();
 
   return (
@@ -17,13 +17,22 @@ const DocumentPreview = ({ formData, documentData, onDownload }) => {
           <h2 className="text-xl font-bold text-green-900 mb-2">Payment Successful!</h2>
           <p className="text-green-800">Your document is ready. You can now download or print your NDA.</p>
 
-          <button
-            onClick={onDownload}
-            className="mt-6 w-full max-w-sm mx-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-lg"
-          >
-            <SafeIcon icon={FiPrinter} size={20} />
-            Print / Download PDF
-          </button>
+          <div className="flex flex-col gap-3 max-w-sm mx-auto mt-6">
+            <button
+                onClick={onDownload}
+                className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-lg"
+            >
+                <SafeIcon icon={FiPrinter} size={20} />
+                Print / Download PDF
+            </button>
+            <button
+                onClick={onEdit}
+                className="w-full bg-white text-blue-600 border border-blue-200 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition shadow-sm"
+            >
+                <SafeIcon icon={FiEdit} size={20} />
+                Edit Document
+            </button>
+          </div>
        </div>
 
        {/* Document Display (Read Only View) */}

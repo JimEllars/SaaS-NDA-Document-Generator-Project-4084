@@ -19,10 +19,11 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
   };
 
   const validatePaymentForm = () => {
-    return paymentData.cardNumber.length >= 16 &&
-           paymentData.expiryDate.length >= 5 &&
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return paymentData.cardNumber.replace(/\s/g, '').length >= 15 &&
+           paymentData.expiryDate.length >= 4 &&
            paymentData.cvc.length >= 3 &&
-           paymentData.email.includes('@');
+           emailRegex.test(paymentData.email);
   };
 
   const simulatePayment = async () => {
