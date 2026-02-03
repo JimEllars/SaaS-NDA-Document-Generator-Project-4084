@@ -3,9 +3,9 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
 
-const { FiBriefcase, FiFileText, FiCheck, FiLock } = FiIcons;
+const { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw } = FiIcons;
 
-const NDAGeneratorForm = ({ formData, setFormData, onPurchase }) => {
+const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpdate }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -169,36 +169,43 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase }) => {
       {/* Download/Purchase Section */}
       <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
         <div className="relative z-10">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-xl font-bold">Generate Professional PDF</h3>
-            <span className="bg-blue-500 text-xs font-bold px-3 py-1 rounded-full">$12.99</span>
-          </div>
-          <p className="text-blue-100 text-sm mb-6 leading-relaxed">
-            Get a watermark-free, legally formatted document ready for digital signatures and immediate use.
-          </p>
+          {!isEditing && (
+            <>
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-bold">Generate Professional PDF</h3>
+                <span className="bg-blue-500 text-xs font-bold px-3 py-1 rounded-full">$12.99</span>
+              </div>
+              <p className="text-blue-100 text-sm mb-6 leading-relaxed">
+                Get a watermark-free, legally formatted document ready for digital signatures and immediate use.
+              </p>
 
-          <ul className="text-blue-100 text-sm mb-6 space-y-2">
-            <li className="flex items-center gap-2">
-              <SafeIcon icon={FiCheck} size={16} />
-              Professional formatting
-            </li>
-            <li className="flex items-center gap-2">
-              <SafeIcon icon={FiCheck} size={16} />
-              Industry-specific clauses
-            </li>
-            <li className="flex items-center gap-2">
-              <SafeIcon icon={FiCheck} size={16} />
-              Instant download
-            </li>
-          </ul>
+              <ul className="text-blue-100 text-sm mb-6 space-y-2">
+                <li className="flex items-center gap-2">
+                  <SafeIcon icon={FiCheck} size={16} />
+                  Professional formatting
+                </li>
+                <li className="flex items-center gap-2">
+                  <SafeIcon icon={FiCheck} size={16} />
+                  Industry-specific clauses
+                </li>
+                <li className="flex items-center gap-2">
+                  <SafeIcon icon={FiCheck} size={16} />
+                  Instant download
+                </li>
+              </ul>
+            </>
+          )}
 
           <button
-            onClick={onPurchase}
+            onClick={isEditing ? onUpdate : onPurchase}
             disabled={!isFormValid}
             className={`w-full bg-white text-blue-800 font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <SafeIcon icon={FiLock} size={20} />
-            {isFormValid ? 'Purchase & Generate Document' : 'Enter Party Names to Continue'}
+            <SafeIcon icon={isEditing ? FiRefreshCw : FiLock} size={20} />
+            {isEditing
+              ? 'Update Document'
+              : (isFormValid ? 'Purchase & Generate Document' : 'Enter Party Names to Continue')
+            }
           </button>
         </div>
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-700 rounded-full opacity-40 blur-3xl"></div>
