@@ -1,8 +1,9 @@
 export const CLAUSES = {
   general: {
-    intro: (disclosing, receiving, type) => {
+    intro: (disclosing, receiving, type, effectiveDate) => {
       const isMutual = type === 'mutual';
-      return `This ${isMutual ? 'Mutual' : 'Unilateral'} Non-Disclosure Agreement (the "Agreement") is entered into as of ${new Date().toLocaleDateString()} (the "Effective Date") by and between ${disclosing || "[Disclosing Party]"} ${isMutual ? '' : '("Disclosing Party")'} and ${receiving || "[Receiving Party]"} ${isMutual ? '' : '("Receiving Party")'}${isMutual ? ', collectively referred to as the "Parties" and individually as a "Party"' : ''}.`;
+      const date = effectiveDate || new Date().toLocaleDateString();
+      return `This ${isMutual ? 'Mutual' : 'Unilateral'} Non-Disclosure Agreement (the "Agreement") is entered into as of ${date} (the "Effective Date") by and between ${disclosing || "[Disclosing Party]"} ${isMutual ? '' : '("Disclosing Party")'} and ${receiving || "[Receiving Party]"} ${isMutual ? '' : '("Receiving Party")'}${isMutual ? ', collectively referred to as the "Parties" and individually as a "Party"' : ''}.`;
     },
     definition: "Confidential Information shall include all information, whether oral, written, or electronic, relating to the business of the Disclosing Party, including but not limited to financial data, customer lists, trade secrets, strategic plans, technical specifications, and proprietary methodologies.",
     exclusions: "Confidential Information does not include information that is (a) publicly known through no breach of this Agreement, (b) already in Receiving Party's lawful possession prior to disclosure, (c) independently developed without use of the Disclosing Party's Confidential Information, or (d) received from a third party without breach of any confidentiality obligation.",
