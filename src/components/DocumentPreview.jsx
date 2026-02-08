@@ -56,7 +56,7 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit }) => {
                   {documentData.title}
                 </h1>
                 <p className="text-slate-600 text-base">
-                  Effective Date: {new Date(formData.effectiveDate).toLocaleDateString()}
+                  Effective Date: {documentData.effectiveDate}
                 </p>
               </div>
 

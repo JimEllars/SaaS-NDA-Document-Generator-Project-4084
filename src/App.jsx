@@ -87,10 +87,12 @@ function App() {
 
     const industry = CLAUSES[formData.industry];
     const isRobust = formData.strictness === 'robust';
+    const effectiveDateFormatted = new Date(formData.effectiveDate).toLocaleDateString();
     
     return {
       title: `${formData.type === 'mutual' ? 'Mutual' : ''} Non-Disclosure Agreement`,
-      intro: CLAUSES.general.intro(formData.disclosing, formData.receiving, formData.type),
+      intro: CLAUSES.general.intro(formData.disclosing, formData.receiving, formData.type, effectiveDateFormatted),
+      effectiveDate: effectiveDateFormatted,
       sections: [
         {
           title: "Article 1: Definition of Confidential Information",
