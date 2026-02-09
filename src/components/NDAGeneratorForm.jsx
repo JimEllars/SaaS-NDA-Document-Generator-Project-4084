@@ -1,9 +1,7 @@
 import React from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
-
-const { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw } = FiIcons;
 
 const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpdate }) => {
 

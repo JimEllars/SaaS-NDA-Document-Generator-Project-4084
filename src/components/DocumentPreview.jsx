@@ -1,8 +1,6 @@
 import React, { useRef } from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiCheckCircle, FiPrinter, FiFileText, FiEdit } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
-
-const { FiCheckCircle, FiPrinter, FiFileText, FiEdit } = FiIcons;
 
 const DocumentPreview = ({ formData, documentData, onDownload, onEdit }) => {
   const documentRef = useRef();
