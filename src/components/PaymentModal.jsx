@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiX, FiCreditCard, FiCheckCircle, FiGlobe } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
-
-const { FiX, FiCreditCard, FiCheckCircle, FiGlobe } = FiIcons;
 
 const PaymentModal = ({ onClose, onPaymentComplete }) => {
   const [isProcessing, setIsProcessing] = useState(false);

@@ -1,8 +1,6 @@
 import React from 'react';
-import * as FiIcons from 'react-icons/fi';
+import { FiShield, FiTrash2 } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
-
-const { FiShield, FiTrash2 } = FiIcons;
 
 const Header = ({ isPaid, onClear, onStartOver }) => {
   return (
