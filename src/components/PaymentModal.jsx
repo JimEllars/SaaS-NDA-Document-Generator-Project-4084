@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// Using named imports to enable tree-shaking
 import { FiX, FiCreditCard, FiCheckCircle, FiGlobe } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
