@@ -1,4 +1,5 @@
 import React from 'react';
+// Use named imports from react-icons to enable tree-shaking and reduce bundle size
 import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
