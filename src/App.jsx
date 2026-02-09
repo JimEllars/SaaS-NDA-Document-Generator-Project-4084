@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import './App.css';
-import '@questlabs/react-sdk/dist/style.css';
 import Header from './components/Header';
 import NDAGeneratorForm from './components/NDAGeneratorForm';
 import PaymentModal from './components/PaymentModal';
