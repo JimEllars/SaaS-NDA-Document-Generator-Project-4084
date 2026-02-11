@@ -5,6 +5,7 @@ import SafeIcon from '../common/SafeIcon';
 
 const PaymentModal = ({ onClose, onPaymentComplete }) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState(null);
   const [paymentData, setPaymentData] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -12,22 +13,33 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
     email: ''
   });
 
+  const isMounted = React.useRef(true);
+
+  React.useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   const handlePaymentInputChange = (e) => {
     const { name, value } = e.target;
+    setError(null);
     setPaymentData(prev => ({ ...prev, [name]: value }));
   };
 
   const validatePaymentForm = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return paymentData.cardNumber.replace(/\s/g, '').length >= 15 &&
-           paymentData.expiryDate.length >= 4 &&
-           paymentData.cvc.length >= 3 &&
-           emailRegex.test(paymentData.email);
+    if (!emailRegex.test(paymentData.email)) return 'Invalid email address';
+    if (paymentData.cardNumber.replace(/\s/g, '').length < 15) return 'Invalid card number';
+    if (paymentData.expiryDate.length < 4) return 'Invalid expiry date';
+    if (paymentData.cvc.length < 3) return 'Invalid CVC';
+    return null;
   };
 
   const simulatePayment = async () => {
-    if (!validatePaymentForm()) {
-      alert('Please fill in all payment details correctly.');
+    const validationError = validatePaymentForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -36,11 +48,12 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    setIsProcessing(false);
-
-    // Simulate sending receipt email
-    console.log('Payment successful! Receipt sent to:', paymentData.email);
-    onPaymentComplete();
+    if (isMounted.current) {
+      setIsProcessing(false);
+      // Simulate sending receipt email
+      console.log('Payment successful! Receipt sent to:', paymentData.email);
+      onPaymentComplete();
+    }
   };
 
   return (
@@ -119,9 +132,15 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
             </div>
           </div>
 
+          {error && (
+            <div className="text-red-600 text-sm font-medium text-center bg-red-50 p-3 rounded-lg border border-red-100">
+              {error}
+            </div>
+          )}
+
           <button
             onClick={simulatePayment}
-            disabled={isProcessing || !validatePaymentForm()}
+            disabled={isProcessing}
             className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-blue-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
           >
             {isProcessing ? (
