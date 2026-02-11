@@ -1,9 +1,9 @@
-import React, { useRef } from 'react';
+import React from 'react';
+// Using named imports to enable tree-shaking
 import { FiCheckCircle, FiPrinter, FiFileText, FiEdit } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
 const DocumentPreview = ({ formData, documentData, onDownload, onEdit }) => {
-  const documentRef = useRef();
 
   return (
     <div className="space-y-6 animate-in fade-in zoom-in duration-500">
@@ -45,7 +45,7 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit }) => {
             </span>
           </div>
 
-          <div className="overflow-y-auto max-h-[800px]" id="document-render" ref={documentRef}>
+          <div className="overflow-y-auto max-h-[800px]" id="document-render">
             <div className="p-8 md:p-12 max-w-4xl mx-auto space-y-8 text-sm leading-relaxed text-slate-800 font-serif relative">
 
               {/* Title */}
