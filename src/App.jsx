@@ -5,6 +5,7 @@ import NDAGeneratorForm from './components/NDAGeneratorForm';
 import PaymentModal from './components/PaymentModal';
 import DocumentPreview from './components/DocumentPreview';
 import { CLAUSES } from './data/ndaData';
+import useDebounce from './hooks/useDebounce';
 
 function App() {
   const [formData, setFormData] = useState(() => {
@@ -38,9 +39,11 @@ function App() {
     }
   });
 
+  const debouncedFormData = useDebounce(formData, 500);
+
   useEffect(() => {
-    localStorage.setItem('ndaFormData', JSON.stringify(formData));
-  }, [formData]);
+    localStorage.setItem('ndaFormData', JSON.stringify(debouncedFormData));
+  }, [debouncedFormData]);
 
   const [showCheckout, setShowCheckout] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
