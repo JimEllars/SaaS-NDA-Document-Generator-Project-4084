@@ -61,10 +61,11 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
           {/* Party Information */}
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="text-sm font-bold text-slate-600 mb-2 block">
+              <label htmlFor="disclosing" className="text-sm font-bold text-slate-600 mb-2 block">
                 Disclosing Party {formData.type === 'mutual' ? '(Party 1)' : ''}
               </label>
               <input
+                id="disclosing"
                 name="disclosing"
                 value={formData.disclosing}
                 onChange={handleInputChange}
@@ -73,10 +74,11 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
               />
             </div>
             <div>
-              <label className="text-sm font-bold text-slate-600 mb-2 block">
+              <label htmlFor="receiving" className="text-sm font-bold text-slate-600 mb-2 block">
                 Receiving Party {formData.type === 'mutual' ? '(Party 2)' : ''}
               </label>
               <input
+                id="receiving"
                 name="receiving"
                 value={formData.receiving}
                 onChange={handleInputChange}
@@ -89,8 +91,9 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
           {/* Industry and Jurisdiction */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-bold text-slate-600 mb-2 block">Industry Sector</label>
+              <label htmlFor="industry" className="text-sm font-bold text-slate-600 mb-2 block">Industry Sector</label>
               <select
+                id="industry"
                 name="industry"
                 value={formData.industry}
                 onChange={handleInputChange}
@@ -104,8 +107,9 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
               </select>
             </div>
             <div>
-              <label className="text-sm font-bold text-slate-600 mb-2 block">Governing Law</label>
+              <label htmlFor="jurisdiction" className="text-sm font-bold text-slate-600 mb-2 block">Governing Law</label>
               <select
+                id="jurisdiction"
                 name="jurisdiction"
                 value={formData.jurisdiction}
                 onChange={handleInputChange}
@@ -121,8 +125,9 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
           {/* Protection Level and Term */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-bold text-slate-600 mb-2 block">Protection Level</label>
+              <label htmlFor="strictness" className="text-sm font-bold text-slate-600 mb-2 block">Protection Level</label>
               <select
+                id="strictness"
                 name="strictness"
                 value={formData.strictness}
                 onChange={handleInputChange}
@@ -133,8 +138,9 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
               </select>
             </div>
             <div>
-              <label className="text-sm font-bold text-slate-600 mb-2 block">Confidentiality Term</label>
+              <label htmlFor="term" className="text-sm font-bold text-slate-600 mb-2 block">Confidentiality Term</label>
               <select
+                id="term"
                 name="term"
                 value={formData.term}
                 onChange={handleInputChange}
@@ -152,13 +158,14 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
           {/* Additional Options */}
           <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl">
             <input
+              id="includeReturn"
               type="checkbox"
               name="includeReturn"
               checked={formData.includeReturn}
               onChange={handleInputChange}
               className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
             />
-            <label className="text-sm font-medium text-slate-700">
+            <label htmlFor="includeReturn" className="text-sm font-medium text-slate-700">
               Include document return clause
             </label>
           </div>
