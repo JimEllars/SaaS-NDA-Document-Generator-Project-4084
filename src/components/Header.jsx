@@ -2,7 +2,7 @@ import React from 'react';
 import { FiShield, FiTrash2 } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const Header = ({ isPaid, onClear, onStartOver }) => {
+const Header = React.memo(({ isPaid, onClear, onStartOver }) => {
   return (
     <div className="max-w-3xl w-full flex justify-between items-center mb-8 no-print">
       <div>
@@ -30,6 +30,8 @@ const Header = ({ isPaid, onClear, onStartOver }) => {
       )}
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  return prevProps.isPaid === nextProps.isPaid;
+});
 
 export default Header;
