@@ -95,7 +95,13 @@ function AppContent() {
   };
 
   // Memoize document generation to prevent unnecessary re-calculation
-  const documentData = useMemo(() => generateDocument(formData), [formData]);
+  // It is only needed when isPaid is true and isEditing is false
+  const documentData = useMemo(() => {
+    if (formData.isPaid && !isEditing) {
+      return generateDocument(formData);
+    }
+    return null;
+  }, [formData, isEditing]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col items-center p-4 md:p-8 font-sans text-slate-900">
