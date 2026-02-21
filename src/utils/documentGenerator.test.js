@@ -92,4 +92,10 @@ describe('generateDocument', () => {
       const data = generateDocument({ ...baseFormData, effectiveDate: '' });
       expect(data.effectiveDate).not.toBe('Invalid Date');
   });
+
+  it('should format date consistently regardless of timezone', () => {
+    // 2023-10-27 should always be "October 27, 2023" with the new robust parsing
+    const data = generateDocument({ ...baseFormData, effectiveDate: '2023-10-27' });
+    expect(data.effectiveDate).toBe('October 27, 2023');
+  });
 });
