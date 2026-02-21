@@ -1,10 +1,10 @@
 import React from 'react';
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
-import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw } from 'react-icons/fi';
+import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiEye, FiCalendar } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
 
-const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpdate }) => {
+const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpdate, onPreview }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -83,6 +83,21 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 value={formData.receiving}
                 onChange={handleInputChange}
                 placeholder="Counterparty Name"
+                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="effectiveDate" className="text-sm font-bold text-slate-600 mb-2 block flex items-center gap-2">
+                <SafeIcon icon={FiCalendar} size={14} />
+                Effective Date
+              </label>
+              <input
+                id="effectiveDate"
+                name="effectiveDate"
+                type="date"
+                value={formData.effectiveDate || ''}
+                onChange={handleInputChange}
                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
               />
             </div>
@@ -202,17 +217,30 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
             </>
           )}
 
-          <button
-            onClick={isEditing ? onUpdate : onPurchase}
-            disabled={!isFormValid}
-            className={`w-full bg-white text-blue-800 font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <SafeIcon icon={isEditing ? FiRefreshCw : FiLock} size={20} />
-            {isEditing
-              ? 'Update Document'
-              : (isFormValid ? 'Purchase & Generate Document' : 'Enter Party Names to Continue')
-            }
-          </button>
+          <div className="flex flex-col md:flex-row gap-4">
+            {!isEditing && (
+              <button
+                onClick={onPreview}
+                disabled={!isFormValid}
+                className={`flex-1 bg-white/20 backdrop-blur-sm border border-white/40 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white/30 transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <SafeIcon icon={FiEye} size={20} />
+                Preview Document
+              </button>
+            )}
+
+            <button
+              onClick={isEditing ? onUpdate : onPurchase}
+              disabled={!isFormValid}
+              className={`flex-1 bg-white text-blue-800 font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <SafeIcon icon={isEditing ? FiRefreshCw : FiLock} size={20} />
+              {isEditing
+                ? 'Update Document'
+                : (isFormValid ? 'Purchase & Generate' : 'Enter Party Names')
+              }
+            </button>
+          </div>
         </div>
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-700 rounded-full opacity-40 blur-3xl"></div>
       </section>
