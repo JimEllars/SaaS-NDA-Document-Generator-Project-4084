@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import './App.css';
 import Header from './components/Header';
 import NDAGeneratorForm from './components/NDAGeneratorForm';
@@ -43,8 +43,13 @@ function AppContent() {
   });
 
   const debouncedFormData = useDebounce(formData, 500);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     try {
       localStorage.setItem('ndaFormData', JSON.stringify(debouncedFormData));
     } catch (e) {
