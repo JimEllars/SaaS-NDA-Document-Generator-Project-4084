@@ -1,3 +1,6 @@
+const DATE_OPTIONS = { year: 'numeric', month: 'long', day: 'numeric' };
+const UTC_FORMATTER = new Intl.DateTimeFormat('en-US', { ...DATE_OPTIONS, timeZone: 'UTC' });
+const LOCAL_FORMATTER = new Intl.DateTimeFormat('en-US', DATE_OPTIONS);
 
 /**
  * Formats a date string (YYYY-MM-DD) into a localized string (Month Day, Year).
@@ -6,8 +9,6 @@
  * @returns {string} - The formatted date string.
  */
 export const formatEffectiveDate = (dateString) => {
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-
   if (dateString) {
       // Optimization: Avoid array creation from split().map(Number)
       const year = parseInt(dateString.substring(0, 4), 10);
@@ -16,13 +17,13 @@ export const formatEffectiveDate = (dateString) => {
 
       if (isNaN(year) || isNaN(month) || isNaN(day)) {
           // Fallback for invalid format, though input type="date" enforces it mostly
-           return new Date().toLocaleDateString('en-US', options);
+           return LOCAL_FORMATTER.format(new Date());
       }
 
       // Create date using UTC to avoid timezone shifts
       const date = new Date(Date.UTC(year, month - 1, day));
-      return new Intl.DateTimeFormat('en-US', { ...options, timeZone: 'UTC' }).format(date);
+      return UTC_FORMATTER.format(date);
   }
 
-  return new Date().toLocaleDateString('en-US', options);
+  return LOCAL_FORMATTER.format(new Date());
 };
