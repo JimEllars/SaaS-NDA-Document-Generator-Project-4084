@@ -1,9 +1,26 @@
 import React from 'react';
 // Using named imports to enable tree-shaking
-import { FiCheckCircle, FiPrinter, FiFileText, FiEdit } from 'react-icons/fi';
+import { FiCheckCircle, FiPrinter, FiFileText, FiEdit, FiCopy, FiCheck } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
 const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview = false }) => {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = () => {
+    const text = document.getElementById('document-render').innerText;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            alert('Failed to copy to clipboard.');
+        });
+    } else {
+        // Fallback or alert
+        alert('Clipboard access not available.');
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in zoom-in duration-500 relative">
@@ -53,9 +70,19 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview
               <SafeIcon icon={FiFileText} size={16} />
               Document Preview
             </span>
-            <span className={`text-xs font-bold px-2 py-1 rounded ${isPreview ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
-              {isPreview ? 'DRAFT - PREVIEW' : 'PAID - FINAL VERSION'}
-            </span>
+            <div className="flex items-center gap-3">
+                <button
+                    onClick={handleCopy}
+                    className="flex items-center gap-1.5 text-slate-500 hover:text-blue-600 text-xs font-bold transition px-2 py-1 rounded hover:bg-slate-200"
+                    title="Copy text to clipboard"
+                >
+                    <SafeIcon icon={copied ? FiCheck : FiCopy} size={14} />
+                    {copied ? 'COPIED' : 'COPY TEXT'}
+                </button>
+                <span className={`text-xs font-bold px-2 py-1 rounded ${isPreview ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                {isPreview ? 'DRAFT - PREVIEW' : 'PAID - FINAL VERSION'}
+                </span>
+            </div>
           </div>
 
           <div className="overflow-y-auto max-h-[800px]" id="document-render">

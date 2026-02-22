@@ -1,6 +1,6 @@
 import React from 'react';
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
-import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiEye, FiCalendar } from 'react-icons/fi';
+import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiEye, FiCalendar, FiAlertCircle } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
 
@@ -35,27 +35,36 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
 
         <div className="space-y-5">
           {/* Agreement Type Toggle */}
-          <div className="flex p-1 bg-slate-100 rounded-xl mb-6">
-            <button
-              onClick={() => setFormData(p => ({...p, type: 'unilateral'}))}
-              className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
-                formData.type === 'unilateral'
-                  ? 'bg-white shadow-sm text-blue-600'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Unilateral NDA
-            </button>
-            <button
-              onClick={() => setFormData(p => ({...p, type: 'mutual'}))}
-              className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
-                formData.type === 'mutual'
-                  ? 'bg-white shadow-sm text-blue-600'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Mutual NDA
-            </button>
+          <div className="flex flex-col gap-2 mb-6">
+            <div className="flex p-1 bg-slate-100 rounded-xl">
+              <button
+                onClick={() => setFormData(p => ({...p, type: 'unilateral'}))}
+                aria-pressed={formData.type === 'unilateral'}
+                className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
+                  formData.type === 'unilateral'
+                    ? 'bg-white shadow-sm text-blue-600'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Unilateral NDA
+              </button>
+              <button
+                onClick={() => setFormData(p => ({...p, type: 'mutual'}))}
+                aria-pressed={formData.type === 'mutual'}
+                className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
+                  formData.type === 'mutual'
+                    ? 'bg-white shadow-sm text-blue-600'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Mutual NDA
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 px-1">
+              {formData.type === 'unilateral'
+                ? 'One party (Disclosing) shares information with another (Receiving).'
+                : 'Both parties share confidential information with each other.'}
+            </p>
           </div>
 
           {/* Party Information */}
@@ -241,6 +250,13 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
               }
             </button>
           </div>
+
+          {!isFormValid && (
+             <p className="text-sm text-blue-200 mt-4 font-medium flex items-center justify-center gap-2 animate-pulse">
+               <SafeIcon icon={FiAlertCircle} size={16} />
+               Please enter both party names to proceed.
+             </p>
+          )}
         </div>
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-700 rounded-full opacity-40 blur-3xl"></div>
       </section>
