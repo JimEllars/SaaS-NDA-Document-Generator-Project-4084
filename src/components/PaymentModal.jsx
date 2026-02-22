@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 // Using named imports to enable tree-shaking
 import { FiX, FiCreditCard, FiCheckCircle, FiGlobe } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import { useToast } from '../context/ToastContext';
 
 const PaymentModal = ({ onClose, onPaymentComplete }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [step, setStep] = useState('form'); // 'form', 'processing', 'success'
   const [error, setError] = useState(null);
   const [paymentData, setPaymentData] = useState({
     cardNumber: '',
@@ -13,6 +14,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
     email: ''
   });
 
+  const { addToast } = useToast();
   const isMounted = React.useRef(true);
 
   React.useEffect(() => {
@@ -44,18 +46,37 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
       return;
     }
 
-    setIsProcessing(true);
+    console.log('Starting payment simulation...');
+    setStep('processing');
 
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2000));
+    console.log('Payment processed. Setting success step.');
 
-    if (isMounted.current) {
-      setIsProcessing(false);
-      // Simulate sending receipt email
-      console.log('Payment successful! Receipt sent to:', paymentData.email);
-      onPaymentComplete();
-    }
+    setStep('success');
+    // Simulate sending receipt email
+    console.log('Payment successful! Receipt sent to:', paymentData.email);
+
+    setTimeout(() => {
+        onPaymentComplete();
+        addToast('Payment successful!', 'success');
+    }, 1500);
   };
+
+  if (step === 'success') {
+      return (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4 no-print">
+            <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in duration-300 p-8 text-center">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <SafeIcon icon={FiCheckCircle} className="text-green-600" size={40} />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">Payment Successful!</h3>
+                <p className="text-slate-600 mb-6">Thank you for your purchase. Your document is now ready.</p>
+                <div className="animate-pulse text-sm text-slate-500">Redirecting to document...</div>
+            </div>
+        </div>
+      );
+  }
 
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4 no-print">
@@ -65,6 +86,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
             onClick={onClose}
             className="absolute top-6 right-6 hover:rotate-90 transition opacity-70 hover:opacity-100 focus:outline-none"
             type="button"
+            disabled={step === 'processing'}
           >
             <SafeIcon icon={FiX} size={24} />
           </button>
@@ -92,7 +114,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
                 onChange={handlePaymentInputChange}
                 placeholder="your@email.com"
                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
-                disabled={isProcessing}
+                disabled={step === 'processing'}
                 required
               />
             </div>
@@ -107,7 +129,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
                   onChange={handlePaymentInputChange}
                   placeholder="1234 5678 9012 3456"
                   className="w-full pl-12 p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
-                  disabled={isProcessing}
+                  disabled={step === 'processing'}
                   required
                 />
               </div>
@@ -122,7 +144,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
                   onChange={handlePaymentInputChange}
                   placeholder="MM/YY"
                   className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
-                  disabled={isProcessing}
+                  disabled={step === 'processing'}
                   required
                 />
               </div>
@@ -135,7 +157,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
                   onChange={handlePaymentInputChange}
                   placeholder="123"
                   className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
-                  disabled={isProcessing}
+                  disabled={step === 'processing'}
                   required
                 />
               </div>
@@ -150,10 +172,10 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
 
           <button
             type="submit"
-            disabled={isProcessing}
+            disabled={step === 'processing'}
             className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-blue-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
           >
-            {isProcessing ? (
+            {step === 'processing' ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                 Processing...

@@ -89,4 +89,23 @@ describe('NDAGeneratorForm', () => {
 
     expect(mockOnPreview).toHaveBeenCalled();
   });
+
+  it('disables purchase button if date is invalid', () => {
+    const invalidFormData = { ...mockFormData, disclosing: 'A', receiving: 'B', effectiveDate: 'invalid-date' };
+    render(
+      <NDAGeneratorForm
+        formData={invalidFormData}
+        setFormData={mockSetFormData}
+        onPurchase={mockOnPurchase}
+        onPreview={mockOnPreview}
+      />
+    );
+
+    // Check that button is disabled
+    const purchaseButton = screen.getByRole('button', { name: /Complete Form/i });
+    expect(purchaseButton).toBeDisabled();
+
+    // Check for validation message
+    expect(screen.getByText(/Please enter a valid effective date/i)).toBeInTheDocument();
+  });
 });

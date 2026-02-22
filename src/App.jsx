@@ -9,6 +9,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 import PreviewModal from './components/PreviewModal';
 import { generateDocument } from './utils/documentGenerator';
 import useDebounce from './hooks/useDebounce';
+import { ToastProvider } from './context/ToastContext';
+import ToastContainer from './components/Toast';
 
 function AppContent() {
   const [formData, setFormData] = useState(() => {
@@ -178,7 +180,10 @@ function AppContent() {
 function App() {
     return (
         <ErrorBoundary>
-            <AppContent />
+            <ToastProvider>
+                <AppContent />
+                <ToastContainer />
+            </ToastProvider>
         </ErrorBoundary>
     );
 }

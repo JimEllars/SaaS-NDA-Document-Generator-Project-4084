@@ -1,4 +1,5 @@
 import { CLAUSES } from '../data/ndaData';
+import { formatEffectiveDate } from './dateUtils';
 
 /**
  * Generates the NDA document structure based on form data.
@@ -11,22 +12,7 @@ export const generateDocument = (formData) => {
   const industry = CLAUSES[formData.industry];
   const isRobust = formData.strictness === 'robust';
 
-  // Fix date parsing to avoid timezone issues with 'YYYY-MM-DD' strings
-  let effectiveDateFormatted;
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-
-  if (formData.effectiveDate) {
-      // Optimization: Avoid array creation from split().map(Number)
-      const year = parseInt(formData.effectiveDate.substring(0, 4), 10);
-      const month = parseInt(formData.effectiveDate.substring(5, 7), 10);
-      const day = parseInt(formData.effectiveDate.substring(8, 10), 10);
-
-      // Create date using UTC to avoid timezone shifts
-      const date = new Date(Date.UTC(year, month - 1, day));
-      effectiveDateFormatted = new Intl.DateTimeFormat('en-US', { ...options, timeZone: 'UTC' }).format(date);
-  } else {
-      effectiveDateFormatted = new Date().toLocaleDateString('en-US', options);
-  }
+  const effectiveDateFormatted = formatEffectiveDate(formData.effectiveDate);
 
   return {
     title: `${formData.type === 'mutual' ? 'Mutual' : 'Unilateral'} Non-Disclosure Agreement`,
