@@ -14,7 +14,17 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
     }));
   };
 
-  const isFormValid = formData.disclosing.trim() !== '' && formData.receiving.trim() !== '';
+  const isDateValid = formData.effectiveDate && !isNaN(new Date(formData.effectiveDate).getTime());
+  const isFormValid = formData.disclosing.trim() !== '' &&
+                      formData.receiving.trim() !== '' &&
+                      isDateValid;
+
+  let validationMessage = '';
+  if (!formData.disclosing.trim() || !formData.receiving.trim()) {
+      validationMessage = 'Please enter both party names to proceed.';
+  } else if (!isDateValid) {
+      validationMessage = 'Please enter a valid effective date.';
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -109,6 +119,8 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 type="date"
                 value={formData.effectiveDate || ''}
                 onChange={handleInputChange}
+                min="2000-01-01"
+                max="2099-12-31"
                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                 required
               />
@@ -249,7 +261,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
               <SafeIcon icon={isEditing ? FiRefreshCw : FiLock} size={20} />
               {isEditing
                 ? 'Update Document'
-                : (isFormValid ? 'Purchase & Generate' : 'Enter Party Names')
+                : (isFormValid ? 'Purchase & Generate' : 'Complete Form')
               }
             </button>
           </div>
@@ -257,7 +269,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
           {!isFormValid && (
              <p className="text-sm text-blue-200 mt-4 font-medium flex items-center justify-center gap-2 animate-pulse">
                <SafeIcon icon={FiAlertCircle} size={16} />
-               Please enter both party names to proceed.
+               {validationMessage}
              </p>
           )}
         </div>

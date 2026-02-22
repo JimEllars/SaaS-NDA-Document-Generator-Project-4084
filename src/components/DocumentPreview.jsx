@@ -2,9 +2,11 @@ import React from 'react';
 // Using named imports to enable tree-shaking
 import { FiCheckCircle, FiPrinter, FiFileText, FiEdit, FiCopy, FiCheck } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import { useToast } from '../context/ToastContext';
 
 const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview = false }) => {
   const [copied, setCopied] = React.useState(false);
+  const { addToast } = useToast();
 
   const handleCopy = () => {
     const text = document.getElementById('document-render').innerText;
@@ -12,13 +14,14 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview
         navigator.clipboard.writeText(text).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
+            addToast('Text copied to clipboard', 'success');
         }).catch(err => {
             console.error('Failed to copy: ', err);
-            alert('Failed to copy to clipboard.');
+            addToast('Failed to copy to clipboard', 'error');
         });
     } else {
         // Fallback or alert
-        alert('Clipboard access not available.');
+        addToast('Clipboard access not available', 'error');
     }
   };
 

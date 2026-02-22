@@ -70,9 +70,9 @@ describe('App Integration', () => {
     const payButtons = screen.getAllByRole('button', { name: /Complete Purchase/i });
     fireEvent.click(payButtons[0]);
 
-    // Fast-forward time for simulatePayment
+    // Fast-forward time for simulatePayment (2000ms processing + 1500ms success delay)
     await act(async () => {
-      vi.advanceTimersByTime(3000);
+      await vi.advanceTimersByTimeAsync(4000);
     });
 
     // Modal should close and we should see "Payment Successful!"
