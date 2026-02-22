@@ -80,6 +80,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 onChange={handleInputChange}
                 placeholder="Company or Individual Name"
                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                required
               />
             </div>
             <div>
@@ -93,11 +94,12 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 onChange={handleInputChange}
                 placeholder="Counterparty Name"
                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                required
               />
             </div>
 
             <div>
-              <label htmlFor="effectiveDate" className="text-sm font-bold text-slate-600 mb-2 block flex items-center gap-2">
+              <label htmlFor="effectiveDate" className="text-sm font-bold text-slate-600 mb-2 flex items-center gap-2">
                 <SafeIcon icon={FiCalendar} size={14} />
                 Effective Date
               </label>
@@ -108,6 +110,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 value={formData.effectiveDate || ''}
                 onChange={handleInputChange}
                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                required
               />
             </div>
           </div>
