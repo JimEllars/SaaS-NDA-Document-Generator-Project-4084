@@ -81,8 +81,9 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-2 block">Email Address</label>
+              <label htmlFor="email" className="text-sm font-medium text-slate-700 mb-2 block">Email Address</label>
               <input
+                id="email"
                 name="email"
                 type="email"
                 value={paymentData.email}
@@ -93,10 +94,11 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 mb-2 block">Card Number</label>
+              <label htmlFor="cardNumber" className="text-sm font-medium text-slate-700 mb-2 block">Card Number</label>
               <div className="relative">
                 <SafeIcon icon={FiCreditCard} className="absolute left-4 top-4 text-slate-400" size={18} />
                 <input
+                  id="cardNumber"
                   name="cardNumber"
                   value={paymentData.cardNumber}
                   onChange={handlePaymentInputChange}
@@ -108,8 +110,9 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">Expiry</label>
+                <label htmlFor="expiryDate" className="text-sm font-medium text-slate-700 mb-2 block">Expiry</label>
                 <input
+                  id="expiryDate"
                   name="expiryDate"
                   value={paymentData.expiryDate}
                   onChange={handlePaymentInputChange}
@@ -119,8 +122,9 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700 mb-2 block">CVC</label>
+                <label htmlFor="cvc" className="text-sm font-medium text-slate-700 mb-2 block">CVC</label>
                 <input
+                  id="cvc"
                   name="cvc"
                   value={paymentData.cvc}
                   onChange={handlePaymentInputChange}
