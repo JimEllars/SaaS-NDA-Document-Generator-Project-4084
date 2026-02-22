@@ -36,7 +36,8 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
     return null;
   };
 
-  const simulatePayment = async () => {
+  const simulatePayment = async (e) => {
+    e.preventDefault();
     const validationError = validatePaymentForm();
     if (validationError) {
       setError(validationError);
@@ -63,6 +64,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
           <button
             onClick={onClose}
             className="absolute top-6 right-6 hover:rotate-90 transition opacity-70 hover:opacity-100 focus:outline-none"
+            type="button"
           >
             <SafeIcon icon={FiX} size={24} />
           </button>
@@ -73,7 +75,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
           <p className="text-blue-100 mt-2 opacity-90">Secure payment processing</p>
         </div>
 
-        <div className="p-8 space-y-6">
+        <form onSubmit={simulatePayment} className="p-8 space-y-6">
           <div className="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
             <span className="font-medium text-slate-700">Professional NDA Document</span>
             <span className="font-bold text-blue-600 text-lg">$12.99</span>
@@ -91,6 +93,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
                 placeholder="your@email.com"
                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
                 disabled={isProcessing}
+                required
               />
             </div>
             <div>
@@ -105,6 +108,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
                   placeholder="1234 5678 9012 3456"
                   className="w-full pl-12 p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
                   disabled={isProcessing}
+                  required
                 />
               </div>
             </div>
@@ -119,6 +123,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
                   placeholder="MM/YY"
                   className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
                   disabled={isProcessing}
+                  required
                 />
               </div>
               <div>
@@ -131,6 +136,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
                   placeholder="123"
                   className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
                   disabled={isProcessing}
+                  required
                 />
               </div>
             </div>
@@ -143,7 +149,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
           )}
 
           <button
-            onClick={simulatePayment}
+            type="submit"
             disabled={isProcessing}
             className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-blue-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
           >
@@ -164,7 +170,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
             <SafeIcon icon={FiGlobe} size={12} />
             Secured by 256-bit SSL encryption
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
