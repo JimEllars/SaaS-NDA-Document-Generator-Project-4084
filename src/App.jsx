@@ -6,7 +6,6 @@ import PaymentModal from './components/PaymentModal';
 import DocumentPreview from './components/DocumentPreview';
 import ConfirmModal from './components/ConfirmModal';
 import ErrorBoundary from './components/ErrorBoundary';
-import PreviewModal from './components/PreviewModal';
 import { generateDocument } from './utils/documentGenerator';
 import { ToastProvider } from './context/ToastContext';
 import ToastContainer from './components/Toast';
@@ -16,7 +15,6 @@ function AppContent() {
   const { formData, setFormData, resetForm } = useNDAForm();
 
   const [showCheckout, setShowCheckout] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
 
@@ -52,14 +50,7 @@ function AppContent() {
     return null;
   }, [formData, isEditing]);
 
-  // Generate preview data regardless of payment status
-  const previewData = useMemo(() => {
-    if (showPreview) {
-       // Force isPaid to true for preview generation purposes
-       return generateDocument({ ...formData, isPaid: true });
-    }
-    return null;
-  }, [formData, showPreview]);
+  // PREVENT_PREVIEW: Do not implement document preview to prevent theft.
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col items-center p-4 md:p-8 font-sans text-slate-900">
@@ -75,7 +66,6 @@ function AppContent() {
             formData={formData}
             setFormData={setFormData}
             onPurchase={() => setShowCheckout(true)}
-            onPreview={() => setShowPreview(true)}
             isEditing={isEditing}
             onUpdate={handleUpdate}
           />
@@ -95,14 +85,6 @@ function AppContent() {
           onPaymentComplete={handlePaymentComplete}
         />
       )}
-
-      <PreviewModal
-        isOpen={showPreview}
-        onClose={() => setShowPreview(false)}
-        formData={formData}
-        documentData={previewData}
-        onPurchase={() => setShowCheckout(true)}
-      />
 
       <ConfirmModal
         isOpen={showStartOverConfirm}

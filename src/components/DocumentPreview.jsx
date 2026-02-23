@@ -5,7 +5,7 @@ import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';
 import { generatePlainText } from '../utils/documentGenerator';
 
-const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview = false }) => {
+const DocumentPreview = ({ formData, documentData, onDownload, onEdit }) => {
   const [copied, setCopied] = React.useState(false);
   const { addToast } = useToast();
 
@@ -30,46 +30,34 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview
 
   return (
     <div className="space-y-6 animate-in fade-in zoom-in duration-500 relative">
-       {/* Success Message - Only show if NOT preview */}
-       {!isPreview && (
-         <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center shadow-sm no-print">
-            <div className="mx-auto bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
-              <SafeIcon icon={FiCheckCircle} className="text-green-600" size={24} />
-            </div>
-            <h2 className="text-xl font-bold text-green-900 mb-2">Payment Successful!</h2>
-            <p className="text-green-800">Your document is ready. You can now download or print your NDA.</p>
+       {/* Success Message */}
+       <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center shadow-sm no-print">
+          <div className="mx-auto bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+            <SafeIcon icon={FiCheckCircle} className="text-green-600" size={24} />
+          </div>
+          <h2 className="text-xl font-bold text-green-900 mb-2">Payment Successful!</h2>
+          <p className="text-green-800">Your document is ready. You can now download or print your NDA.</p>
 
-            <div className="flex flex-col gap-3 max-w-sm mx-auto mt-6">
-              <button
-                  onClick={onDownload}
-                  className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-lg"
-              >
-                  <SafeIcon icon={FiPrinter} size={20} />
-                  Print / Download PDF
-              </button>
-              <button
-                  onClick={onEdit}
-                  className="w-full bg-white text-blue-600 border border-blue-200 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition shadow-sm"
-              >
-                  <SafeIcon icon={FiEdit} size={20} />
-                  Edit Document
-              </button>
-            </div>
-         </div>
-       )}
+          <div className="flex flex-col gap-3 max-w-sm mx-auto mt-6">
+            <button
+                onClick={onDownload}
+                className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-lg"
+            >
+                <SafeIcon icon={FiPrinter} size={20} />
+                Print / Download PDF
+            </button>
+            <button
+                onClick={onEdit}
+                className="w-full bg-white text-blue-600 border border-blue-200 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition shadow-sm"
+            >
+                <SafeIcon icon={FiEdit} size={20} />
+                Edit Document
+            </button>
+          </div>
+       </div>
 
        {/* Document Display (Read Only View) */}
-       <div className={`bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden relative ${isPreview ? 'select-none' : ''}`}>
-
-          {/* Watermark Overlay for Preview */}
-          {isPreview && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden">
-                  <div className="transform -rotate-45 text-slate-900/10 text-9xl font-black whitespace-nowrap select-none">
-                      PREVIEW ONLY
-                  </div>
-                  <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px]"></div>
-              </div>
-          )}
+       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden relative">
 
           <div className="bg-slate-50 px-6 py-4 border-b flex justify-between items-center no-print">
             <span className="text-sm font-bold text-slate-600 flex items-center gap-2">
@@ -85,8 +73,8 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview
                     <SafeIcon icon={copied ? FiCheck : FiCopy} size={14} />
                     {copied ? 'COPIED' : 'COPY TEXT'}
                 </button>
-                <span className={`text-xs font-bold px-2 py-1 rounded ${isPreview ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
-                {isPreview ? 'DRAFT - PREVIEW' : 'PAID - FINAL VERSION'}
+                <span className="text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-700">
+                PAID - FINAL VERSION
                 </span>
             </div>
           </div>

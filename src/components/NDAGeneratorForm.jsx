@@ -1,6 +1,6 @@
 import React from 'react';
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
-import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiEye, FiCalendar, FiAlertCircle } from 'react-icons/fi';
+import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import useFormValidation from '../hooks/useFormValidation';
 import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
@@ -10,7 +10,7 @@ const INPUT_CLASSES = `${FIELD_BASE_CLASSES} transition`;
 const SELECT_CLASSES = FIELD_BASE_CLASSES;
 const LABEL_CLASSES = "text-sm font-bold text-slate-600 mb-2";
 
-const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpdate, onPreview }) => {
+const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpdate }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -242,17 +242,6 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
           )}
 
           <div className="flex flex-col md:flex-row gap-4">
-            {!isEditing && (
-              <button
-                onClick={onPreview}
-                disabled={!isFormValid}
-                className={`flex-1 bg-white/20 backdrop-blur-sm border border-white/40 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white/30 transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <SafeIcon icon={FiEye} size={20} />
-                Preview Document
-              </button>
-            )}
-
             <button
               onClick={isEditing ? onUpdate : onPurchase}
               disabled={!isFormValid}

@@ -104,27 +104,4 @@ describe('App Integration', () => {
     expect(screen.getAllByText(/Alice Corp/i)[0]).toBeInTheDocument();
     expect(screen.getAllByText(/Bob Inc/i)[0]).toBeInTheDocument();
   });
-
-  it('allows previewing the document before purchase', () => {
-    render(<App />);
-
-    // Fill form
-    const disclosingInput = screen.getByLabelText(/Disclosing Party/i);
-    const receivingInput = screen.getByLabelText(/Receiving Party/i);
-
-    fireEvent.change(disclosingInput, { target: { value: 'Preview Corp' } });
-    fireEvent.change(receivingInput, { target: { value: 'Viewer Inc' } });
-
-    // Click preview
-    const previewButtons = screen.getAllByRole('button', { name: /Preview Document/i });
-    const previewButton = previewButtons[0];
-    expect(previewButton).not.toBeDisabled();
-    fireEvent.click(previewButton);
-
-    // Expect Preview Modal
-    const previewHeaders = screen.getAllByText(/Document Preview/i);
-    expect(previewHeaders.length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/PREVIEW ONLY/i)[0]).toBeInTheDocument();
-    expect(screen.getAllByText(/Preview Corp/i)[0]).toBeInTheDocument();
-  });
 });
