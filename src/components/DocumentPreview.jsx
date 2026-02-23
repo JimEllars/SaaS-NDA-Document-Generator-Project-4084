@@ -3,13 +3,16 @@ import React from 'react';
 import { FiCheckCircle, FiPrinter, FiFileText, FiEdit, FiCopy, FiCheck } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';
+import { generatePlainText } from '../utils/documentGenerator';
 
 const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview = false }) => {
   const [copied, setCopied] = React.useState(false);
   const { addToast } = useToast();
 
   const handleCopy = () => {
-    const text = document.getElementById('document-render').innerText;
+    // Generate text from data instead of DOM
+    const text = generatePlainText(documentData, formData);
+
     if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => {
             setCopied(true);
@@ -117,32 +120,20 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview
               </div>
 
               {/* Document Sections */}
-              {documentData.sections.map((section, index) => {
-                let clauseCounter = 0;
-                return (
+              {documentData.sections.map((section, index) => (
                 <section key={index} className="space-y-4">
                   <h3 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase tracking-wide">
                     {section.title}
                   </h3>
                   <div className="space-y-4">
-                    {/*
-                      Renders mixed content:
-                      - Strings are rendered as paragraphs.
-                      - Objects {title, text} are rendered as numbered subsections.
-                      Note: Numbering relies on counter so it works with mixed content.
-                    */}
-                    {section.content.map((item, itemIndex) => {
-                      if (typeof item !== 'string') {
-                          clauseCounter++;
-                      }
-                      return (
+                    {section.content.map((item, itemIndex) => (
                       <div key={itemIndex} className="space-y-2">
-                        {typeof item === 'string' ? (
-                          <p className="text-justify leading-relaxed">{item}</p>
+                        {item.type === 'paragraph' ? (
+                          <p className="text-justify leading-relaxed">{item.text}</p>
                         ) : (
                           <div>
                             <h4 className="font-semibold text-slate-800 mb-2">
-                              {clauseCounter}. {item.title}
+                              {item.number}. {item.title}
                             </h4>
                             <p className="text-justify leading-relaxed pl-4 border-l-2 border-blue-100">
                               {item.text}
@@ -150,10 +141,10 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview
                           </div>
                         )}
                       </div>
-                    )})}
+                    ))}
                   </div>
                 </section>
-              )})}
+              ))}
 
               {/* Signature Section */}
               <div className="mt-16 pt-8 border-t-2 border-slate-200">
