@@ -49,7 +49,7 @@ export const CLAUSES = {
     clauses: [
       {
         title: "Non-Circumvention Clause",
-        text: "The Receiving Party agrees not to circumvent the Disclosing Party by directly contacting property owners, developers, lenders, investors, or other parties associated with the disclosed real estate opportunities, projects, or transactions to pursue any business relationship or transaction independently."
+        text: "The Receiving Party agrees to not circumvent the Disclosing Party by directly contacting property owners, developers, lenders, investors, or other parties associated with the disclosed real estate opportunities, projects, or transactions to pursue any business relationship or transaction independently."
       },
       {
         title: "Property Information Protection",
@@ -88,14 +88,14 @@ export const CLAUSES = {
     ]
   },
   robust: {
-    clauses: [
+    definition: {
+      title: "Broad Interpretation of Confidential Information",
+      text: "Confidential Information shall be interpreted in the broadest possible sense allowed by law, covering all communications, observations, and information gained through any interaction with the Disclosing Party, regardless of whether such information was explicitly marked 'Confidential' at the time of disclosure."
+    },
+    enforcement: [
       {
         title: "Liquidated Damages and Remedies",
         text: "The Parties agree that any breach of this Agreement would cause irreparable harm for which monetary damages would be inadequate. In the event of a proven breach, the Receiving Party agrees to pay liquidated damages of $25,000 as a reasonable estimate of the harm caused, plus any actual damages exceeding this amount, attorney fees, and costs of enforcement."
-      },
-      {
-        title: "Broad Interpretation of Confidential Information",
-        text: "Confidential Information shall be interpreted in the broadest possible sense allowed by law, covering all communications, observations, and information gained through any interaction with the Disclosing Party, regardless of whether such information was explicitly marked 'Confidential' at the time of disclosure."
       },
       {
         title: "Injunctive Relief",

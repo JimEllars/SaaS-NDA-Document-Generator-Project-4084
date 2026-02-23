@@ -51,4 +51,15 @@ describe('NDA Data Generation', () => {
         expect(CLAUSES.creative.clauses.length).toBeGreaterThan(0);
       });
   });
+
+  describe('Robust Clauses', () => {
+    it('should have separate definition and enforcement clauses', () => {
+      expect(CLAUSES.robust.definition).toBeDefined();
+      expect(CLAUSES.robust.definition.title).toContain('Broad Interpretation');
+      expect(CLAUSES.robust.enforcement).toBeDefined();
+      expect(Array.isArray(CLAUSES.robust.enforcement)).toBe(true);
+      expect(CLAUSES.robust.enforcement.length).toBeGreaterThan(0);
+      expect(CLAUSES.robust.enforcement[0].title).toBeDefined();
+    });
+  });
 });

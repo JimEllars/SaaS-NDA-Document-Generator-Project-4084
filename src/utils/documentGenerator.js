@@ -23,7 +23,7 @@ export const generateDocument = (formData) => {
         title: "Article 1: Definition of Confidential Information",
         content: [
           CLAUSES.general.definition,
-          ...(isRobust ? [CLAUSES.robust.clauses[1].text] : [])
+          ...(isRobust ? [CLAUSES.robust.definition.text] : [])
         ]
       },
       ...(formData.industry !== 'general' ? [{
@@ -40,7 +40,7 @@ export const generateDocument = (formData) => {
       },
       ...(isRobust ? [{
         title: "Article 4: Enforcement and Remedies",
-        content: CLAUSES.robust.clauses.map(clause => ({ title: clause.title, text: clause.text }))
+        content: CLAUSES.robust.enforcement.map(clause => ({ title: clause.title, text: clause.text }))
       }] : []),
       {
         title: "Article 5: Governing Law and Jurisdiction",
