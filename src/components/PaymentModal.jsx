@@ -1,61 +1,105 @@
-import React, { useState } from 'react';
-// Using named imports to enable tree-shaking
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  Elements,
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
+  useStripe,
+  useElements
+} from '@stripe/react-stripe-js';
 import { FiX, FiCreditCard, FiCheckCircle, FiGlobe, FiLock } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';
+import { stripePromise } from '../utils/stripe';
 
-const PaymentModal = ({ onClose, onPaymentComplete }) => {
+const CARD_ELEMENT_OPTIONS = {
+  style: {
+    base: {
+      color: "#334155", // slate-700
+      fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      fontSmoothing: "antialiased",
+      fontSize: "14px",
+      "::placeholder": {
+        color: "#94a3b8" // slate-400
+      }
+    },
+    invalid: {
+      color: "#dc2626", // red-600
+      iconColor: "#dc2626"
+    }
+  }
+};
+
+const PaymentFormContent = ({ onClose, onPaymentComplete }) => {
+  const stripe = useStripe();
+  const elements = useElements();
   const [step, setStep] = useState('form'); // 'form', 'processing', 'success'
   const [error, setError] = useState(null);
-  const [paymentData, setPaymentData] = useState({
-    email: ''
-  });
+  const [email, setEmail] = useState('');
 
   const { addToast } = useToast();
-  const isMounted = React.useRef(true);
+  const isMounted = useRef(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       isMounted.current = false;
     };
   }, []);
 
-  const handlePaymentInputChange = (e) => {
-    const { name, value } = e.target;
-    setError(null);
-    setPaymentData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const validatePaymentForm = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(paymentData.email)) return 'Invalid email address';
-    // Card validation is skipped here as it's handled by the secure provider in a real implementation
-    return null;
-  };
-
-  const simulatePayment = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationError = validatePaymentForm();
-    if (validationError) {
-      setError(validationError);
+
+    if (!stripe || !elements) {
       return;
     }
 
-    console.log('Starting payment simulation...');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Invalid email address');
+      return;
+    }
+
     setStep('processing');
+    setError(null);
 
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log('Payment processed. Setting success step.');
+    const cardNumberElement = elements.getElement(CardNumberElement);
 
-    setStep('success');
-    // Simulate sending receipt email
-    console.log('Payment successful! Receipt sent to:', paymentData.email);
+    try {
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardNumberElement,
+        billing_details: {
+          email: email,
+        },
+      });
 
-    setTimeout(() => {
-        onPaymentComplete();
-        addToast('Payment successful!', 'success');
-    }, 1500);
+      if (error) {
+        console.log('[error]', error);
+        setError(error.message);
+        setStep('form');
+      } else {
+        console.log('[PaymentMethod]', paymentMethod);
+
+        // Simulate backend processing
+        setTimeout(() => {
+          if (isMounted.current) {
+            setStep('success');
+            console.log('Payment successful! Receipt sent to:', email);
+
+            setTimeout(() => {
+              if (isMounted.current) {
+                onPaymentComplete();
+                addToast('Payment successful!', 'success');
+              }
+            }, 1500);
+          }
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("An unexpected error occurred", err);
+      setError("An unexpected error occurred. Please try again.");
+      setStep('form');
+    }
   };
 
   if (step === 'success') {
@@ -95,10 +139,10 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
             <SafeIcon icon={FiCreditCard} size={24} />
             Complete Purchase
           </h3>
-          <p className="text-blue-100 mt-2 opacity-90">Secure payment processing</p>
+          <p className="text-blue-100 mt-2 opacity-90">Secure payment processing via Stripe</p>
         </div>
 
-        <form onSubmit={simulatePayment} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
             <span className="font-medium text-slate-700">Professional NDA Document</span>
             <span className="font-bold text-blue-600 text-lg">$12.99</span>
@@ -111,8 +155,11 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
                 id="email"
                 name="email"
                 type="email"
-                value={paymentData.email}
-                onChange={handlePaymentInputChange}
+                value={email}
+                onChange={(e) => {
+                  setError(null);
+                  setEmail(e.target.value);
+                }}
                 placeholder="your@email.com"
                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
                 disabled={step === 'processing'}
@@ -123,48 +170,32 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-wider">
                   <SafeIcon icon={FiLock} size={14} />
-                  Secure Card Entry (Simulated Iframe)
+                  Secure Card Entry
+                </div>
+                <div className="flex gap-1 opacity-50">
+                  {/* Icons for card types could go here */}
                 </div>
               </div>
 
-              {/* Note: In a production app, the following inputs would be provided by a PCI-compliant iframe (e.g., Stripe Elements)
-                  to ensure the application never touches raw card data. For this simulation, we use uncontrolled inputs
-                  to avoid storing sensitive data in the React state. */}
               <div className="space-y-3">
                 <div className="relative">
-                  <label htmlFor="cardNumber" className="sr-only">Card Number</label>
-                  <SafeIcon icon={FiCreditCard} className="absolute left-3 top-3.5 text-slate-300" size={18} />
-                  <input
-                    id="cardNumber"
-                    type="text"
-                    placeholder="Card Number"
-                    className="w-full pl-10 p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 transition shadow-sm"
-                    autoComplete="cc-number"
-                    disabled={step === 'processing'}
-                  />
+                  <label htmlFor="cardNumber-element" className="sr-only">Card Number</label>
+                  <div className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus-within:border-blue-500 transition shadow-sm">
+                    <CardNumberElement id="cardNumber-element" options={CARD_ELEMENT_OPTIONS} />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
-                    <label htmlFor="expiryDate" className="sr-only">Expiry</label>
-                    <input
-                      id="expiryDate"
-                      type="text"
-                      placeholder="MM / YY"
-                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 transition shadow-sm"
-                      autoComplete="cc-exp"
-                      disabled={step === 'processing'}
-                    />
+                    <label htmlFor="expiryDate-element" className="sr-only">Expiry</label>
+                    <div className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus-within:border-blue-500 transition shadow-sm">
+                        <CardExpiryElement id="expiryDate-element" options={CARD_ELEMENT_OPTIONS} />
+                    </div>
                   </div>
                   <div className="relative">
-                    <label htmlFor="cvc" className="sr-only">CVC</label>
-                    <input
-                      id="cvc"
-                      type="text"
-                      placeholder="CVC"
-                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 transition shadow-sm"
-                      autoComplete="cc-csc"
-                      disabled={step === 'processing'}
-                    />
+                    <label htmlFor="cvc-element" className="sr-only">CVC</label>
+                    <div className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus-within:border-blue-500 transition shadow-sm">
+                        <CardCvcElement id="cvc-element" options={CARD_ELEMENT_OPTIONS} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -179,7 +210,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
 
           <button
             type="submit"
-            disabled={step === 'processing'}
+            disabled={!stripe || step === 'processing'}
             className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-blue-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
           >
             {step === 'processing' ? (
@@ -190,18 +221,26 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
             ) : (
               <>
                 <SafeIcon icon={FiCheckCircle} size={18} />
-                Complete Purchase - $12.99
+                Pay $12.99
               </>
             )}
           </button>
 
           <div className="flex items-center gap-2 justify-center text-xs text-slate-500 font-medium">
             <SafeIcon icon={FiGlobe} size={12} />
-            Secured by 256-bit SSL encryption
+            Secured by Stripe
           </div>
         </form>
       </div>
     </div>
+  );
+};
+
+const PaymentModal = (props) => {
+  return (
+    <Elements stripe={stripePromise}>
+      <PaymentFormContent {...props} />
+    </Elements>
   );
 };
 

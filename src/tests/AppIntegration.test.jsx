@@ -1,10 +1,31 @@
 // @vitest-environment jsdom
+import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
 import App from '../App';
 
 expect.extend(matchers);
+
+// Mock Stripe
+vi.mock('@stripe/stripe-js', () => ({
+  loadStripe: vi.fn(() => Promise.resolve({})),
+}));
+
+vi.mock('@stripe/react-stripe-js', () => ({
+  Elements: ({ children }) => <div>{children}</div>,
+  useStripe: () => ({
+    createPaymentMethod: vi.fn().mockResolvedValue({
+      paymentMethod: { id: 'pm_test' }
+    }),
+  }),
+  useElements: () => ({
+    getElement: vi.fn(),
+  }),
+  CardNumberElement: (props) => <input data-testid="card-number-element" {...props} onChange={() => {}} />,
+  CardExpiryElement: (props) => <input data-testid="card-expiry-element" {...props} onChange={() => {}} />,
+  CardCvcElement: (props) => <input data-testid="card-cvc-element" {...props} onChange={() => {}} />,
+}));
 
 // Mock scrollIntoView since it's not implemented in JSDOM
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
@@ -67,7 +88,7 @@ describe('App Integration', () => {
     fireEvent.change(cvcInput, { target: { value: '123' } });
 
     // Click pay
-    const payButtons = screen.getAllByRole('button', { name: /Complete Purchase/i });
+    const payButtons = screen.getAllByRole('button', { name: /Pay \$12.99/i });
     fireEvent.click(payButtons[0]);
 
     // Fast-forward time for simulatePayment (2000ms processing + 1500ms success delay)
