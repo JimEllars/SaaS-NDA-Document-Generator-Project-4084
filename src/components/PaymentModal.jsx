@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // Using named imports to enable tree-shaking
-import { FiX, FiCreditCard, FiCheckCircle, FiGlobe } from 'react-icons/fi';
+import { FiX, FiCreditCard, FiCheckCircle, FiGlobe, FiLock } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';
 
@@ -8,9 +8,6 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
   const [step, setStep] = useState('form'); // 'form', 'processing', 'success'
   const [error, setError] = useState(null);
   const [paymentData, setPaymentData] = useState({
-    cardNumber: '',
-    expiryDate: '',
-    cvc: '',
     email: ''
   });
 
@@ -32,9 +29,7 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
   const validatePaymentForm = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(paymentData.email)) return 'Invalid email address';
-    if (paymentData.cardNumber.replace(/\s/g, '').length < 15) return 'Invalid card number';
-    if (paymentData.expiryDate.length < 4) return 'Invalid expiry date';
-    if (paymentData.cvc.length < 3) return 'Invalid CVC';
+    // Card validation is skipped here as it's handled by the secure provider in a real implementation
     return null;
   };
 
@@ -118,48 +113,54 @@ const PaymentModal = ({ onClose, onPaymentComplete }) => {
                 required
               />
             </div>
-            <div>
-              <label htmlFor="cardNumber" className="text-sm font-medium text-slate-700 mb-2 block">Card Number</label>
-              <div className="relative">
-                <SafeIcon icon={FiCreditCard} className="absolute left-4 top-4 text-slate-400" size={18} />
-                <input
-                  id="cardNumber"
-                  name="cardNumber"
-                  value={paymentData.cardNumber}
-                  onChange={handlePaymentInputChange}
-                  placeholder="1234 5678 9012 3456"
-                  className="w-full pl-12 p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
-                  disabled={step === 'processing'}
-                  required
-                />
+            <div className="p-5 border-2 border-slate-100 rounded-2xl bg-slate-50/50 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-wider">
+                  <SafeIcon icon={FiLock} size={14} />
+                  Secure Card Entry (Simulated Iframe)
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="expiryDate" className="text-sm font-medium text-slate-700 mb-2 block">Expiry</label>
-                <input
-                  id="expiryDate"
-                  name="expiryDate"
-                  value={paymentData.expiryDate}
-                  onChange={handlePaymentInputChange}
-                  placeholder="MM/YY"
-                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
-                  disabled={step === 'processing'}
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="cvc" className="text-sm font-medium text-slate-700 mb-2 block">CVC</label>
-                <input
-                  id="cvc"
-                  name="cvc"
-                  value={paymentData.cvc}
-                  onChange={handlePaymentInputChange}
-                  placeholder="123"
-                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
-                  disabled={step === 'processing'}
-                  required
-                />
+
+              {/* Note: In a production app, the following inputs would be provided by a PCI-compliant iframe (e.g., Stripe Elements)
+                  to ensure the application never touches raw card data. For this simulation, we use uncontrolled inputs
+                  to avoid storing sensitive data in the React state. */}
+              <div className="space-y-3">
+                <div className="relative">
+                  <label htmlFor="cardNumber" className="sr-only">Card Number</label>
+                  <SafeIcon icon={FiCreditCard} className="absolute left-3 top-3.5 text-slate-300" size={18} />
+                  <input
+                    id="cardNumber"
+                    type="text"
+                    placeholder="Card Number"
+                    className="w-full pl-10 p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 transition shadow-sm"
+                    autoComplete="cc-number"
+                    disabled={step === 'processing'}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <label htmlFor="expiryDate" className="sr-only">Expiry</label>
+                    <input
+                      id="expiryDate"
+                      type="text"
+                      placeholder="MM / YY"
+                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 transition shadow-sm"
+                      autoComplete="cc-exp"
+                      disabled={step === 'processing'}
+                    />
+                  </div>
+                  <div className="relative">
+                    <label htmlFor="cvc" className="sr-only">CVC</label>
+                    <input
+                      id="cvc"
+                      type="text"
+                      placeholder="CVC"
+                      className="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 transition shadow-sm"
+                      autoComplete="cc-csc"
+                      disabled={step === 'processing'}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
