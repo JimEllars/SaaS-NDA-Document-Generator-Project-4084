@@ -74,17 +74,18 @@ const PaymentFormContent = ({ onClose, onPaymentComplete }) => {
       });
 
       if (error) {
-        console.log('[error]', error);
+        console.error('Payment Error:', error);
         setError(error.message);
         setStep('form');
       } else {
-        console.log('[PaymentMethod]', paymentMethod);
+        // PaymentMethod created successfully
+        // console.log('[PaymentMethod]', paymentMethod);
 
         // Simulate backend processing
         setTimeout(() => {
           if (isMounted.current) {
             setStep('success');
-            console.log('Payment successful! Receipt sent to:', email);
+            // console.log('Payment successful! Receipt sent to:', email);
 
             setTimeout(() => {
               if (isMounted.current) {

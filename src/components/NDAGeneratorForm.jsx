@@ -2,6 +2,7 @@ import React from 'react';
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
 import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiEye, FiCalendar, FiAlertCircle } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import useFormValidation from '../hooks/useFormValidation';
 import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
 
 const FIELD_BASE_CLASSES = "w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none";
@@ -19,17 +20,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
     }));
   };
 
-  const isDateValid = formData.effectiveDate && !isNaN(new Date(formData.effectiveDate).getTime());
-  const isFormValid = formData.disclosing.trim() !== '' &&
-                      formData.receiving.trim() !== '' &&
-                      isDateValid;
-
-  let validationMessage = '';
-  if (!formData.disclosing.trim() || !formData.receiving.trim()) {
-      validationMessage = 'Please enter both party names to proceed.';
-  } else if (!isDateValid) {
-      validationMessage = 'Please enter a valid effective date.';
-  }
+  const { isValid: isFormValid, validationMessage } = useFormValidation(formData);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

@@ -72,7 +72,7 @@ describe('NDAGeneratorForm', () => {
 
   it('calls onPreview when Preview button is clicked', () => {
     // Fill required fields to enable buttons
-    const validFormData = { ...mockFormData, disclosing: 'A', receiving: 'B' };
+    const validFormData = { ...mockFormData, disclosing: 'Alice Corp', receiving: 'Bob Inc' };
 
     render(
       <NDAGeneratorForm
@@ -91,7 +91,7 @@ describe('NDAGeneratorForm', () => {
   });
 
   it('disables purchase button if date is invalid', () => {
-    const invalidFormData = { ...mockFormData, disclosing: 'A', receiving: 'B', effectiveDate: 'invalid-date' };
+    const invalidFormData = { ...mockFormData, disclosing: 'Alice Corp', receiving: 'Bob Inc', effectiveDate: 'invalid-date' };
     render(
       <NDAGeneratorForm
         formData={invalidFormData}
