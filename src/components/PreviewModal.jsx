@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiX, FiLock } from 'react-icons/fi';
+import { FiX, FiLock, FiPrinter } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import DocumentPreview from './DocumentPreview';
 
@@ -44,9 +44,16 @@ const PreviewModal = ({ isOpen, onClose, formData, documentData, onPurchase }) =
             <div className="flex gap-3 w-full md:w-auto">
                 <button
                     onClick={onClose}
-                    className="flex-1 md:flex-none px-6 py-3 font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
+                    className="flex-1 md:flex-none px-4 py-3 font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition"
                 >
                     Close
+                </button>
+                <button
+                    onClick={() => window.print()}
+                    className="flex-1 md:flex-none px-4 py-3 font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition flex items-center justify-center gap-2"
+                >
+                    <SafeIcon icon={FiPrinter} size={18} />
+                    Print
                 </button>
                 <button
                     onClick={() => {

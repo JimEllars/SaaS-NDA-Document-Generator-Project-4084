@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import './App.css';
 import Header from './components/Header';
 import NDAGeneratorForm from './components/NDAGeneratorForm';
@@ -8,77 +8,17 @@ import ConfirmModal from './components/ConfirmModal';
 import ErrorBoundary from './components/ErrorBoundary';
 import PreviewModal from './components/PreviewModal';
 import { generateDocument } from './utils/documentGenerator';
-import useDebounce from './hooks/useDebounce';
 import { ToastProvider } from './context/ToastContext';
 import ToastContainer from './components/Toast';
+import useNDAForm from './hooks/useNDAForm';
 
 function AppContent() {
-  const [formData, setFormData] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ndaFormData');
-      return saved ? JSON.parse(saved) : {
-        disclosing: '',
-        receiving: '',
-        industry: 'general',
-        strictness: 'standard',
-        type: 'unilateral',
-        jurisdiction: 'Delaware',
-        term: '3',
-        isPaid: false,
-        includeReturn: true,
-        effectiveDate: new Date().toISOString().split('T')[0]
-      };
-    } catch (e) {
-      console.warn("Failed to load from localStorage", e);
-      return {
-        disclosing: '',
-        receiving: '',
-        industry: 'general',
-        strictness: 'standard',
-        type: 'unilateral',
-        jurisdiction: 'Delaware',
-        term: '3',
-        isPaid: false,
-        includeReturn: true,
-        effectiveDate: new Date().toISOString().split('T')[0]
-      };
-    }
-  });
-
-  const debouncedFormData = useDebounce(formData, 500);
-  const isFirstRender = useRef(true);
-
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    try {
-      localStorage.setItem('ndaFormData', JSON.stringify(debouncedFormData));
-    } catch (e) {
-      console.warn("Failed to save to localStorage", e);
-    }
-  }, [debouncedFormData]);
+  const { formData, setFormData, resetForm } = useNDAForm();
 
   const [showCheckout, setShowCheckout] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
-
-  const clearForm = () => {
-    setFormData({
-      disclosing: '',
-      receiving: '',
-      industry: 'general',
-      strictness: 'standard',
-      type: 'unilateral',
-      jurisdiction: 'Delaware',
-      term: '3',
-      isPaid: false,
-      includeReturn: true,
-      effectiveDate: new Date().toISOString().split('T')[0]
-    });
-  };
 
   const handleDownload = () => {
     window.print();
@@ -89,7 +29,7 @@ function AppContent() {
   };
 
   const handleStartOverConfirm = () => {
-      clearForm();
+      resetForm();
       setIsEditing(false);
       setShowStartOverConfirm(false);
   };
