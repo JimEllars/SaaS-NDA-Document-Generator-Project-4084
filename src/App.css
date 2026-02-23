@@ -15,6 +15,14 @@
     box-shadow: none !important;
     border: none !important;
     background: white !important;
+    max-height: none !important;
+    overflow: visible !important;
+    height: auto !important;
   }
   .no-print { display: none !important; }
+
+  /* Ensure page breaks work correctly inside the document */
+  h1, h2, h3, h4, p {
+      page-break-inside: avoid;
+  }
 }

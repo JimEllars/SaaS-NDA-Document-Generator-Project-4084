@@ -46,10 +46,12 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
         <div className="space-y-5">
           {/* Agreement Type Toggle */}
           <div className="flex flex-col gap-2 mb-6">
-            <div className="flex p-1 bg-slate-100 rounded-xl">
+            <div className="flex p-1 bg-slate-100 rounded-xl" role="radiogroup" aria-label="Agreement Type">
               <button
+                type="button"
+                role="radio"
+                aria-checked={formData.type === 'unilateral'}
                 onClick={() => setFormData(p => ({...p, type: 'unilateral'}))}
-                aria-pressed={formData.type === 'unilateral'}
                 className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
                   formData.type === 'unilateral'
                     ? 'bg-white shadow-sm text-blue-600'
@@ -59,8 +61,10 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 Unilateral NDA
               </button>
               <button
+                type="button"
+                role="radio"
+                aria-checked={formData.type === 'mutual'}
                 onClick={() => setFormData(p => ({...p, type: 'mutual'}))}
-                aria-pressed={formData.type === 'mutual'}
                 className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
                   formData.type === 'mutual'
                     ? 'bg-white shadow-sm text-blue-600'
