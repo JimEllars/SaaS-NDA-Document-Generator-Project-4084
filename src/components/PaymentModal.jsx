@@ -30,6 +30,11 @@ const CARD_ELEMENT_OPTIONS = {
   }
 };
 
+const INPUT_CLASSES = "w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition";
+const LABEL_CLASSES = "text-sm font-medium text-slate-700 mb-2 block";
+const CARD_CONTAINER_CLASSES = "w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus-within:border-blue-500 transition shadow-sm";
+const SR_ONLY_LABEL = "sr-only";
+
 const PaymentFormContent = ({ onClose, onPaymentComplete }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -151,7 +156,7 @@ const PaymentFormContent = ({ onClose, onPaymentComplete }) => {
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="text-sm font-medium text-slate-700 mb-2 block">Email Address</label>
+              <label htmlFor="email" className={LABEL_CLASSES}>Email Address</label>
               <input
                 id="email"
                 name="email"
@@ -162,7 +167,7 @@ const PaymentFormContent = ({ onClose, onPaymentComplete }) => {
                   setEmail(e.target.value);
                 }}
                 placeholder="your@email.com"
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-blue-500 focus:bg-white transition"
+                className={INPUT_CLASSES}
                 disabled={step === 'processing'}
                 required
               />
@@ -180,21 +185,21 @@ const PaymentFormContent = ({ onClose, onPaymentComplete }) => {
 
               <div className="space-y-3">
                 <div className="relative">
-                  <label htmlFor="cardNumber-element" className="sr-only">Card Number</label>
-                  <div className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus-within:border-blue-500 transition shadow-sm">
+                  <label htmlFor="cardNumber-element" className={SR_ONLY_LABEL}>Card Number</label>
+                  <div className={CARD_CONTAINER_CLASSES}>
                     <CardNumberElement id="cardNumber-element" options={CARD_ELEMENT_OPTIONS} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
-                    <label htmlFor="expiryDate-element" className="sr-only">Expiry</label>
-                    <div className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus-within:border-blue-500 transition shadow-sm">
+                    <label htmlFor="expiryDate-element" className={SR_ONLY_LABEL}>Expiry</label>
+                    <div className={CARD_CONTAINER_CLASSES}>
                         <CardExpiryElement id="expiryDate-element" options={CARD_ELEMENT_OPTIONS} />
                     </div>
                   </div>
                   <div className="relative">
-                    <label htmlFor="cvc-element" className="sr-only">CVC</label>
-                    <div className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus-within:border-blue-500 transition shadow-sm">
+                    <label htmlFor="cvc-element" className={SR_ONLY_LABEL}>CVC</label>
+                    <div className={CARD_CONTAINER_CLASSES}>
                         <CardCvcElement id="cvc-element" options={CARD_ELEMENT_OPTIONS} />
                     </div>
                   </div>

@@ -117,7 +117,9 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview
               </div>
 
               {/* Document Sections */}
-              {documentData.sections.map((section, index) => (
+              {documentData.sections.map((section, index) => {
+                let clauseCounter = 0;
+                return (
                 <section key={index} className="space-y-4">
                   <h3 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-2 uppercase tracking-wide">
                     {section.title}
@@ -127,17 +129,20 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview
                       Renders mixed content:
                       - Strings are rendered as paragraphs.
                       - Objects {title, text} are rendered as numbered subsections.
-                      Note: Numbering relies on array index, so it might need adjustment if strings are mixed with subsections in the same section.
-                      Currently, sections are either all strings or all subsections.
+                      Note: Numbering relies on counter so it works with mixed content.
                     */}
-                    {section.content.map((item, itemIndex) => (
+                    {section.content.map((item, itemIndex) => {
+                      if (typeof item !== 'string') {
+                          clauseCounter++;
+                      }
+                      return (
                       <div key={itemIndex} className="space-y-2">
                         {typeof item === 'string' ? (
                           <p className="text-justify leading-relaxed">{item}</p>
                         ) : (
                           <div>
                             <h4 className="font-semibold text-slate-800 mb-2">
-                              {itemIndex + 1}. {item.title}
+                              {clauseCounter}. {item.title}
                             </h4>
                             <p className="text-justify leading-relaxed pl-4 border-l-2 border-blue-100">
                               {item.text}
@@ -145,10 +150,10 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview
                           </div>
                         )}
                       </div>
-                    ))}
+                    )})}
                   </div>
                 </section>
-              ))}
+              )})}
 
               {/* Signature Section */}
               <div className="mt-16 pt-8 border-t-2 border-slate-200">
