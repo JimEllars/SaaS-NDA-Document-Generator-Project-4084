@@ -4,6 +4,11 @@ import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiEye, FiCalenda
 import SafeIcon from '../common/SafeIcon';
 import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
 
+const FIELD_BASE_CLASSES = "w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none";
+const INPUT_CLASSES = `${FIELD_BASE_CLASSES} transition`;
+const SELECT_CLASSES = FIELD_BASE_CLASSES;
+const LABEL_CLASSES = "text-sm font-bold text-slate-600 mb-2";
+
 const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpdate, onPreview }) => {
 
   const handleInputChange = (e) => {
@@ -80,7 +85,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
           {/* Party Information */}
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label htmlFor="disclosing" className="text-sm font-bold text-slate-600 mb-2 block">
+              <label htmlFor="disclosing" className={`${LABEL_CLASSES} block`}>
                 Disclosing Party {formData.type === 'mutual' ? '(Party 1)' : ''}
               </label>
               <input
@@ -89,12 +94,12 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 value={formData.disclosing}
                 onChange={handleInputChange}
                 placeholder="Company or Individual Name"
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                className={INPUT_CLASSES}
                 required
               />
             </div>
             <div>
-              <label htmlFor="receiving" className="text-sm font-bold text-slate-600 mb-2 block">
+              <label htmlFor="receiving" className={`${LABEL_CLASSES} block`}>
                 Receiving Party {formData.type === 'mutual' ? '(Party 2)' : ''}
               </label>
               <input
@@ -103,13 +108,13 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 value={formData.receiving}
                 onChange={handleInputChange}
                 placeholder="Counterparty Name"
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                className={INPUT_CLASSES}
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="effectiveDate" className="text-sm font-bold text-slate-600 mb-2 flex items-center gap-2">
+              <label htmlFor="effectiveDate" className={`${LABEL_CLASSES} flex items-center gap-2`}>
                 <SafeIcon icon={FiCalendar} size={14} />
                 Effective Date
               </label>
@@ -121,7 +126,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 onChange={handleInputChange}
                 min="2000-01-01"
                 max="2099-12-31"
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                className={INPUT_CLASSES}
                 required
               />
             </div>
@@ -130,13 +135,13 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
           {/* Industry and Jurisdiction */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="industry" className="text-sm font-bold text-slate-600 mb-2 block">Industry Sector</label>
+              <label htmlFor="industry" className={`${LABEL_CLASSES} block`}>Industry Sector</label>
               <select
                 id="industry"
                 name="industry"
                 value={formData.industry}
                 onChange={handleInputChange}
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className={SELECT_CLASSES}
               >
                 {INDUSTRY_OPTIONS.map(option => (
                   <option key={option.value} value={option.value}>
@@ -146,13 +151,13 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
               </select>
             </div>
             <div>
-              <label htmlFor="jurisdiction" className="text-sm font-bold text-slate-600 mb-2 block">Governing Law</label>
+              <label htmlFor="jurisdiction" className={`${LABEL_CLASSES} block`}>Governing Law</label>
               <select
                 id="jurisdiction"
                 name="jurisdiction"
                 value={formData.jurisdiction}
                 onChange={handleInputChange}
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className={SELECT_CLASSES}
               >
                 {JURISDICTIONS.map(state => (
                   <option key={state} value={state}>{state}</option>
@@ -164,26 +169,26 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
           {/* Protection Level and Term */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="strictness" className="text-sm font-bold text-slate-600 mb-2 block">Protection Level</label>
+              <label htmlFor="strictness" className={`${LABEL_CLASSES} block`}>Protection Level</label>
               <select
                 id="strictness"
                 name="strictness"
                 value={formData.strictness}
                 onChange={handleInputChange}
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className={SELECT_CLASSES}
               >
                 <option value="standard">Standard Protection</option>
                 <option value="robust">Enhanced (with Penalties)</option>
               </select>
             </div>
             <div>
-              <label htmlFor="term" className="text-sm font-bold text-slate-600 mb-2 block">Confidentiality Term</label>
+              <label htmlFor="term" className={`${LABEL_CLASSES} block`}>Confidentiality Term</label>
               <select
                 id="term"
                 name="term"
                 value={formData.term}
                 onChange={handleInputChange}
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className={SELECT_CLASSES}
               >
                 <option value="1">1 Year</option>
                 <option value="2">2 Years</option>
