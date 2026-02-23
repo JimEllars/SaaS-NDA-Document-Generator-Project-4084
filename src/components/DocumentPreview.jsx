@@ -123,6 +123,13 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit, isPreview
                     {section.title}
                   </h3>
                   <div className="space-y-4">
+                    {/*
+                      Renders mixed content:
+                      - Strings are rendered as paragraphs.
+                      - Objects {title, text} are rendered as numbered subsections.
+                      Note: Numbering relies on array index, so it might need adjustment if strings are mixed with subsections in the same section.
+                      Currently, sections are either all strings or all subsections.
+                    */}
                     {section.content.map((item, itemIndex) => (
                       <div key={itemIndex} className="space-y-2">
                         {typeof item === 'string' ? (
