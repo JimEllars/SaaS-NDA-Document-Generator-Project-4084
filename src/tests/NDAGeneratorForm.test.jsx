@@ -28,7 +28,6 @@ describe('NDAGeneratorForm', () => {
 
   const mockSetFormData = vi.fn();
   const mockOnPurchase = vi.fn();
-  const mockOnPreview = vi.fn();
 
   it('renders Effective Date field', () => {
     render(
@@ -36,7 +35,6 @@ describe('NDAGeneratorForm', () => {
         formData={mockFormData}
         setFormData={mockSetFormData}
         onPurchase={mockOnPurchase}
-        onPreview={mockOnPreview}
       />
     );
     expect(screen.getByLabelText(/Effective Date/i)).toBeInTheDocument();
@@ -48,7 +46,6 @@ describe('NDAGeneratorForm', () => {
         formData={mockFormData}
         setFormData={mockSetFormData}
         onPurchase={mockOnPurchase}
-        onPreview={mockOnPreview}
       />
     );
 
@@ -58,38 +55,6 @@ describe('NDAGeneratorForm', () => {
     expect(mockSetFormData).toHaveBeenCalled();
   });
 
-  it('renders Preview button', () => {
-    render(
-      <NDAGeneratorForm
-        formData={mockFormData}
-        setFormData={mockSetFormData}
-        onPurchase={mockOnPurchase}
-        onPreview={mockOnPreview}
-      />
-    );
-    expect(screen.getByRole('button', { name: /Preview Document/i })).toBeInTheDocument();
-  });
-
-  it('calls onPreview when Preview button is clicked', () => {
-    // Fill required fields to enable buttons
-    const validFormData = { ...mockFormData, disclosing: 'Alice Corp', receiving: 'Bob Inc' };
-
-    render(
-      <NDAGeneratorForm
-        formData={validFormData}
-        setFormData={mockSetFormData}
-        onPurchase={mockOnPurchase}
-        onPreview={mockOnPreview}
-      />
-    );
-
-    const previewButton = screen.getByRole('button', { name: /Preview Document/i });
-    expect(previewButton).not.toBeDisabled();
-    fireEvent.click(previewButton);
-
-    expect(mockOnPreview).toHaveBeenCalled();
-  });
-
   it('disables purchase button if date is invalid', () => {
     const invalidFormData = { ...mockFormData, disclosing: 'Alice Corp', receiving: 'Bob Inc', effectiveDate: 'invalid-date' };
     render(
@@ -97,7 +62,6 @@ describe('NDAGeneratorForm', () => {
         formData={invalidFormData}
         setFormData={mockSetFormData}
         onPurchase={mockOnPurchase}
-        onPreview={mockOnPreview}
       />
     );
 
