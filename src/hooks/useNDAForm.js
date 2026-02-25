@@ -14,6 +14,8 @@ const DEFAULT_FORM_DATA = {
   effectiveDate: new Date().toISOString().split('T')[0]
 };
 
+const FORM_SAVE_DEBOUNCE_MS = 500;
+
 const useNDAForm = () => {
   const [formData, setFormData] = useState(() => {
     try {
@@ -25,7 +27,7 @@ const useNDAForm = () => {
     }
   });
 
-  const debouncedFormData = useDebounce(formData, 500);
+  const debouncedFormData = useDebounce(formData, FORM_SAVE_DEBOUNCE_MS);
   const isFirstRender = useRef(true);
 
   useEffect(() => {

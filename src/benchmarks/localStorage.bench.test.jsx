@@ -6,10 +6,12 @@ import React, { useState, useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import useDebounce from '../hooks/useDebounce';
 
+const TEST_DEBOUNCE_DELAY = 500;
+
 // Simplified component mimicking App.jsx's optimized logic
 function TestApp() {
   const [formData, setFormData] = useState({ count: 0 });
-  const debouncedFormData = useDebounce(formData, 500);
+  const debouncedFormData = useDebounce(formData, TEST_DEBOUNCE_DELAY);
 
   useEffect(() => {
     localStorage.setItem('ndaFormData', JSON.stringify(debouncedFormData));
@@ -55,9 +57,9 @@ describe('LocalStorage Performance Benchmark', () => {
     // The previous 1 call was from mount.
     expect(localStorage.setItem).toHaveBeenCalledTimes(1);
 
-    // Fast forward time past debounce delay (500ms)
+    // Fast forward time past debounce delay (TEST_DEBOUNCE_DELAY)
     act(() => {
-        vi.advanceTimersByTime(1000);
+        vi.advanceTimersByTime(TEST_DEBOUNCE_DELAY * 2);
     });
 
     // Now it should have fired once more with the final value
