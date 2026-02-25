@@ -3,6 +3,7 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
 import NDAGeneratorForm from '../components/NDAGeneratorForm';
+import { getDefaultFormData } from '../data/ndaData';
 
 // @vitest-environment jsdom
 
@@ -14,15 +15,7 @@ describe('NDAGeneratorForm', () => {
   });
 
   const mockFormData = {
-    disclosing: '',
-    receiving: '',
-    industry: 'general',
-    strictness: 'standard',
-    type: 'unilateral',
-    jurisdiction: 'Delaware',
-    term: '3',
-    isPaid: false,
-    includeReturn: true,
+    ...getDefaultFormData(),
     effectiveDate: '2023-10-27'
   };
 

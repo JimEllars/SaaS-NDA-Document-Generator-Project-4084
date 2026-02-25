@@ -2,6 +2,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import useNDAForm from './useNDAForm';
+import { getDefaultFormData } from '../data/ndaData';
 
 describe('useNDAForm', () => {
   beforeEach(() => {
@@ -16,8 +17,9 @@ describe('useNDAForm', () => {
 
   it('should initialize with default values', () => {
     const { result } = renderHook(() => useNDAForm());
-    expect(result.current.formData.disclosing).toBe('');
-    expect(result.current.formData.jurisdiction).toBe('Delaware');
+    const defaults = getDefaultFormData();
+    expect(result.current.formData.disclosing).toBe(defaults.disclosing);
+    expect(result.current.formData.jurisdiction).toBe(defaults.jurisdiction);
   });
 
   it('should update form data', () => {
@@ -35,6 +37,7 @@ describe('useNDAForm', () => {
 
   it('should reset form data', () => {
     const { result } = renderHook(() => useNDAForm());
+    const defaults = getDefaultFormData();
 
     act(() => {
       const current = result.current.formData;
@@ -45,7 +48,7 @@ describe('useNDAForm', () => {
     act(() => {
       result.current.resetForm();
     });
-    expect(result.current.formData.disclosing).toBe('');
+    expect(result.current.formData.disclosing).toBe(defaults.disclosing);
   });
 
   it('should save to localStorage after debounce', () => {
@@ -67,15 +70,8 @@ describe('useNDAForm', () => {
 
   it('should load from localStorage on init', () => {
     const savedData = {
+      ...getDefaultFormData(),
       disclosing: 'Loaded Company',
-      receiving: '',
-      industry: 'general',
-      strictness: 'standard',
-      type: 'unilateral',
-      jurisdiction: 'Delaware',
-      term: '3',
-      isPaid: false,
-      includeReturn: true,
       effectiveDate: '2023-01-01'
     };
     localStorage.setItem('ndaFormData', JSON.stringify(savedData));

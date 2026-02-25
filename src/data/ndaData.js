@@ -123,3 +123,16 @@ export const INDUSTRY_OPTIONS = [
   { value: 'healthcare', label: 'Healthcare & Life Sciences' },
   { value: 'financial', label: 'Financial Services' }
 ];
+
+export const getDefaultFormData = () => ({
+  disclosing: '',
+  receiving: '',
+  industry: 'general',
+  strictness: 'standard',
+  type: 'unilateral',
+  jurisdiction: 'Delaware',
+  term: '3',
+  isPaid: false,
+  includeReturn: true,
+  effectiveDate: new Date().toISOString().split('T')[0]
+});

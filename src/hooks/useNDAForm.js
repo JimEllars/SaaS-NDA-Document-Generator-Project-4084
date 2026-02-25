@@ -1,18 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import useDebounce from './useDebounce';
-
-const DEFAULT_FORM_DATA = {
-  disclosing: '',
-  receiving: '',
-  industry: 'general',
-  strictness: 'standard',
-  type: 'unilateral',
-  jurisdiction: 'Delaware',
-  term: '3',
-  isPaid: false,
-  includeReturn: true,
-  effectiveDate: new Date().toISOString().split('T')[0]
-};
+import { getDefaultFormData } from '../data/ndaData';
 
 const FORM_SAVE_DEBOUNCE_MS = 500;
 
@@ -20,10 +8,10 @@ const useNDAForm = () => {
   const [formData, setFormData] = useState(() => {
     try {
       const saved = localStorage.getItem('ndaFormData');
-      return saved ? JSON.parse(saved) : DEFAULT_FORM_DATA;
+      return saved ? JSON.parse(saved) : getDefaultFormData();
     } catch (e) {
       console.warn("Failed to load from localStorage", e);
-      return DEFAULT_FORM_DATA;
+      return getDefaultFormData();
     }
   });
 
@@ -43,7 +31,7 @@ const useNDAForm = () => {
   }, [debouncedFormData]);
 
   const resetForm = () => {
-    setFormData(DEFAULT_FORM_DATA);
+    setFormData(getDefaultFormData());
   };
 
   return { formData, setFormData, resetForm };

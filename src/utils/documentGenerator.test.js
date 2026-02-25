@@ -1,17 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { generateDocument, generatePlainText } from './documentGenerator';
+import { getDefaultFormData } from '../data/ndaData';
 
 const baseFormData = {
+  ...getDefaultFormData(),
   isPaid: true,
   disclosing: 'Company A',
   receiving: 'Company B',
-  type: 'unilateral',
   effectiveDate: '2023-10-27',
-  strictness: 'standard',
-  industry: 'general',
-  term: '3',
   includeReturn: false,
-  jurisdiction: 'Delaware'
 };
 
 describe('generateDocument', () => {
