@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { CLAUSES } from './ndaData';
 
 describe('NDA Data Generation', () => {
@@ -25,6 +25,23 @@ describe('NDA Data Generation', () => {
         const intro = CLAUSES.general.intro('', '', 'unilateral');
         expect(intro).toContain('[Disclosing Party]');
         expect(intro).toContain('[Receiving Party]');
+    });
+
+    it('should use provided effectiveDate', () => {
+        const testDate = 'December 31, 2023';
+        const intro = CLAUSES.general.intro('Company A', 'Company B', 'unilateral', testDate);
+        expect(intro).toContain(`entered into as of ${testDate}`);
+    });
+
+    it('should default to current date when effectiveDate is not provided', () => {
+        vi.useFakeTimers();
+        const mockDate = new Date('2024-01-01T12:00:00Z');
+        vi.setSystemTime(mockDate);
+
+        const intro = CLAUSES.general.intro('Company A', 'Company B', 'unilateral');
+        expect(intro).toContain(`entered into as of ${mockDate.toLocaleDateString()}`);
+
+        vi.useRealTimers();
     });
   });
 
