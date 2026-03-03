@@ -9,6 +9,7 @@ const FIELD_BASE_CLASSES = "w-full p-4 bg-slate-50 border border-slate-200 round
 const INPUT_CLASSES = `${FIELD_BASE_CLASSES} transition`;
 const SELECT_CLASSES = FIELD_BASE_CLASSES;
 const LABEL_CLASSES = "text-sm font-bold text-slate-600 mb-2";
+const TOGGLE_BUTTON_BASE_CLASSES = "flex-1 py-3 text-sm font-bold rounded-lg transition";
 
 const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpdate }) => {
 
@@ -48,7 +49,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 role="radio"
                 aria-checked={formData.type === 'unilateral'}
                 onClick={() => setFormData(p => ({...p, type: 'unilateral'}))}
-                className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
+                className={`${TOGGLE_BUTTON_BASE_CLASSES} ${
                   formData.type === 'unilateral'
                     ? 'bg-white shadow-sm text-blue-600'
                     : 'text-slate-500 hover:text-slate-700'
@@ -61,7 +62,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 role="radio"
                 aria-checked={formData.type === 'mutual'}
                 onClick={() => setFormData(p => ({...p, type: 'mutual'}))}
-                className={`flex-1 py-3 text-sm font-bold rounded-lg transition ${
+                className={`${TOGGLE_BUTTON_BASE_CLASSES} ${
                   formData.type === 'mutual'
                     ? 'bg-white shadow-sm text-blue-600'
                     : 'text-slate-500 hover:text-slate-700'
@@ -89,7 +90,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 value={formData.disclosing}
                 onChange={handleInputChange}
                 placeholder="Company or Individual Name"
-                className={INPUT_CLASSES}
+                className={ INPUT_CLASSES }
                 required
               />
             </div>
@@ -103,7 +104,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 value={formData.receiving}
                 onChange={handleInputChange}
                 placeholder="Counterparty Name"
-                className={INPUT_CLASSES}
+                className={ INPUT_CLASSES }
                 required
               />
             </div>
@@ -121,7 +122,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 onChange={handleInputChange}
                 min="2000-01-01"
                 max="2099-12-31"
-                className={INPUT_CLASSES}
+                className={ INPUT_CLASSES }
                 required
               />
             </div>
