@@ -92,6 +92,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 placeholder="Company or Individual Name"
                 className={ INPUT_CLASSES }
                 required
+                maxLength="255"
               />
             </div>
             <div>
@@ -106,6 +107,7 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
                 placeholder="Counterparty Name"
                 className={ INPUT_CLASSES }
                 required
+                maxLength="255"
               />
             </div>
 

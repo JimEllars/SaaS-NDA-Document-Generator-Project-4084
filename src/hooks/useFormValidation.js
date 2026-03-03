@@ -12,14 +12,14 @@ const useFormValidation = (formData) => {
   useEffect(() => {
     const validate = () => {
       // Validate Party Names
-      if (!formData.disclosing || formData.disclosing.trim().length < 2) {
-        setValidationMessage('Please enter a valid Disclosing Party name (min 2 characters).');
+      if (!formData.disclosing || formData.disclosing.trim().length < 2 || formData.disclosing.length > 255) {
+        setValidationMessage('Please enter a valid Disclosing Party name (min 2 characters, max 255).');
         setIsValid(false);
         return;
       }
 
-      if (!formData.receiving || formData.receiving.trim().length < 2) {
-        setValidationMessage('Please enter a valid Receiving Party name (min 2 characters).');
+      if (!formData.receiving || formData.receiving.trim().length < 2 || formData.receiving.length > 255) {
+        setValidationMessage('Please enter a valid Receiving Party name (min 2 characters, max 255).');
         setIsValid(false);
         return;
       }
