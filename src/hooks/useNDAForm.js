@@ -10,7 +10,7 @@ const useNDAForm = () => {
       const saved = localStorage.getItem('ndaFormData');
       return saved ? JSON.parse(saved) : getDefaultFormData();
     } catch (e) {
-      console.warn("Failed to load from localStorage", e);
+      // Ignore localStorage errors (e.g., in incognito mode or restricted environments)
       return getDefaultFormData();
     }
   });
@@ -26,7 +26,7 @@ const useNDAForm = () => {
     try {
       localStorage.setItem('ndaFormData', JSON.stringify(debouncedFormData));
     } catch (e) {
-      console.warn("Failed to save to localStorage", e);
+      // Silently fail if localStorage is unavailable
     }
   }, [debouncedFormData]);
 
