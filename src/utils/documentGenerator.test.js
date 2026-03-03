@@ -83,6 +83,12 @@ describe('generateDocument', () => {
       const data = generateDocument({ ...baseFormData, effectiveDate: '2023-10-27' });
       expect(data.effectiveDate).toBe('October 27, 2023');
   });
+
+  it('should throw an error if an invalid industry is provided', () => {
+    expect(() => {
+      generateDocument({ ...baseFormData, industry: 'invalid-industry' });
+    }).toThrow(TypeError);
+  });
 });
 
 describe('generatePlainText', () => {
