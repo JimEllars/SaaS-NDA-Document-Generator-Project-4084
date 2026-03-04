@@ -132,7 +132,6 @@ export const getDefaultFormData = () => ({
   type: 'unilateral',
   jurisdiction: 'Delaware',
   term: '3',
-  isPaid: false,
   includeReturn: true,
   effectiveDate: new Date().toISOString().split('T')[0]
 });

@@ -84,20 +84,8 @@ const PaymentFormContent = ({ onClose, onPaymentComplete }) => {
         setStep('form');
       } else {
         // PaymentMethod created successfully
-
-        // Simulate backend processing
-        setTimeout(() => {
-          if (isMounted.current) {
-            setStep('success');
-
-            setTimeout(() => {
-              if (isMounted.current) {
-                onPaymentComplete();
-                addToast('Payment successful!', 'success');
-              }
-            }, 1500);
-          }
-        }, 2000);
+        // We pass the paymentMethod.id up to the App, which will call the mock backend API
+        onPaymentComplete(paymentMethod.id);
       }
     } catch (err) {
       console.error("An unexpected error occurred", err);
@@ -106,20 +94,6 @@ const PaymentFormContent = ({ onClose, onPaymentComplete }) => {
     }
   };
 
-  if (step === 'success') {
-      return (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4 no-print">
-            <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in duration-300 p-8 text-center">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <SafeIcon icon={FiCheckCircle} className="text-green-600" size={40} />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Payment Successful!</h3>
-                <p className="text-slate-600 mb-6">Thank you for your purchase. Your document is now ready.</p>
-                <div className="animate-pulse text-sm text-slate-500">Redirecting to document...</div>
-            </div>
-        </div>
-      );
-  }
 
   return (
     <div
