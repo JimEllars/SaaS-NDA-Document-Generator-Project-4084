@@ -37,9 +37,13 @@ function AppContent() {
       setFormData(prev => ({ ...prev, isPaid: true }));
   }
 
-  const handleUpdate = () => {
+  const handleUpdate = React.useCallback(() => {
     setIsEditing(false);
-  };
+  }, []);
+
+  const handlePurchase = React.useCallback(() => {
+    setShowCheckout(true);
+  }, []);
 
   // Memoize document generation to prevent unnecessary re-calculation
   // It is only needed when isPaid is true and isEditing is false
@@ -65,7 +69,7 @@ function AppContent() {
           <NDAGeneratorForm
             formData={formData}
             setFormData={setFormData}
-            onPurchase={() => setShowCheckout(true)}
+            onPurchase={handlePurchase}
             isEditing={isEditing}
             onUpdate={handleUpdate}
           />

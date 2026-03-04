@@ -11,7 +11,7 @@ const SELECT_CLASSES = FIELD_BASE_CLASSES;
 const LABEL_CLASSES = "text-sm font-bold text-slate-600 mb-2";
 const TOGGLE_BUTTON_BASE_CLASSES = "flex-1 py-3 text-sm font-bold rounded-lg transition";
 
-const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpdate }) => {
+const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEditing, onUpdate }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -269,6 +269,6 @@ const NDAGeneratorForm = ({ formData, setFormData, onPurchase, isEditing, onUpda
       </section>
     </div>
   );
-};
+});
 
 export default NDAGeneratorForm;
