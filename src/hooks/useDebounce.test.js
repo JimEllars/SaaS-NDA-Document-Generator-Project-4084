@@ -78,4 +78,45 @@ describe('useDebounce', () => {
     });
     expect(result.current).toBe('update3');
   });
+
+  it('should clear timeout on unmount', () => {
+    const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+
+    const { unmount } = renderHook(() => useDebounce('initial', 500));
+
+    expect(clearTimeoutSpy).not.toHaveBeenCalled();
+
+    unmount();
+
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+
+    clearTimeoutSpy.mockRestore();
+  });
+
+  it('should reset timeout if delay changes', () => {
+    const { result, rerender } = renderHook(
+      ({ value, delay }) => useDebounce(value, delay),
+      { initialProps: { value: 'initial', delay: 500 } }
+    );
+
+    expect(result.current).toBe('initial');
+
+    // Update value and delay
+    rerender({ value: 'updated', delay: 1000 });
+
+    // Advance by the old delay amount
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    // The value should not have updated yet because the delay is now 1000
+    expect(result.current).toBe('initial');
+
+    // Advance by the remaining new delay amount
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(result.current).toBe('updated');
+  });
 });
