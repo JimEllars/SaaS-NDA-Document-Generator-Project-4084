@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import useDebounce from './useDebounce';
 import { getDefaultFormData } from '../data/ndaData';
 
 const FORM_SAVE_DEBOUNCE_MS = 500;
@@ -15,7 +14,6 @@ const useNDAForm = () => {
     }
   });
 
-  const debouncedFormData = useDebounce(formData, FORM_SAVE_DEBOUNCE_MS);
   const isFirstRender = useRef(true);
 
   useEffect(() => {
@@ -23,12 +21,17 @@ const useNDAForm = () => {
       isFirstRender.current = false;
       return;
     }
-    try {
-      localStorage.setItem('ndaFormData', JSON.stringify(debouncedFormData));
-    } catch (e) {
-      // Silently fail if localStorage is unavailable
-    }
-  }, [debouncedFormData]);
+
+    const handler = setTimeout(() => {
+      try {
+        localStorage.setItem('ndaFormData', JSON.stringify(formData));
+      } catch (e) {
+        // Silently fail if localStorage is unavailable
+      }
+    }, FORM_SAVE_DEBOUNCE_MS);
+
+    return () => clearTimeout(handler);
+  }, [formData]);
 
   const resetForm = () => {
     setFormData(getDefaultFormData());
