@@ -27,6 +27,23 @@ describe('NDA Data Generation', () => {
         expect(intro).toContain('[Receiving Party]');
     });
 
+    it('should handle missing type parameter (defaults to unilateral)', () => {
+      const intro = CLAUSES.general.intro('Company A', 'Company B');
+      expect(intro).toContain('Unilateral Non-Disclosure Agreement');
+      expect(intro).toContain('("Disclosing Party")');
+      expect(intro).toContain('("Receiving Party")');
+      expect(intro).not.toContain('collectively referred to as the "Parties"');
+    });
+
+    it('should handle all missing parameters', () => {
+      const intro = CLAUSES.general.intro();
+      expect(intro).toContain('Unilateral Non-Disclosure Agreement');
+      expect(intro).toContain('[Disclosing Party]');
+      expect(intro).toContain('[Receiving Party]');
+      expect(intro).toContain('("Disclosing Party")');
+      expect(intro).toContain('("Receiving Party")');
+    });
+
     it('should use provided effectiveDate', () => {
         const testDate = 'December 31, 2023';
         const intro = CLAUSES.general.intro('Company A', 'Company B', 'unilateral', testDate);
