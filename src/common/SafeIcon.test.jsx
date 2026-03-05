@@ -22,8 +22,6 @@ describe('SafeIcon', () => {
     const svg = container.querySelector('svg');
     expect(svg).toBeInTheDocument();
     expect(svg).toHaveClass('fallback-class');
-    // FiAlertTriangle renders an svg element containing path elements
-    // We can also verify that the SVG has line or path, etc. Let's just check the innerHTML or simply that it is an svg since FiAlertTriangle is an external icon component.
     expect(svg.innerHTML).toContain('<path');
   });
 
@@ -32,6 +30,22 @@ describe('SafeIcon', () => {
     const svg = container.querySelector('svg');
     expect(svg).toBeInTheDocument();
     expect(svg).toHaveClass('fallback-class-null');
+    expect(svg.innerHTML).toContain('<path');
+  });
+
+  it('renders the fallback icon when icon prop is undefined', () => {
+    const { container } = render(<SafeIcon icon={undefined} className="fallback-class-undefined" />);
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveClass('fallback-class-undefined');
+    expect(svg.innerHTML).toContain('<path');
+  });
+
+  it('renders the fallback icon when icon prop is false', () => {
+    const { container } = render(<SafeIcon icon={false} className="fallback-class-false" />);
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveClass('fallback-class-false');
     expect(svg.innerHTML).toContain('<path');
   });
 });
