@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { CLAUSES } from './ndaData';
+import { CLAUSES, getDefaultFormData } from './ndaData';
 
 describe('NDA Data Generation', () => {
   describe('CLAUSES.general.intro', () => {
@@ -42,6 +42,22 @@ describe('NDA Data Generation', () => {
       expect(intro).toContain('[Receiving Party]');
       expect(intro).toContain('("Disclosing Party")');
       expect(intro).toContain('("Receiving Party")');
+    });
+
+    it('should handle undefined and null parameters', () => {
+      vi.useFakeTimers();
+      const mockDate = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(mockDate);
+
+      const intro = CLAUSES.general.intro(null, undefined, null, undefined);
+      expect(intro).toContain('Unilateral Non-Disclosure Agreement');
+      expect(intro).toContain('[Disclosing Party]');
+      expect(intro).toContain('[Receiving Party]');
+      expect(intro).toContain('("Disclosing Party")');
+      expect(intro).toContain('("Receiving Party")');
+      expect(intro).toContain(`entered into as of ${mockDate.toLocaleDateString()}`);
+
+      vi.useRealTimers();
     });
 
     it('should use provided effectiveDate', () => {
@@ -94,6 +110,23 @@ describe('NDA Data Generation', () => {
       expect(Array.isArray(CLAUSES.robust.enforcement)).toBe(true);
       expect(CLAUSES.robust.enforcement.length).toBeGreaterThan(0);
       expect(CLAUSES.robust.enforcement[0].title).toBeDefined();
+    });
+  });
+});
+
+describe('getDefaultFormData', () => {
+  it('should return the correct default form data', () => {
+    const formData = getDefaultFormData();
+    expect(formData).toEqual({
+      disclosing: '',
+      receiving: '',
+      industry: 'general',
+      strictness: 'standard',
+      type: 'unilateral',
+      jurisdiction: 'Delaware',
+      term: '3',
+      includeReturn: true,
+      effectiveDate: new Date().toISOString().split('T')[0]
     });
   });
 });
