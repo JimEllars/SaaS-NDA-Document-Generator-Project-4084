@@ -48,4 +48,10 @@ describe('SafeIcon', () => {
     expect(svg).toHaveClass('fallback-class-false');
     expect(svg.innerHTML).toContain('<path');
   });
+
+  it('renders a string icon component (HTML element)', () => {
+    const { container } = render(<SafeIcon icon="span" className="string-icon" />);
+    const span = container.querySelector('span.string-icon');
+    expect(span).toBeInTheDocument();
+  });
 });
