@@ -4,44 +4,102 @@ import { CLAUSES, getDefaultFormData } from './ndaData';
 describe('NDA Data Generation', () => {
   describe('CLAUSES.general.intro', () => {
     it('should generate correct intro for unilateral NDA', () => {
+      vi.useFakeTimers();
+      const mockDate = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(mockDate);
+
       const intro = CLAUSES.general.intro('Company A', 'Company B', 'unilateral');
-      expect(intro).toContain('Unilateral Non-Disclosure Agreement');
-      expect(intro).toContain('Company A');
-      expect(intro).toContain('("Disclosing Party")');
-      expect(intro).toContain('Company B');
-      expect(intro).toContain('("Receiving Party")');
-      expect(intro).not.toContain('collectively referred to as the "Parties"');
+      expect(intro).toBe(`This Unilateral Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between Company A ("Disclosing Party") and Company B ("Receiving Party").`);
+
+      vi.useRealTimers();
     });
 
     it('should generate correct intro for mutual NDA', () => {
+      vi.useFakeTimers();
+      const mockDate = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(mockDate);
+
       const intro = CLAUSES.general.intro('Company A', 'Company B', 'mutual');
-      expect(intro).toContain('Mutual Non-Disclosure Agreement');
-      expect(intro).toContain('Company A');
-      expect(intro).not.toContain('("Disclosing Party")');
-      expect(intro).toContain('collectively referred to as the "Parties"');
+      expect(intro).toBe(`This Mutual Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between Company A  and Company B , collectively referred to as the "Parties" and individually as a "Party".`);
+
+      vi.useRealTimers();
     });
 
     it('should handle missing party names', () => {
+        vi.useFakeTimers();
+        const mockDate = new Date('2024-01-01T12:00:00Z');
+        vi.setSystemTime(mockDate);
+
         const intro = CLAUSES.general.intro('', '', 'unilateral');
-        expect(intro).toContain('[Disclosing Party]');
-        expect(intro).toContain('[Receiving Party]');
+        expect(intro).toBe(`This Unilateral Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between [Disclosing Party] ("Disclosing Party") and [Receiving Party] ("Receiving Party").`);
+
+        vi.useRealTimers();
+    });
+
+    it('should handle missing disclosing party only', () => {
+        vi.useFakeTimers();
+        const mockDate = new Date('2024-01-01T12:00:00Z');
+        vi.setSystemTime(mockDate);
+
+        const intro = CLAUSES.general.intro('', 'Company B', 'unilateral');
+        expect(intro).toBe(`This Unilateral Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between [Disclosing Party] ("Disclosing Party") and Company B ("Receiving Party").`);
+
+        vi.useRealTimers();
+    });
+
+    it('should handle missing receiving party only', () => {
+        vi.useFakeTimers();
+        const mockDate = new Date('2024-01-01T12:00:00Z');
+        vi.setSystemTime(mockDate);
+
+        const intro = CLAUSES.general.intro('Company A', '', 'unilateral');
+        expect(intro).toBe(`This Unilateral Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between Company A ("Disclosing Party") and [Receiving Party] ("Receiving Party").`);
+
+        vi.useRealTimers();
+    });
+
+    it('should handle unexpected type parameter as unilateral', () => {
+        vi.useFakeTimers();
+        const mockDate = new Date('2024-01-01T12:00:00Z');
+        vi.setSystemTime(mockDate);
+
+        const intro = CLAUSES.general.intro('Company A', 'Company B', 'invalid-type');
+        expect(intro).toBe(`This Unilateral Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between Company A ("Disclosing Party") and Company B ("Receiving Party").`);
+
+        vi.useRealTimers();
+    });
+
+    it('should handle empty effectiveDate string as falsy and use current date', () => {
+        vi.useFakeTimers();
+        const mockDate = new Date('2024-01-01T12:00:00Z');
+        vi.setSystemTime(mockDate);
+
+        const intro = CLAUSES.general.intro('Company A', 'Company B', 'unilateral', '');
+        expect(intro).toBe(`This Unilateral Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between Company A ("Disclosing Party") and Company B ("Receiving Party").`);
+
+        vi.useRealTimers();
     });
 
     it('should handle missing type parameter (defaults to unilateral)', () => {
+      vi.useFakeTimers();
+      const mockDate = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(mockDate);
+
       const intro = CLAUSES.general.intro('Company A', 'Company B');
-      expect(intro).toContain('Unilateral Non-Disclosure Agreement');
-      expect(intro).toContain('("Disclosing Party")');
-      expect(intro).toContain('("Receiving Party")');
-      expect(intro).not.toContain('collectively referred to as the "Parties"');
+      expect(intro).toBe(`This Unilateral Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between Company A ("Disclosing Party") and Company B ("Receiving Party").`);
+
+      vi.useRealTimers();
     });
 
     it('should handle all missing parameters', () => {
+      vi.useFakeTimers();
+      const mockDate = new Date('2024-01-01T12:00:00Z');
+      vi.setSystemTime(mockDate);
+
       const intro = CLAUSES.general.intro();
-      expect(intro).toContain('Unilateral Non-Disclosure Agreement');
-      expect(intro).toContain('[Disclosing Party]');
-      expect(intro).toContain('[Receiving Party]');
-      expect(intro).toContain('("Disclosing Party")');
-      expect(intro).toContain('("Receiving Party")');
+      expect(intro).toBe(`This Unilateral Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between [Disclosing Party] ("Disclosing Party") and [Receiving Party] ("Receiving Party").`);
+
+      vi.useRealTimers();
     });
 
     it('should handle undefined and null parameters', () => {
@@ -50,12 +108,7 @@ describe('NDA Data Generation', () => {
       vi.setSystemTime(mockDate);
 
       const intro = CLAUSES.general.intro(null, undefined, null, undefined);
-      expect(intro).toContain('Unilateral Non-Disclosure Agreement');
-      expect(intro).toContain('[Disclosing Party]');
-      expect(intro).toContain('[Receiving Party]');
-      expect(intro).toContain('("Disclosing Party")');
-      expect(intro).toContain('("Receiving Party")');
-      expect(intro).toContain(`entered into as of ${mockDate.toLocaleDateString()}`);
+      expect(intro).toBe(`This Unilateral Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between [Disclosing Party] ("Disclosing Party") and [Receiving Party] ("Receiving Party").`);
 
       vi.useRealTimers();
     });
@@ -63,7 +116,7 @@ describe('NDA Data Generation', () => {
     it('should use provided effectiveDate', () => {
         const testDate = 'December 31, 2023';
         const intro = CLAUSES.general.intro('Company A', 'Company B', 'unilateral', testDate);
-        expect(intro).toContain(`entered into as of ${testDate}`);
+        expect(intro).toBe(`This Unilateral Non-Disclosure Agreement (the "Agreement") is entered into as of ${testDate} (the "Effective Date") by and between Company A ("Disclosing Party") and Company B ("Receiving Party").`);
     });
 
     it('should default to current date when effectiveDate is not provided', () => {
@@ -72,7 +125,7 @@ describe('NDA Data Generation', () => {
         vi.setSystemTime(mockDate);
 
         const intro = CLAUSES.general.intro('Company A', 'Company B', 'unilateral');
-        expect(intro).toContain(`entered into as of ${mockDate.toLocaleDateString()}`);
+        expect(intro).toBe(`This Unilateral Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between Company A ("Disclosing Party") and Company B ("Receiving Party").`);
 
         vi.useRealTimers();
     });
