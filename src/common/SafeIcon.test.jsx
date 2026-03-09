@@ -54,4 +54,39 @@ describe('SafeIcon', () => {
     const span = container.querySelector('span.string-icon');
     expect(span).toBeInTheDocument();
   });
+
+  it('forwards all additional props to the custom icon component', () => {
+    const { getAllByTestId } = render(
+      <SafeIcon
+        icon={CustomIcon}
+        size={24}
+        color="red"
+        data-custom-attr="test-value"
+      />
+    );
+    const icons = getAllByTestId('custom-icon');
+    const icon = icons[icons.length - 1]; // get the one we just rendered
+    expect(icon).toBeInTheDocument();
+    expect(icon).toHaveAttribute('size', '24');
+    expect(icon).toHaveAttribute('color', 'red');
+    expect(icon).toHaveAttribute('data-custom-attr', 'test-value');
+  });
+
+  it('forwards all additional props to the fallback icon when icon is missing', () => {
+    const { getByTestId } = render(
+      <SafeIcon
+        size={32}
+        color="blue"
+        data-testid="unique-fallback-icon"
+        aria-label="Warning"
+      />
+    );
+    const svg = getByTestId('unique-fallback-icon');
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveAttribute('width', '32'); // react-icons maps size to width and height
+    expect(svg).toHaveAttribute('height', '32');
+    expect(svg).toHaveAttribute('color', 'blue');
+    expect(svg).toHaveAttribute('data-testid', 'unique-fallback-icon');
+    expect(svg).toHaveAttribute('aria-label', 'Warning');
+  });
 });
