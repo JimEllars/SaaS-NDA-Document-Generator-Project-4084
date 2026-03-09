@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { render } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
+import { FiAlertTriangle } from 'react-icons/fi';
 import SafeIcon from './SafeIcon';
 
 expect.extend(matchers);
@@ -88,5 +89,52 @@ describe('SafeIcon', () => {
     expect(svg).toHaveAttribute('color', 'blue');
     expect(svg).toHaveAttribute('data-testid', 'unique-fallback-icon');
     expect(svg).toHaveAttribute('aria-label', 'Warning');
+  });
+
+  it('throws an error when an invalid object is passed as the icon prop', () => {
+    // Silence console.error for this expected error test to keep output clean
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // In React 18 / jsdom, jsdom will also fire 'error' events on window that log to console.
+    // We prevent default so it doesn't log the uncaught exception to the test output.
+    const errorHandler = (e) => e.preventDefault();
+    window.addEventListener('error', errorHandler);
+
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+      componentDidCatch(error, errorInfo) {}
+      render() {
+        if (this.state.hasError) {
+          return <div data-testid="error-message">{this.state.error.message}</div>;
+        }
+        return this.props.children;
+      }
+    }
+
+    // An invalid element type (like an empty object) will cause React.createElement to throw.
+    // We catch it in an error boundary so Vitest doesn't consider it an unhandled exception.
+    const { getByTestId } = render(
+      <ErrorBoundary>
+        <SafeIcon icon={{ invalid: 'object' }} />
+      </ErrorBoundary>
+    );
+
+    expect(getByTestId('error-message')).toHaveTextContent(/is invalid/);
+
+    window.removeEventListener('error', errorHandler);
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('renders a react-icons component correctly', () => {
+    const { container } = render(<SafeIcon icon={FiAlertTriangle} className="real-icon" />);
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveClass('real-icon');
   });
 });
