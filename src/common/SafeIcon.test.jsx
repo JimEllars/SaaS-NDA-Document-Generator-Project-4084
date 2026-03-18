@@ -137,4 +137,14 @@ describe('SafeIcon', () => {
     expect(svg).toBeInTheDocument();
     expect(svg).toHaveClass('real-icon');
   });
+
+  it('matches snapshot when rendering a custom icon', () => {
+    const { asFragment } = render(<SafeIcon icon={CustomIcon} className="snapshot-custom" />);
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  it('matches snapshot when rendering the fallback icon', () => {
+    const { asFragment } = render(<SafeIcon className="snapshot-fallback" />);
+    expect(asFragment()).toMatchSnapshot();
+  });
 });
