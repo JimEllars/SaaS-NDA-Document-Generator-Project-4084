@@ -147,4 +147,16 @@ describe('SafeIcon', () => {
     const { asFragment } = render(<SafeIcon className="snapshot-fallback" />);
     expect(asFragment()).toMatchSnapshot();
   });
+
+  it('renders a React Class Component correctly', () => {
+    class ClassIcon extends React.Component {
+      render() {
+        return <svg data-testid="class-icon" {...this.props} />;
+      }
+    }
+    const { getByTestId } = render(<SafeIcon icon={ClassIcon} className="class-test" />);
+    const icon = getByTestId('class-icon');
+    expect(icon).toBeInTheDocument();
+    expect(icon).toHaveClass('class-test');
+  });
 });
