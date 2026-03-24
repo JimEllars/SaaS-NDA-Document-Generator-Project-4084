@@ -31,41 +31,48 @@ export const generateDocument = (formData) => {
     });
   };
 
+  const rawSections = [
+    {
+      title: "Definition of Confidential Information",
+      content: processContent([
+        CLAUSES.general.definition,
+        ...(isRobust ? [CLAUSES.robust.definition] : [])
+      ])
+    },
+    ...(formData.industry !== 'general' ? [{
+      title: `${industry.label} Specific Provisions`,
+      content: processContent(industry.clauses)
+    }] : []),
+    {
+      title: "Permitted Use and Exclusions",
+      content: processContent([
+        CLAUSES.general.exclusions,
+        CLAUSES.general.term(formData.term),
+        ...(formData.includeReturn ? [CLAUSES.general.return] : [])
+      ])
+    },
+    ...(isRobust ? [{
+      title: "Enforcement and Remedies",
+      content: processContent(CLAUSES.robust.enforcement)
+    }] : []),
+    {
+      title: "Governing Law and Jurisdiction",
+      content: processContent([
+        `This Agreement shall be governed by and construed in accordance with the laws of the State of ${formData.jurisdiction}, without regard to conflict of law principles. Any disputes arising under this Agreement shall be subject to the exclusive jurisdiction of the courts of ${formData.jurisdiction}.`
+      ])
+    }
+  ];
+
+  const sections = rawSections.map((section, index) => ({
+    ...section,
+    title: `Article ${index + 1}: ${section.title}`
+  }));
+
   return {
     title: `${formData.type === 'mutual' ? 'Mutual' : 'Unilateral'} Non-Disclosure Agreement`,
     intro: CLAUSES.general.intro(formData.disclosing, formData.receiving, formData.type, effectiveDateFormatted),
     effectiveDate: effectiveDateFormatted,
-    sections: [
-      {
-        title: "Article 1: Definition of Confidential Information",
-        content: processContent([
-          CLAUSES.general.definition,
-          ...(isRobust ? [CLAUSES.robust.definition] : [])
-        ])
-      },
-      ...(formData.industry !== 'general' ? [{
-        title: `Article 2: ${industry.label} Specific Provisions`,
-        content: processContent(industry.clauses)
-      }] : []),
-      {
-        title: "Article 3: Permitted Use and Exclusions",
-        content: processContent([
-          CLAUSES.general.exclusions,
-          CLAUSES.general.term(formData.term),
-          ...(formData.includeReturn ? [CLAUSES.general.return] : [])
-        ])
-      },
-      ...(isRobust ? [{
-        title: "Article 4: Enforcement and Remedies",
-        content: processContent(CLAUSES.robust.enforcement)
-      }] : []),
-      {
-        title: "Article 5: Governing Law and Jurisdiction",
-        content: processContent([
-          `This Agreement shall be governed by and construed in accordance with the laws of the State of ${formData.jurisdiction}, without regard to conflict of law principles. Any disputes arising under this Agreement shall be subject to the exclusive jurisdiction of the courts of ${formData.jurisdiction}.`
-        ])
-      }
-    ]
+    sections
   };
 };
 

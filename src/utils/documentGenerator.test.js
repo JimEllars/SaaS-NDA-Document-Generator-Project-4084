@@ -29,25 +29,25 @@ describe('generateDocument', () => {
 
   it('should include robust clauses when strictness is robust', () => {
     const data = generateDocument({ ...baseFormData, strictness: 'robust' });
-    const article1 = data.sections.find(s => s.title.includes('Article 1'));
+    const definitionSection = data.sections.find(s => s.title.includes('Definition of Confidential Information'));
     // Content is now objects
-    expect(article1.content.length).toBe(2);
+    expect(definitionSection.content.length).toBe(2);
     // Check first item is paragraph (definition)
-    expect(article1.content[0].type).toBe('paragraph');
+    expect(definitionSection.content[0].type).toBe('paragraph');
     // Check second item is clause (robust definition)
-    expect(article1.content[1].type).toBe('clause');
-    expect(article1.content[1].title).toBeDefined();
+    expect(definitionSection.content[1].type).toBe('clause');
+    expect(definitionSection.content[1].title).toBeDefined();
 
-    const article4 = data.sections.find(s => s.title.includes('Article 4'));
-    expect(article4).toBeDefined();
-    expect(article4.title).toContain('Enforcement and Remedies');
+    const enforcementSection = data.sections.find(s => s.title.includes('Enforcement and Remedies'));
+    expect(enforcementSection).toBeDefined();
+    expect(enforcementSection.title).toContain('Enforcement and Remedies');
   });
 
   it('should not include robust clauses when strictness is standard', () => {
     const data = generateDocument({ ...baseFormData, strictness: 'standard' });
-    const article1 = data.sections.find(s => s.title.includes('Article 1'));
-    expect(article1.content.length).toBe(1); // Definition only
-    expect(article1.content[0].type).toBe('paragraph');
+    const definitionSection = data.sections.find(s => s.title.includes('Definition of Confidential Information'));
+    expect(definitionSection.content.length).toBe(1); // Definition only
+    expect(definitionSection.content[0].type).toBe('paragraph');
 
     const enforcement = data.sections.find(s => s.title.includes('Enforcement'));
     expect(enforcement).toBeUndefined();
@@ -55,22 +55,22 @@ describe('generateDocument', () => {
 
   it('should include industry specific clauses for tech', () => {
     const data = generateDocument({ ...baseFormData, industry: 'tech' });
-    const article2 = data.sections.find(s => s.title.includes('Article 2'));
-    expect(article2.title).toContain('Technology & Software Specific Provisions');
-    expect(article2.content.length).toBeGreaterThan(0);
+    const industrySection = data.sections.find(s => s.title.includes('Technology & Software Specific Provisions'));
+    expect(industrySection).toBeDefined();
+    expect(industrySection.content.length).toBeGreaterThan(0);
     // Tech clauses are typically 'clause' type
-    expect(article2.content[0].type).toBe('clause');
-    expect(article2.content[0].number).toBe(1);
+    expect(industrySection.content[0].type).toBe('clause');
+    expect(industrySection.content[0].number).toBe(1);
   });
 
   it('should include return clause when includeReturn is true', () => {
     const data = generateDocument({ ...baseFormData, includeReturn: true });
-    const article3 = data.sections.find(s => s.title.includes('Article 3'));
+    const exclusionsSection = data.sections.find(s => s.title.includes('Permitted Use and Exclusions'));
     // Exclusions + Term + Return
-    expect(article3.content.length).toBe(3);
+    expect(exclusionsSection.content.length).toBe(3);
     // Return clause is paragraph
-    expect(article3.content[2].type).toBe('paragraph');
-    expect(article3.content[2].text).toContain('return or destroy');
+    expect(exclusionsSection.content[2].type).toBe('paragraph');
+    expect(exclusionsSection.content[2].text).toContain('return or destroy');
   });
 
   it('should format date correctly', () => {
