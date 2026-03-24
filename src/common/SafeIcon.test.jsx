@@ -159,4 +159,22 @@ describe('SafeIcon', () => {
     expect(icon).toBeInTheDocument();
     expect(icon).toHaveClass('class-test');
   });
+
+  it('renders children correctly when passed', () => {
+    const IconWithChildren = ({ children, ...props }) => (
+      <svg data-testid="icon-with-children" {...props}>
+        {children}
+      </svg>
+    );
+
+    const { getByTestId, getByText } = render(
+      <SafeIcon icon={IconWithChildren}>
+        <title>Test Title</title>
+      </SafeIcon>
+    );
+
+    const icon = getByTestId('icon-with-children');
+    expect(icon).toBeInTheDocument();
+    expect(getByText('Test Title')).toBeInTheDocument();
+  });
 });
