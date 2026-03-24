@@ -177,4 +177,14 @@ describe('SafeIcon', () => {
     expect(icon).toBeInTheDocument();
     expect(getByText('Test Title')).toBeInTheDocument();
   });
+
+  it('renders a React element directly passed as icon without crashing', () => {
+    const ReactElementIcon = <svg data-testid="react-element-icon" />;
+    const { getByTestId } = render(
+      <SafeIcon icon={ReactElementIcon} className="added-class" />
+    );
+    const icon = getByTestId('react-element-icon');
+    expect(icon).toBeInTheDocument();
+    expect(icon).toHaveClass('added-class');
+  });
 });
