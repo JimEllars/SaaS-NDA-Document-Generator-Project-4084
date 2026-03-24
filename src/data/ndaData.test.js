@@ -25,6 +25,45 @@ describe('NDA Data Generation', () => {
       vi.useRealTimers();
     });
 
+    it('should handle missing party names for mutual NDA', () => {
+        vi.useFakeTimers();
+        const mockDate = new Date('2024-01-01T12:00:00Z');
+        vi.setSystemTime(mockDate);
+
+        const intro = CLAUSES.general.intro('', '', 'mutual');
+        expect(intro).toBe(`This Mutual Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between [Disclosing Party]  and [Receiving Party] , collectively referred to as the "Parties" and individually as a "Party".`);
+
+        vi.useRealTimers();
+    });
+
+    it('should handle missing disclosing party only for mutual NDA', () => {
+        vi.useFakeTimers();
+        const mockDate = new Date('2024-01-01T12:00:00Z');
+        vi.setSystemTime(mockDate);
+
+        const intro = CLAUSES.general.intro('', 'Company B', 'mutual');
+        expect(intro).toBe(`This Mutual Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between [Disclosing Party]  and Company B , collectively referred to as the "Parties" and individually as a "Party".`);
+
+        vi.useRealTimers();
+    });
+
+    it('should handle missing receiving party only for mutual NDA', () => {
+        vi.useFakeTimers();
+        const mockDate = new Date('2024-01-01T12:00:00Z');
+        vi.setSystemTime(mockDate);
+
+        const intro = CLAUSES.general.intro('Company A', '', 'mutual');
+        expect(intro).toBe(`This Mutual Non-Disclosure Agreement (the "Agreement") is entered into as of ${mockDate.toLocaleDateString()} (the "Effective Date") by and between Company A  and [Receiving Party] , collectively referred to as the "Parties" and individually as a "Party".`);
+
+        vi.useRealTimers();
+    });
+
+    it('should use provided effectiveDate for mutual NDA', () => {
+        const testDate = 'December 31, 2023';
+        const intro = CLAUSES.general.intro('Company A', 'Company B', 'mutual', testDate);
+        expect(intro).toBe(`This Mutual Non-Disclosure Agreement (the "Agreement") is entered into as of ${testDate} (the "Effective Date") by and between Company A  and Company B , collectively referred to as the "Parties" and individually as a "Party".`);
+    });
+
     it('should handle missing party names', () => {
         vi.useFakeTimers();
         const mockDate = new Date('2024-01-01T12:00:00Z');
