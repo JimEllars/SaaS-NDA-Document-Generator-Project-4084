@@ -187,4 +187,71 @@ describe('SafeIcon', () => {
     expect(icon).toBeInTheDocument();
     expect(icon).toHaveClass('added-class');
   });
+
+  it('merges props correctly when cloning a pre-instantiated React element', () => {
+    const ReactElementIcon = <svg data-testid="react-element-icon-merge" className="original-class" fill="blue" />;
+    const { getByTestId } = render(
+      <SafeIcon icon={ReactElementIcon} className="added-class" fill="red" width="24" />
+    );
+    const icon = getByTestId('react-element-icon-merge');
+    expect(icon).toBeInTheDocument();
+    // React.cloneElement replaces primitive string props and merges className/style depending on implementation.
+    // However, basic React.cloneElement simply overwrites `className` and `fill` with the new props.
+    expect(icon).toHaveClass('added-class');
+    expect(icon).not.toHaveClass('original-class'); // standard cloneElement overwrites className unless manually merged
+    expect(icon).toHaveAttribute('fill', 'red');
+    expect(icon).toHaveAttribute('width', '24');
+  });
+
+  it('renders the fallback icon when icon prop is an empty string', () => {
+    const { container } = render(<SafeIcon icon="" className="fallback-class-empty-string" />);
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveClass('fallback-class-empty-string');
+    expect(svg.innerHTML).toContain('<path');
+  });
+
+  it('renders the fallback icon when icon prop is 0 (falsy number)', () => {
+    const { container } = render(<SafeIcon icon={0} className="fallback-class-zero" />);
+    const svg = container.querySelector('svg');
+    expect(svg).toBeInTheDocument();
+    expect(svg).toHaveClass('fallback-class-zero');
+    expect(svg.innerHTML).toContain('<path');
+  });
+
+  it('handles rendering when passing an array of elements (should fallback or throw appropriately based on React element validity)', () => {
+    // Suppress console.error if React warns about keys or invalid elements in certain contexts
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const errorHandler = (e) => e.preventDefault();
+    window.addEventListener('error', errorHandler);
+
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false };
+      }
+      static getDerivedStateFromError() {
+        return { hasError: true };
+      }
+      render() {
+        if (this.state.hasError) {
+          return <div data-testid="error-caught">Error caught</div>;
+        }
+        return this.props.children;
+      }
+    }
+
+    // React.isValidElement([<div/>]) is false, so it falls through to React.createElement([<div/>], props),
+    // which throws because an array is not a valid element type.
+    const { getByTestId } = render(
+      <ErrorBoundary>
+        <SafeIcon icon={[<div key="1" />]} />
+      </ErrorBoundary>
+    );
+
+    expect(getByTestId('error-caught')).toBeInTheDocument();
+
+    window.removeEventListener('error', errorHandler);
+    consoleErrorSpy.mockRestore();
+  });
 });
