@@ -35,7 +35,7 @@ const LABEL_CLASSES = "text-sm font-medium text-slate-700 mb-2 block";
 const CARD_CONTAINER_CLASSES = "w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus-within:border-blue-500 transition shadow-sm";
 const SR_ONLY_LABEL = "sr-only";
 
-const PaymentFormContent = ({ onClose, onPaymentComplete }) => {
+const PaymentFormContent = React.memo(({ onClose, onPaymentComplete }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [step, setStep] = useState('form'); // 'form', 'processing', 'success'
@@ -212,7 +212,7 @@ const PaymentFormContent = ({ onClose, onPaymentComplete }) => {
       </div>
     </div>
   );
-};
+});
 
 const PaymentModal = (props) => {
   return (

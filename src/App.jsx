@@ -26,47 +26,59 @@ function AppContent() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const handleDownload = () => {
+  const handleDownload = React.useCallback(() => {
     window.print();
-  };
+  }, []);
 
-  const handleStartOverRequest = () => {
-      setShowStartOverConfirm(true);
-  };
+  const handleStartOverRequest = React.useCallback(() => {
+    setShowStartOverConfirm(true);
+  }, []);
 
-  const handleStartOverConfirm = () => {
-      resetForm();
-      setIsEditing(false);
-      setPurchasedDocument(null);
-      setShowStartOverConfirm(false);
-  };
+  const handleStartOverConfirm = React.useCallback(() => {
+    resetForm();
+    setIsEditing(false);
+    setPurchasedDocument(null);
+    setShowStartOverConfirm(false);
+  }, [resetForm]);
 
-  const handlePaymentComplete = async (paymentMethodId) => {
-      setShowCheckout(false);
-      setIsProcessingPayment(true);
+  const handleCancelStartOver = React.useCallback(() => {
+    setShowStartOverConfirm(false);
+  }, []);
 
-      try {
-          // Send the paymentMethodId to our "backend" API
-          // The backend verifies the payment, and only if successful, generates the document
-          const response = await verifyPaymentAndGetDocument(paymentMethodId, formData);
+  const handleCloseCheckout = React.useCallback(() => {
+    setShowCheckout(false);
+  }, []);
 
-          if (response.success) {
-             setPurchasedDocument(response.document);
-             setShowSuccessModal(true);
-             addToast('Payment successful!', 'success');
+  const handleEdit = React.useCallback(() => {
+    setIsEditing(true);
+  }, []);
 
-             // Hide success modal after a delay
-             setTimeout(() => {
-                 setShowSuccessModal(false);
-             }, 2000);
-          }
-      } catch (err) {
-          console.error("Verification error:", err);
-          addToast("Payment verification failed. Please try again.", "error");
-      } finally {
-          setIsProcessingPayment(false);
+  const handlePaymentComplete = React.useCallback(async (paymentMethodId) => {
+    setShowCheckout(false);
+    setIsProcessingPayment(true);
+
+    try {
+      // Send the paymentMethodId to our "backend" API
+      // The backend verifies the payment, and only if successful, generates the document
+      const response = await verifyPaymentAndGetDocument(paymentMethodId, formData);
+
+      if (response.success) {
+        setPurchasedDocument(response.document);
+        setShowSuccessModal(true);
+        addToast('Payment successful!', 'success');
+
+        // Hide success modal after a delay
+        setTimeout(() => {
+          setShowSuccessModal(false);
+        }, 2000);
       }
-  }
+    } catch (err) {
+      console.error("Verification error:", err);
+      addToast("Payment verification failed. Please try again.", "error");
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  }, [formData, addToast]);
 
   const handleUpdate = useCallback(async () => {
     setIsEditing(false);
@@ -121,14 +133,14 @@ function AppContent() {
             formData={formData}
             documentData={purchasedDocument}
             onDownload={handleDownload}
-            onEdit={() => setIsEditing(true)}
+            onEdit={handleEdit}
           />
         )}
       </div>
 
       {showCheckout && (
         <PaymentModal
-          onClose={() => setShowCheckout(false)}
+          onClose={handleCloseCheckout}
           onPaymentComplete={handlePaymentComplete}
         />
       )}
@@ -163,7 +175,7 @@ function AppContent() {
         confirmText="Yes, Start Over"
         isDestructive={true}
         onConfirm={handleStartOverConfirm}
-        onCancel={() => setShowStartOverConfirm(false)}
+        onCancel={handleCancelStartOver}
       />
     </div>
   );

@@ -5,7 +5,7 @@ import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';
 import { generatePlainText } from '../utils/documentGenerator';
 
-const DocumentPreview = ({ formData, documentData, onDownload, onEdit }) => {
+const DocumentPreview = React.memo(({ formData, documentData, onDownload, onEdit }) => {
   const [copied, setCopied] = React.useState(false);
   const { addToast } = useToast();
 
@@ -188,6 +188,6 @@ const DocumentPreview = ({ formData, documentData, onDownload, onEdit }) => {
        </div>
     </div>
   );
-};
+});
 
 export default DocumentPreview;
