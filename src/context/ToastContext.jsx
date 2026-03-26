@@ -18,9 +18,8 @@ export const ToastProvider = ({ children }) => {
   }, []);
 
   const addToast = useCallback((message, type = 'info', duration = 3000) => {
-    const id = Date.now();
-    // Use a simpler ID generation or add randomness to avoid collisions if called rapidly
-    const uniqueId = id + Math.random().toString(36).substr(2, 9);
+    // Generate a cryptographically secure unique ID to avoid collisions
+    const uniqueId = crypto.randomUUID();
 
     setToasts((prev) => [...prev, { id: uniqueId, message, type, duration }]);
 
