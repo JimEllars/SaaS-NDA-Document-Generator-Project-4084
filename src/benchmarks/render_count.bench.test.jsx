@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { render, fireEvent, act } from '@testing-library/react';
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import useNDAForm from '../hooks/useNDAForm';
 

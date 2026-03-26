@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { render, fireEvent, act } from '@testing-library/react';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import useDebounce from '../hooks/useDebounce';
 
