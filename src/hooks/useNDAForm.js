@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getDefaultFormData } from '../data/ndaData';
 
 const FORM_SAVE_DEBOUNCE_MS = 500;
@@ -33,9 +33,9 @@ const useNDAForm = () => {
     return () => clearTimeout(handler);
   }, [formData]);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData(getDefaultFormData());
-  };
+  }, []);
 
   return { formData, setFormData, resetForm };
 };

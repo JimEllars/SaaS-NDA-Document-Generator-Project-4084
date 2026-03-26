@@ -2,7 +2,7 @@ import React from 'react';
 import { FiAlertCircle, FiX } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
-const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", isDestructive = false }) => {
+const ConfirmModal = React.memo(({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", isDestructive = false }) => {
   if (!isOpen) return null;
 
   return (
@@ -43,6 +43,6 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText
       </div>
     </div>
   );
-};
+});
 
 export default ConfirmModal;
