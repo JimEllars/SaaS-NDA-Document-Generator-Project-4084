@@ -1,4 +1,3 @@
-import React from 'react';
 import { FiCheckCircle, FiAlertTriangle, FiInfo, FiX } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';

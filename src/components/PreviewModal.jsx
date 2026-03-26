@@ -1,4 +1,3 @@
-import React from 'react';
 import { FiX, FiLock, FiPrinter } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import DocumentPreview from './DocumentPreview';

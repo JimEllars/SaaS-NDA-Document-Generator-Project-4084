@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import './App.css';
 import Header from './components/Header';
 import NDAGeneratorForm from './components/NDAGeneratorForm';
@@ -68,7 +68,7 @@ function AppContent() {
       }
   }
 
-  const handleUpdate = React.useCallback(async () => {
+  const handleUpdate = useCallback(async () => {
     setIsEditing(false);
 
     // Check if they've already purchased a document. If so, they are editing it.
@@ -91,7 +91,7 @@ function AppContent() {
     }
   }, [formData, purchasedDocument, addToast]);
 
-  const handlePurchase = React.useCallback(() => {
+  const handlePurchase = useCallback(() => {
     setShowCheckout(true);
   }, []);
 
