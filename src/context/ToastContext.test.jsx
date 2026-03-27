@@ -14,12 +14,15 @@ describe('ToastContext', () => {
     it('throws an error if used outside of a ToastProvider', () => {
       // Mock console.error to avoid React's error boundary logging in the test output
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const preventError = (e) => e.preventDefault();
+      window.addEventListener('error', preventError);
 
       expect(() => {
         renderHook(() => useToast());
       }).toThrow('useToast must be used within a ToastProvider');
 
       consoleSpy.mockRestore();
+      window.removeEventListener('error', preventError);
     });
 
     it('adds and removes toasts correctly', () => {
