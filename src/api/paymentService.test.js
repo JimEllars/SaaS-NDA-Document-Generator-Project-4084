@@ -20,10 +20,18 @@ describe('paymentService', () => {
   });
 
   describe('verifyPaymentAndGetDocument', () => {
-    it('should reject with "Invalid payment method" if paymentMethodId is missing', async () => {
+    it('should reject with "Invalid payment method" if paymentMethodId is null', async () => {
       const promise = verifyPaymentAndGetDocument(null, mockFormData);
 
       // Advance timers to trigger the setTimeout
+      vi.advanceTimersByTime(2000);
+
+      await expect(promise).rejects.toThrow('Invalid payment method');
+    });
+
+    it('should reject with "Invalid payment method" if paymentMethodId is missing', async () => {
+      const promise = verifyPaymentAndGetDocument(undefined, mockFormData);
+
       vi.advanceTimersByTime(2000);
 
       await expect(promise).rejects.toThrow('Invalid payment method');
