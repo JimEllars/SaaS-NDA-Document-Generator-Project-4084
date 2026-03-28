@@ -50,10 +50,7 @@ describe('useNDAForm Render Benchmark', () => {
       vi.advanceTimersByTime(500);
     });
 
-    // With current implementation, it re-renders again (to 3) because debouncedFormData changes state
-    // The goal is to keep it at 2 by using a ref for debounce, so that the parent component doesn't re-render.
-
-    // Output the final render count
+    // Output the final render count to verify it stayed at 2
     console.log('Final render count:', getByTestId('renders').textContent);
 
     expect(getByTestId('renders').textContent).toBe('2');
