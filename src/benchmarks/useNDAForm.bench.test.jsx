@@ -56,6 +56,6 @@ describe('useNDAForm Render Benchmark', () => {
     // Output the final render count
     console.log('Final render count:', getByTestId('renders').textContent);
 
-    // we won't assert toBe(2) here yet until we fix it
+    expect(getByTestId('renders').textContent).toBe('2');
   });
 });
