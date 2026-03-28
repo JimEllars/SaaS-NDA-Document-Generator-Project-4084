@@ -51,6 +51,20 @@ describe('ErrorBoundary Component', () => {
     expect(console.error).toHaveBeenCalled();
   });
 
+  it('should log error details to console.error using componentDidCatch', () => {
+    render(
+      <ErrorBoundary>
+        <ProblemChild shouldThrow={true} />
+      </ErrorBoundary>
+    );
+
+    expect(console.error).toHaveBeenCalledWith(
+      "ErrorBoundary caught an error",
+      expect.any(Error),
+      expect.objectContaining({ componentStack: expect.any(String) })
+    );
+  });
+
   it('should display error details in development mode', () => {
     const originalEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = 'development';
