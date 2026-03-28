@@ -26,34 +26,34 @@ function AppContent() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const handleDownload = React.useCallback(() => {
+  const handleDownload = useCallback(() => {
     window.print();
   }, []);
 
-  const handleStartOverRequest = React.useCallback(() => {
+  const handleStartOverRequest = useCallback(() => {
     setShowStartOverConfirm(true);
   }, []);
 
-  const handleStartOverConfirm = React.useCallback(() => {
+  const handleStartOverConfirm = useCallback(() => {
     resetForm();
     setIsEditing(false);
     setPurchasedDocument(null);
     setShowStartOverConfirm(false);
   }, [resetForm]);
 
-  const handleCancelStartOver = React.useCallback(() => {
+  const handleCancelStartOver = useCallback(() => {
     setShowStartOverConfirm(false);
   }, []);
 
-  const handleCloseCheckout = React.useCallback(() => {
+  const handleCloseCheckout = useCallback(() => {
     setShowCheckout(false);
   }, []);
 
-  const handleEdit = React.useCallback(() => {
+  const handleEdit = useCallback(() => {
     setIsEditing(true);
   }, []);
 
-  const handlePaymentComplete = React.useCallback(async (paymentMethodId) => {
+  const handlePaymentComplete = useCallback(async (paymentMethodId) => {
     setShowCheckout(false);
     setIsProcessingPayment(true);
 
