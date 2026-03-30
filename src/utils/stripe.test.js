@@ -5,44 +5,48 @@ vi.mock('@stripe/stripe-js', () => ({
   loadStripe: vi.fn(),
 }));
 
-describe('stripe', () => {
+describe('stripe utility', () => {
+  let consoleWarnSpy;
+
   beforeEach(() => {
     vi.resetModules();
-    vi.clearAllMocks();
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
+    consoleWarnSpy.mockRestore();
+    vi.clearAllMocks();
   });
 
   it('resolves to null and warns if VITE_STRIPE_PUBLISHABLE_KEY is not defined', async () => {
+    // Ensure the env var is not set
     vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', '');
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const { stripePromise } = await import('./stripe.js');
-    const result = await stripePromise;
 
-    expect(warnSpy).toHaveBeenCalledWith('VITE_STRIPE_PUBLISHABLE_KEY is not defined in the environment variables.');
-    expect(result).toBeNull();
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'VITE_STRIPE_PUBLISHABLE_KEY is not defined in the environment variables.'
+    );
     expect(loadStripe).not.toHaveBeenCalled();
 
-    warnSpy.mockRestore();
+    const result = await stripePromise;
+    expect(result).toBeNull();
   });
 
-  it('calls loadStripe and resolves to its result if VITE_STRIPE_PUBLISHABLE_KEY is defined', async () => {
-    vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', 'pk_test_123');
-    const mockStripeInstance = { elements: vi.fn() };
-    vi.mocked(loadStripe).mockResolvedValue(mockStripeInstance);
+  it('calls loadStripe and resolves with its return value if VITE_STRIPE_PUBLISHABLE_KEY is defined', async () => {
+    const fakeKey = 'pk_test_123';
+    vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', fakeKey);
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const mockStripeInstance = { elements: vi.fn() };
+    loadStripe.mockResolvedValue(mockStripeInstance);
 
     const { stripePromise } = await import('./stripe.js');
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    expect(loadStripe).toHaveBeenCalledWith(fakeKey);
+
     const result = await stripePromise;
-
-    expect(warnSpy).not.toHaveBeenCalled();
-    expect(loadStripe).toHaveBeenCalledWith('pk_test_123');
     expect(result).toBe(mockStripeInstance);
-
-    warnSpy.mockRestore();
   });
 });
