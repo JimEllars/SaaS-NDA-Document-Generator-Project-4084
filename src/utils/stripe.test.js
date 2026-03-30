@@ -50,3 +50,26 @@ describe('stripe utility', () => {
     expect(result).toBe(mockStripeInstance);
   });
 });
+
+describe('stripe utility additional tests', () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
+  });
+
+  it('rejects if loadStripe rejects', async () => {
+    const fakeKey = 'pk_test_123';
+    vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', fakeKey);
+
+    const error = new Error('Network error');
+    loadStripe.mockRejectedValue(error);
+
+    const { stripePromise } = await import('./stripe.js');
+
+    await expect(stripePromise).rejects.toThrow('Network error');
+  });
+});
