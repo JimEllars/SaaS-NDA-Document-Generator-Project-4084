@@ -79,41 +79,41 @@ export const generateDocument = (formData) => {
 export const generatePlainText = (documentData, formData) => {
   if (!documentData) return '';
 
-  const lines = [];
-  lines.push(`${documentData.title}\n`);
-  lines.push(`Effective Date: ${documentData.effectiveDate}\n\n`);
-  lines.push('RECITALS\n');
-  lines.push(`${documentData.intro}\n\n`);
-  lines.push('NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the parties agree as follows:\n\n');
+  let text = '';
+  text += `${documentData.title}\n`;
+  text += `Effective Date: ${documentData.effectiveDate}\n\n`;
+  text += 'RECITALS\n';
+  text += `${documentData.intro}\n\n`;
+  text += 'NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the parties agree as follows:\n\n';
 
-  for (const section of documentData.sections) {
-    lines.push(`${section.title.toUpperCase()}\n\n`);
-    for (const item of section.content) {
-      if (item.type === 'paragraph') {
-        lines.push(`${item.text}\n\n`);
-      } else {
-        lines.push(`${item.number}. ${item.title}\n`);
-        lines.push(`${item.text}\n\n`);
-      }
-    }
-  }
+  documentData.sections.forEach(section => {
+      text += `${section.title.toUpperCase()}\n\n`;
+      section.content.forEach(item => {
+          if (item.type === 'paragraph') {
+              text += `${item.text}\n\n`;
+          } else {
+              text += `${item.number}. ${item.title}\n`;
+              text += `${item.text}\n\n`;
+          }
+      });
+  });
 
-  lines.push('EXECUTION\n\n');
-  lines.push('IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.\n\n');
+  text += 'EXECUTION\n\n';
+  text += 'IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.\n\n';
 
   // Add formatted signature blocks
   const party1Label = formData.type === 'mutual' ? 'PARTY 1' : 'DISCLOSING PARTY';
   const party2Label = formData.type === 'mutual' ? 'PARTY 2' : 'RECEIVING PARTY';
 
-  lines.push(`${party1Label}: ${formData.disclosing || '[Party Name]'}\n`);
-  lines.push('Print Name: _________________________\n');
-  lines.push('Title: _______________________________\n');
-  lines.push('Date: _______________________________\n\n');
+  text += `${party1Label}: ${formData.disclosing || '[Party Name]'}\n`;
+  text += 'Print Name: _________________________\n';
+  text += 'Title: _______________________________\n';
+  text += 'Date: _______________________________\n\n';
 
-  lines.push(`${party2Label}: ${formData.receiving || '[Party Name]'}\n`);
-  lines.push('Print Name: _________________________\n');
-  lines.push('Title: _______________________________\n');
-  lines.push('Date: _______________________________\n');
+  text += `${party2Label}: ${formData.receiving || '[Party Name]'}\n`;
+  text += 'Print Name: _________________________\n';
+  text += 'Title: _______________________________\n';
+  text += 'Date: _______________________________\n';
 
-  return lines.join('');
+  return text;
 };
