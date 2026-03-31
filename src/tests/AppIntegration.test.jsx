@@ -107,6 +107,74 @@ describe('App Integration', () => {
     expect(screen.getAllByText(/Bob Inc/i)[0]).toBeInTheDocument();
   });
 
+  it('shows success toast when document update succeeds', async () => {
+    // Spy on updateDocument to resolve successfully
+    const updateSpy = vi.spyOn(paymentService, 'updateDocument').mockResolvedValue({
+      success: true,
+      document: {
+        title: 'Non-Disclosure Agreement',
+        sections: [{ title: 'Parties', content: [{ type: 'paragraph', text: 'Alice Corp and Bob Inc' }] }]
+      }
+    });
+
+    render(<App />);
+
+    // Fill form
+    const disclosingInput = screen.getByLabelText(/Disclosing Party/i);
+    const receivingInput = screen.getByLabelText(/Receiving Party/i);
+
+    fireEvent.change(disclosingInput, { target: { value: 'Alice Corp' } });
+    fireEvent.change(receivingInput, { target: { value: 'Bob Inc' } });
+
+    // Click purchase
+    const purchaseButtons = screen.getAllByRole('button', { name: /Purchase & Generate/i });
+    fireEvent.click(purchaseButtons[0]);
+
+    // Fill payment details
+    const emailInput = screen.getByLabelText(/Email Address/i);
+    const cardInput = screen.getByLabelText(/Card Number/i);
+    const expiryInput = screen.getByLabelText(/Expiry/i);
+    const cvcInput = screen.getByLabelText(/CVC/i);
+
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(cardInput, { target: { value: '4242 4242 4242 4242' } });
+    fireEvent.change(expiryInput, { target: { value: '12/25' } });
+    fireEvent.change(cvcInput, { target: { value: '123' } });
+
+    // Click pay
+    const payButtons = screen.getAllByRole('button', { name: /Pay \$12.99/i });
+    fireEvent.click(payButtons[0]);
+
+    // Fast-forward time for payment completion
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4000);
+    });
+
+    // We should be on the document preview now. Click "Edit Document"
+    const editButtons = screen.getAllByRole('button', { name: /Edit Document/i });
+    fireEvent.click(editButtons[0]);
+
+    // Now we should be back at the form, but in editing mode.
+    // Change some data
+    fireEvent.change(disclosingInput, { target: { value: 'Alice LLC' } });
+
+    // Click "Update Document"
+    const updateButtons = screen.getAllByRole('button', { name: /Update Document/i });
+    fireEvent.click(updateButtons[0]);
+
+    // Wait for the success to process
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    expect(updateSpy).toHaveBeenCalled();
+
+    // Verify success toast
+    const successToasts = screen.getAllByText(/Document updated successfully!/i);
+    expect(successToasts[0]).toBeInTheDocument();
+
+    updateSpy.mockRestore();
+  });
+
   it('shows error toast when document update fails', async () => {
     // Spy on console.error to avoid noise in test output
     vi.spyOn(console, 'error').mockImplementation(() => {});
