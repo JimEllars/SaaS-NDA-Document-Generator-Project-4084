@@ -10,7 +10,7 @@ import App from '../App';
 describe('App Render Benchmark', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    localStorage.clear();
+    sessionStorage.clear();
   });
 
   afterEach(() => {

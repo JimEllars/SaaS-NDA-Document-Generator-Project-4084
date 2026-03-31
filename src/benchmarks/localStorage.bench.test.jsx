@@ -14,7 +14,7 @@ function TestApp() {
   const debouncedFormData = useDebounce(formData, TEST_DEBOUNCE_DELAY);
 
   useEffect(() => {
-    localStorage.setItem('ndaFormData', JSON.stringify(debouncedFormData));
+    sessionStorage.setItem('ndaFormData', JSON.stringify(debouncedFormData));
   }, [debouncedFormData]);
 
   return (
@@ -27,9 +27,9 @@ function TestApp() {
 describe('LocalStorage Performance Benchmark', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    // Mock setItem directly on the localStorage object
-    vi.spyOn(Object.getPrototypeOf(window.localStorage), 'setItem');
-    localStorage.clear();
+    // Mock setItem directly on the sessionStorage object
+    vi.spyOn(Object.getPrototypeOf(window.sessionStorage), 'setItem');
+    sessionStorage.clear();
   });
 
   afterEach(() => {
@@ -37,12 +37,12 @@ describe('LocalStorage Performance Benchmark', () => {
     vi.useRealTimers();
   });
 
-  it('debounces localStorage updates', async () => {
+  it('debounces sessionStorage updates', async () => {
     const { getByText } = render(<TestApp />);
     const button = getByText('Increment');
 
     // Initial render triggers one call immediately because debouncedValue initializes with initial value
-    expect(localStorage.setItem).toHaveBeenCalledTimes(1);
+    expect(sessionStorage.setItem).toHaveBeenCalledTimes(1);
 
     // Simulate 10 rapid updates
     for (let i = 0; i < 10; i++) {
@@ -55,7 +55,7 @@ describe('LocalStorage Performance Benchmark', () => {
 
     // Should still be 1 call because debounce hasn't fired yet
     // The previous 1 call was from mount.
-    expect(localStorage.setItem).toHaveBeenCalledTimes(1);
+    expect(sessionStorage.setItem).toHaveBeenCalledTimes(1);
 
     // Fast forward time past debounce delay (TEST_DEBOUNCE_DELAY)
     act(() => {
@@ -64,6 +64,6 @@ describe('LocalStorage Performance Benchmark', () => {
 
     // Now it should have fired once more with the final value
     // Total calls: 1 (mount) + 1 (debounced update) = 2
-    expect(localStorage.setItem).toHaveBeenCalledTimes(2);
+    expect(sessionStorage.setItem).toHaveBeenCalledTimes(2);
   });
 });

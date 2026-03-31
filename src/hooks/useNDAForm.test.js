@@ -7,7 +7,7 @@ import { getDefaultFormData } from '../data/ndaData';
 describe('useNDAForm', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    localStorage.clear();
+    sessionStorage.clear();
   });
 
   afterEach(() => {
@@ -51,7 +51,7 @@ describe('useNDAForm', () => {
     expect(result.current.formData.disclosing).toBe(defaults.disclosing);
   });
 
-  it('should save to localStorage after debounce', () => {
+  it('should save to sessionStorage after debounce', () => {
     const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
     const { result } = renderHook(() => useNDAForm());
 
@@ -68,13 +68,13 @@ describe('useNDAForm', () => {
     expect(setItemSpy).toHaveBeenCalledWith('ndaFormData', expect.stringContaining('Saved Company'));
   });
 
-  it('should load from localStorage on init', () => {
+  it('should load from sessionStorage on init', () => {
     const savedData = {
       ...getDefaultFormData(),
       disclosing: 'Loaded Company',
       effectiveDate: '2023-01-01'
     };
-    localStorage.setItem('ndaFormData', JSON.stringify(savedData));
+    sessionStorage.setItem('ndaFormData', JSON.stringify(savedData));
 
     const { result } = renderHook(() => useNDAForm());
     expect(result.current.formData.disclosing).toBe('Loaded Company');
