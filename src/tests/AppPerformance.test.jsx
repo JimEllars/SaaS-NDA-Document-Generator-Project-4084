@@ -10,11 +10,11 @@ window.scrollTo = vi.fn();
 window.print = vi.fn();
 
 describe('App Performance', () => {
-  let localStorageSpy;
+  let sessionStorageSpy;
 
   beforeEach(() => {
-    localStorageSpy = vi.spyOn(Storage.prototype, 'setItem');
-    localStorage.clear();
+    sessionStorageSpy = vi.spyOn(Storage.prototype, 'setItem');
+    sessionStorage.clear();
     vi.useFakeTimers();
   });
 
@@ -23,7 +23,7 @@ describe('App Performance', () => {
     vi.useRealTimers();
   });
 
-  it('should not write to localStorage on initial render', async () => {
+  it('should not write to sessionStorage on initial render', async () => {
     render(<App />);
 
     // Fast-forward any initial effects
@@ -31,15 +31,15 @@ describe('App Performance', () => {
       vi.runAllTimers();
     });
 
-    // Verify localStorage.setItem was NOT called
-    expect(localStorageSpy).not.toHaveBeenCalled();
+    // Verify sessionStorage.setItem was NOT called
+    expect(sessionStorageSpy).not.toHaveBeenCalled();
   });
 
-  it('should write to localStorage after form update and debounce', async () => {
+  it('should write to sessionStorage after form update and debounce', async () => {
     render(<App />);
 
     // Clear the spy calls from initial render
-    localStorageSpy.mockClear();
+    sessionStorageSpy.mockClear();
 
     // Find an input field
     const nameInput = screen.getByLabelText(/Disclosing Party/i);
@@ -52,8 +52,8 @@ describe('App Performance', () => {
       vi.advanceTimersByTime(1000);
     });
 
-    // Verify localStorage.setItem WAS called with the new data
-    expect(localStorageSpy).toHaveBeenCalledWith(
+    // Verify sessionStorage.setItem WAS called with the new data
+    expect(sessionStorageSpy).toHaveBeenCalledWith(
       'ndaFormData',
       expect.stringContaining('Test Company')
     );

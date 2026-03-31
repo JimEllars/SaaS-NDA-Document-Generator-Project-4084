@@ -37,7 +37,7 @@ window.alert = vi.fn();
 describe('App Integration', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    localStorage.clear();
+    sessionStorage.clear();
     window.print.mockClear();
     window.alert.mockClear();
     });

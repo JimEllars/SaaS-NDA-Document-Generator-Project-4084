@@ -6,10 +6,10 @@ const FORM_SAVE_DEBOUNCE_MS = 500;
 const useNDAForm = () => {
   const [formData, setFormDataInternal] = useState(() => {
     try {
-      const saved = localStorage.getItem('ndaFormData');
+      const saved = sessionStorage.getItem('ndaFormData');
       return saved ? JSON.parse(saved) : getDefaultFormData();
     } catch (e) {
-      // Ignore localStorage errors (e.g., in incognito mode or restricted environments)
+      // Ignore sessionStorage errors (e.g., in incognito mode or restricted environments)
       return getDefaultFormData();
     }
   });
@@ -23,9 +23,9 @@ const useNDAForm = () => {
 
     debounceTimeoutRef.current = setTimeout(() => {
       try {
-        localStorage.setItem('ndaFormData', JSON.stringify(data));
+        sessionStorage.setItem('ndaFormData', JSON.stringify(data));
       } catch (e) {
-        // Silently fail if localStorage is unavailable
+        // Silently fail if sessionStorage is unavailable
       }
     }, FORM_SAVE_DEBOUNCE_MS);
   }, []);
