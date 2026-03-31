@@ -169,4 +169,65 @@ describe('App Integration', () => {
     updateSpy.mockRestore();
     console.error.mockRestore();
   });
+
+  it('shows error toast when payment verification fails', async () => {
+    // Spy on console.error to avoid noise in test output
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Spy on verifyPaymentAndGetDocument to reject
+    const verifySpy = vi.spyOn(paymentService, 'verifyPaymentAndGetDocument').mockRejectedValue(new Error('Verification failed'));
+
+    render(<App />);
+
+    // Fill form
+    const disclosingInput = screen.getByLabelText(/Disclosing Party/i);
+    const receivingInput = screen.getByLabelText(/Receiving Party/i);
+
+    fireEvent.change(disclosingInput, { target: { value: 'Alice Corp' } });
+    fireEvent.change(receivingInput, { target: { value: 'Bob Inc' } });
+
+    // Click purchase
+    const purchaseButtons = screen.getAllByRole('button', { name: /Purchase & Generate/i });
+    fireEvent.click(purchaseButtons[0]);
+
+    // Fill payment details
+    const emailInput = screen.getByLabelText(/Email Address/i);
+    const cardInput = screen.getByLabelText(/Card Number/i);
+    const expiryInput = screen.getByLabelText(/Expiry/i);
+    const cvcInput = screen.getByLabelText(/CVC/i);
+
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(cardInput, { target: { value: '4242 4242 4242 4242' } });
+    fireEvent.change(expiryInput, { target: { value: '12/25' } });
+    fireEvent.change(cvcInput, { target: { value: '123' } });
+
+    // Click pay
+    const payButtons = screen.getAllByRole('button', { name: /Pay \$12.99/i });
+    fireEvent.click(payButtons[0]);
+
+    // Allow promise rejection to bubble up
+    await act(async () => {
+      // Need a tiny tick to resolve the microtasks for createPaymentMethod before advancing timers
+      await Promise.resolve();
+    });
+
+    // Wait for verifyPaymentAndGetDocument mock rejection
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+
+    expect(verifySpy).toHaveBeenCalled();
+
+    // The payment processing should have set isProcessingPayment(false) and added a toast
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // Verify error toast
+    const errorToasts = screen.getAllByText(/Payment verification failed\. Please try again\./i);
+    expect(errorToasts[0]).toBeInTheDocument();
+
+    verifySpy.mockRestore();
+    console.error.mockRestore();
+  });
 });
