@@ -19,9 +19,22 @@ describe('stripe utility', () => {
     vi.clearAllMocks();
   });
 
-  it('resolves to null and warns if VITE_STRIPE_PUBLISHABLE_KEY is not defined', async () => {
-    // Ensure the env var is not set
+  it('resolves to null and warns if VITE_STRIPE_PUBLISHABLE_KEY is empty string', async () => {
     vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', '');
+
+    const { stripePromise } = await import('./stripe.js');
+
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'VITE_STRIPE_PUBLISHABLE_KEY is not defined in the environment variables.'
+    );
+    expect(loadStripe).not.toHaveBeenCalled();
+
+    const result = await stripePromise;
+    expect(result).toBeNull();
+  });
+
+  it('resolves to null and warns if VITE_STRIPE_PUBLISHABLE_KEY is completely undefined', async () => {
+    vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', undefined);
 
     const { stripePromise } = await import('./stripe.js');
 
