@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { memo, useState } from 'react';
 // Using named imports to enable tree-shaking
 import { FiCheckCircle, FiPrinter, FiFileText, FiEdit, FiCopy, FiCheck } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';
 import { generatePlainText } from '../utils/documentGenerator';
 
-const DocumentPreview = React.memo(({ formData, documentData, onDownload, onEdit }) => {
-  const [copied, setCopied] = React.useState(false);
+const DocumentPreview = memo(({ formData, documentData, onDownload, onEdit }) => {
+  const [copied, setCopied] = useState(false);
   const { addToast } = useToast();
 
   const handleCopy = () => {
