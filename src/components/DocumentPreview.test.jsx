@@ -142,12 +142,11 @@ describe('DocumentPreview', () => {
     });
 
     it('handles missing clipboard API', async () => {
-        // Remove clipboard API
-        Object.defineProperty(navigator, 'clipboard', {
-            configurable: true,
-            writable: true,
-            value: undefined,
-        });
+        // Cache original to restore later
+        const cachedClipboard = navigator.clipboard;
+
+        // Temporarily delete clipboard API
+        delete navigator.clipboard;
 
         render(<DocumentPreview formData={mockFormData} documentData={mockDocumentData} onDownload={vi.fn()} onEdit={vi.fn()} />);
 
@@ -158,5 +157,12 @@ describe('DocumentPreview', () => {
         });
 
         expect(mockAddToast).toHaveBeenCalledWith('Clipboard access not available', 'error');
+
+        // Restore clipboard
+        Object.defineProperty(navigator, 'clipboard', {
+            configurable: true,
+            writable: true,
+            value: cachedClipboard,
+        });
     });
 });
