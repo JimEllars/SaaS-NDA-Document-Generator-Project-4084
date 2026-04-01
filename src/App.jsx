@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import './App.css';
 import Header from './components/Header';
 import NDAGeneratorForm from './components/NDAGeneratorForm';
