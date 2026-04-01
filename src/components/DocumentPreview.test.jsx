@@ -155,10 +155,44 @@ describe('DocumentPreview', () => {
             fireEvent.click(copyButton);
         });
 
+        // Ensure the mock was called correctly
+        expect(generatePlainText).toHaveBeenCalledWith(mockDocumentData, mockFormData);
+        expect(mockWriteText).toHaveBeenCalledWith('Mocked plain text content');
+
+        // Wait for asynchronous error handling
         await waitFor(() => {
             expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to copy: ', mockError);
             expect(mockAddToast).toHaveBeenCalledWith('Failed to copy to clipboard', 'error');
         });
+
+        // Ensure that copied state is never set to true on failure
+        expect(screen.getByText('COPY TEXT')).toBeInTheDocument();
+        expect(screen.queryByText('COPIED')).not.toBeInTheDocument();
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('handles error during clipboard copy (DOMException, e.g. NotAllowedError)', async () => {
+        const mockError = new DOMException('Write permission denied', 'NotAllowedError');
+        mockWriteText.mockReturnValue(Promise.reject(mockError));
+
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        render(<DocumentPreview formData={mockFormData} documentData={mockDocumentData} onDownload={vi.fn()} onEdit={vi.fn()} />);
+
+        const copyButton = screen.getAllByTitle('Copy text to clipboard')[0];
+
+        await act(async () => {
+            fireEvent.click(copyButton);
+        });
+
+        // Wait for asynchronous error handling
+        await waitFor(() => {
+            expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to copy: ', mockError);
+            expect(mockAddToast).toHaveBeenCalledWith('Failed to copy to clipboard', 'error');
+        });
+
+        consoleErrorSpy.mockRestore();
     });
 
     it('handles missing clipboard API', async () => {
