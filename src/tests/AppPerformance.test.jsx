@@ -52,10 +52,13 @@ describe('App Performance', () => {
       vi.advanceTimersByTime(1000);
     });
 
-    // Verify sessionStorage.setItem WAS called with the new data
-    expect(sessionStorageSpy).toHaveBeenCalledWith(
-      'ndaFormData',
-      expect.stringContaining('Test Company')
-    );
+    // Verify sessionStorage.setItem WAS called
+    expect(sessionStorageSpy).toHaveBeenCalled();
+    const [key, value] = sessionStorageSpy.mock.calls[0];
+    expect(key).toBe('ndaFormData');
+
+    // Check if it's correctly obfuscated (base64 of URI encoded JSON)
+    const decodedValue = JSON.parse(decodeURIComponent(atob(value)));
+    expect(decodedValue.disclosing).toBe('Test Company');
   });
 });
