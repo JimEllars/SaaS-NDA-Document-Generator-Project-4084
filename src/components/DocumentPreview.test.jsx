@@ -41,7 +41,8 @@ describe('DocumentPreview', () => {
             {
                 title: 'Article 1: Section',
                 content: [
-                    { type: 'paragraph', text: 'Paragraph text.' }
+                    { type: 'paragraph', text: 'Paragraph text.' },
+                    { type: 'list', number: '1.1', title: 'List Title', text: 'List text.' }
                 ]
             }
         ]
@@ -87,6 +88,25 @@ describe('DocumentPreview', () => {
         expect(screen.getByText('Payment Successful!')).toBeInTheDocument();
         expect(screen.getByText('Document Preview')).toBeInTheDocument();
         expect(screen.getByText('Mutual Non-Disclosure Agreement')).toBeInTheDocument();
+        expect(screen.getByText('PARTY 1:')).toBeInTheDocument();
+        expect(screen.getByText('PARTY 2:')).toBeInTheDocument();
+        expect(screen.getByText('Alice')).toBeInTheDocument();
+        expect(screen.getByText('Bob')).toBeInTheDocument();
+        expect(screen.getByText('1.1. List Title')).toBeInTheDocument();
+        expect(screen.getByText('List text.')).toBeInTheDocument();
+    });
+
+    it('renders standard NDA fields and empty party name fallbacks correctly', () => {
+        const standardFormData = {
+            type: 'standard',
+            disclosing: '',
+            receiving: '',
+        };
+        render(<DocumentPreview formData={standardFormData} documentData={mockDocumentData} onDownload={vi.fn()} onEdit={vi.fn()} />);
+
+        expect(screen.getByText('DISCLOSING PARTY:')).toBeInTheDocument();
+        expect(screen.getByText('RECEIVING PARTY:')).toBeInTheDocument();
+        expect(screen.getAllByText('[Party Name]')).toHaveLength(2);
     });
 
     it('handles successful clipboard copy', async () => {
