@@ -97,6 +97,77 @@ describe('App', () => {
     consoleSpy.mockRestore();
   });
 
+  it('handles error when document update fails', async () => {
+    // Spy on console.error
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Mock verifyPaymentAndGetDocument to succeed so we can get to the document preview
+    const verifySpy = vi.spyOn(paymentService, 'verifyPaymentAndGetDocument').mockResolvedValue({
+      success: true,
+      document: {
+        title: 'Non-Disclosure Agreement',
+        sections: [{ title: 'Parties', content: [{ type: 'paragraph', text: 'Test content' }] }]
+      }
+    });
+
+    // Mock updateDocument to reject
+    const updateSpy = vi.spyOn(paymentService, 'updateDocument').mockRejectedValue(new Error('Update failed test case'));
+
+    render(<App />);
+
+    // Fill form
+    fireEvent.change(screen.getByLabelText(/Disclosing Party/i), { target: { value: 'Alice Corp' } });
+    fireEvent.change(screen.getByLabelText(/Receiving Party/i), { target: { value: 'Bob Inc' } });
+
+    // Click purchase
+    fireEvent.click(screen.getAllByRole('button', { name: /Purchase & Generate/i })[0]);
+
+    // Fill payment details
+    fireEvent.change(screen.getByLabelText(/Email Address/i), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByLabelText(/Card Number/i), { target: { value: '4242 4242 4242 4242' } });
+    fireEvent.change(screen.getByLabelText(/Expiry/i), { target: { value: '12/25' } });
+    fireEvent.change(screen.getByLabelText(/CVC/i), { target: { value: '123' } });
+
+    // Click pay
+    fireEvent.click(screen.getAllByRole('button', { name: /Pay \$12.99/i })[0]);
+
+    // Fast-forward to document preview
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4000);
+    });
+
+    // Click Edit Document
+    fireEvent.click(screen.getAllByRole('button', { name: /Edit Document/i })[0]);
+
+    // Click Update Document
+    fireEvent.click(screen.getAllByRole('button', { name: /Update Document/i })[0]);
+
+    // Allow promise rejection to bubble up
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // Wait for updateDocument mock rejection
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+
+    expect(updateSpy).toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith("Update error:", expect.any(Error));
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // Verify error toast
+    const errorToasts = screen.getAllByText(/Failed to update the document\./i);
+    expect(errorToasts[0]).toBeInTheDocument();
+
+    verifySpy.mockRestore();
+    updateSpy.mockRestore();
+    consoleSpy.mockRestore();
+  });
+
   it('handles download, start over flow, and closing checkout', async () => {
     // To test the start over / close checkout / download flows.
     render(<App />);
