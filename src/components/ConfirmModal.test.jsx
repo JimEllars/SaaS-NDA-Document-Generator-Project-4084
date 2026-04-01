@@ -169,4 +169,27 @@ describe('ConfirmModal', () => {
 
     expect(onCancelMock).toHaveBeenCalledTimes(1);
   });
+
+  it('matches snapshot when rendered', () => {
+    const { asFragment } = render(
+      <ConfirmModal
+        isOpen={true}
+        title="Snapshot Title"
+        message="Snapshot Message"
+      />
+    );
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  it('does not crash when optional props are omitted', () => {
+    render(
+      <ConfirmModal
+        isOpen={true}
+        title="Title"
+        message="Message"
+      />
+    );
+    expect(screen.getByText('Confirm')).toBeInTheDocument();
+    expect(screen.getByText('Cancel')).toBeInTheDocument();
+  });
 });
