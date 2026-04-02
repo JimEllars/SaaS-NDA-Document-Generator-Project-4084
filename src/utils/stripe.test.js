@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { loadStripe } from '@stripe/stripe-js';
+import { stripePromise as staticStripePromise } from './stripe.js';
 
 vi.mock('@stripe/stripe-js', () => ({
   loadStripe: vi.fn(),
@@ -72,6 +73,13 @@ describe('stripe utility additional tests', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
+  });
+
+  it('exports a valid stripePromise that is a Promise', async () => {
+    expect(staticStripePromise).toBeInstanceOf(Promise);
+    const result = await staticStripePromise;
+    // Without setting the env variable during static import, it resolves to null
+    expect(result).toBeNull();
   });
 
   it('rejects if loadStripe rejects', async () => {
