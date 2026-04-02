@@ -41,7 +41,6 @@ describe('App Render Optimization', () => {
     });
 
     const newRenderCount = renderCount;
-    console.log(`Initial: ${initialRenderCount}, After state change: ${newRenderCount}`);
 
     // Check if clicking close on checkout triggers a re-render
     const checkoutBtn = screen.getByTestId('mock-purchase');
@@ -50,7 +49,6 @@ describe('App Render Optimization', () => {
     });
 
     const checkoutRenderCount = renderCount;
-    console.log(`After mock purchase change: ${checkoutRenderCount}`);
 
     expect(newRenderCount).toBe(initialRenderCount);
     expect(checkoutRenderCount).toBe(newRenderCount);

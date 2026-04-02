@@ -49,8 +49,5 @@ describe('useNDAForm Render Benchmark', () => {
     act(() => {
       vi.advanceTimersByTime(500);
     });
-
-    // Capture the final render count
-    console.log('Final render count:', getByTestId('renders').textContent);
   });
 });

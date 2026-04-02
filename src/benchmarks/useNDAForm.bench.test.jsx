@@ -50,9 +50,6 @@ describe('useNDAForm Render Benchmark', () => {
       vi.advanceTimersByTime(500);
     });
 
-    // Output the final render count to verify it stayed at 2
-    console.log('Final render count:', getByTestId('renders').textContent);
-
     expect(getByTestId('renders').textContent).toBe('2');
   });
 });
