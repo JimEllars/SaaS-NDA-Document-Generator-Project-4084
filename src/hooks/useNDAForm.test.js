@@ -100,4 +100,29 @@ describe('useNDAForm', () => {
     const { result } = renderHook(() => useNDAForm());
     expect(result.current.formData.disclosing).toBe('Obfuscated Company');
   });
+
+  it('should silently handle errors when sessionStorage.setItem fails', () => {
+    // Mock setItem to throw an error (e.g. quota exceeded or incognito mode)
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('Quota exceeded');
+    });
+
+    const { result } = renderHook(() => useNDAForm());
+
+    act(() => {
+      const current = result.current.formData;
+      result.current.setFormData({ ...current, disclosing: 'New Company' });
+    });
+
+    // Advance timers by 500ms to trigger the debounce
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    // Verify setItem was called but the app didn't crash
+    expect(setItemSpy).toHaveBeenCalledWith('ndaFormData', expect.any(String));
+
+    // Also verify state still updated successfully despite the storage error
+    expect(result.current.formData.disclosing).toBe('New Company');
+  });
 });
