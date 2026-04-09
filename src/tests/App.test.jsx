@@ -163,6 +163,9 @@ describe('App', () => {
     const errorToasts = screen.getAllByText(/Failed to update the document\./i);
     expect(errorToasts[0]).toBeInTheDocument();
 
+    // Verify "Verifying Payment" spinner is removed from DOM
+    expect(screen.queryByText(/Verifying Payment/i)).not.toBeInTheDocument();
+
     verifySpy.mockRestore();
     updateSpy.mockRestore();
     consoleSpy.mockRestore();
