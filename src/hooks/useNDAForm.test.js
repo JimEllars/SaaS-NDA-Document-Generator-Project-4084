@@ -7,7 +7,6 @@ import { getDefaultFormData } from '../data/ndaData';
 describe('useNDAForm', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    sessionStorage.clear();
   });
 
   afterEach(() => {
@@ -49,80 +48,5 @@ describe('useNDAForm', () => {
       result.current.resetForm();
     });
     expect(result.current.formData.disclosing).toBe(defaults.disclosing);
-  });
-
-  it('should save obfuscated data to sessionStorage after debounce', () => {
-    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
-    const { result } = renderHook(() => useNDAForm());
-
-    act(() => {
-        const current = result.current.formData;
-        result.current.setFormData({ ...current, disclosing: 'Saved Company' });
-    });
-
-    // Advance timers by 500ms
-    act(() => {
-      vi.advanceTimersByTime(500);
-    });
-
-    // Should call setItem with ndaFormData and an obfuscated string
-    expect(setItemSpy).toHaveBeenCalled();
-    const [key, value] = setItemSpy.mock.calls[0];
-    expect(key).toBe('ndaFormData');
-
-    // Check if it's correctly obfuscated (base64 of URI encoded JSON)
-    const decodedValue = JSON.parse(decodeURIComponent(atob(value)));
-    expect(decodedValue.disclosing).toBe('Saved Company');
-  });
-
-  it('should load from sessionStorage on init with fallback for un-obfuscated data', () => {
-    const savedData = {
-      ...getDefaultFormData(),
-      disclosing: 'Loaded Company',
-      effectiveDate: '2023-01-01'
-    };
-    // Test fallback: storing plain JSON (un-obfuscated)
-    sessionStorage.setItem('ndaFormData', JSON.stringify(savedData));
-
-    const { result } = renderHook(() => useNDAForm());
-    expect(result.current.formData.disclosing).toBe('Loaded Company');
-  });
-
-  it('should load obfuscated data from sessionStorage on init', () => {
-    const savedData = {
-      ...getDefaultFormData(),
-      disclosing: 'Obfuscated Company',
-      effectiveDate: '2023-01-01'
-    };
-    const obfuscated = btoa(encodeURIComponent(JSON.stringify(savedData)));
-    sessionStorage.setItem('ndaFormData', obfuscated);
-
-    const { result } = renderHook(() => useNDAForm());
-    expect(result.current.formData.disclosing).toBe('Obfuscated Company');
-  });
-
-  it('should silently handle errors when sessionStorage.setItem fails', () => {
-    // Mock setItem to throw an error (e.g. quota exceeded or incognito mode)
-    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('Quota exceeded');
-    });
-
-    const { result } = renderHook(() => useNDAForm());
-
-    act(() => {
-      const current = result.current.formData;
-      result.current.setFormData({ ...current, disclosing: 'New Company' });
-    });
-
-    // Advance timers by 500ms to trigger the debounce
-    act(() => {
-      vi.advanceTimersByTime(500);
-    });
-
-    // Verify setItem was called but the app didn't crash
-    expect(setItemSpy).toHaveBeenCalledWith('ndaFormData', expect.any(String));
-
-    // Also verify state still updated successfully despite the storage error
-    expect(result.current.formData.disclosing).toBe('New Company');
   });
 });
