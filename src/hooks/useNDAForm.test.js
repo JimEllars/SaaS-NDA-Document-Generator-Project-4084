@@ -49,4 +49,24 @@ describe('useNDAForm', () => {
     });
     expect(result.current.formData.disclosing).toBe(defaults.disclosing);
   });
+
+  it('should not persist sensitive data to sessionStorage (Regression test for Base64 obfuscation vulnerability)', () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+    const { result } = renderHook(() => useNDAForm());
+
+    act(() => {
+      const current = result.current.formData;
+      result.current.setFormData({ ...current, disclosing: 'Secret Company' });
+    });
+
+    // Advance timers in case a debounce strategy is still present
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    // The component should NOT use sessionStorage to persist the form state
+    expect(setItemSpy).not.toHaveBeenCalledWith('ndaFormData', expect.any(String));
+
+    setItemSpy.mockRestore();
+  });
 });
