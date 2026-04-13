@@ -117,4 +117,38 @@ describe('generatePlainText', () => {
         expect(text).toContain('PARTY 1: Company A');
         expect(text).toContain('PARTY 2: Company B');
     });
+
+    it('should return an empty string if documentData is null', () => {
+        expect(generatePlainText(null, baseFormData)).toBe('');
+    });
+
+    it('should use [Party Name] fallback when party names are missing', () => {
+        const formData = { ...baseFormData, disclosing: '', receiving: '' };
+        const docData = generateDocument(formData);
+        const text = generatePlainText(docData, formData);
+        expect(text).toContain('DISCLOSING PARTY: [Party Name]');
+        expect(text).toContain('RECEIVING PARTY: [Party Name]');
+    });
+
+    it('should correctly format paragraph and clause items and uppercase section titles', () => {
+        const docData = {
+            title: 'Test NDA',
+            effectiveDate: 'October 27, 2023',
+            intro: 'Intro text',
+            sections: [
+                {
+                    title: 'Article 1: Section 1',
+                    content: [
+                        { type: 'paragraph', text: 'Paragraph content' },
+                        { type: 'clause', number: 1, title: 'Clause Title', text: 'Clause content' }
+                    ]
+                }
+            ]
+        };
+        const text = generatePlainText(docData, baseFormData);
+        expect(text).toContain('ARTICLE 1: SECTION 1');
+        expect(text).toContain('Paragraph content');
+        expect(text).toContain('1. Clause Title');
+        expect(text).toContain('Clause content');
+    });
 });
