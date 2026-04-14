@@ -1,11 +1,5 @@
 import { generateDocument } from '../utils/documentGenerator';
-
-/**
- * Helper to simulate a network delay.
- * @param {number} ms The delay in milliseconds.
- * @returns {Promise<void>}
- */
-const simulateDelay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+import { simulateDelay } from '../utils/simulateDelay';
 
 /**
  * Simulates a secure backend API for processing payments and generating documents.
