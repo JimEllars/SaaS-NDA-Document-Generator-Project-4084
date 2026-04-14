@@ -19,10 +19,11 @@ describe('useNDAForm', () => {
     const defaults = getDefaultFormData();
     expect(result.current.formData.disclosing).toBe(defaults.disclosing);
     expect(result.current.formData.jurisdiction).toBe(defaults.jurisdiction);
+    expect(result.current.debouncedFormData.disclosing).toBe(defaults.disclosing);
   });
 
-  it('should update form data', () => {
-    const { result } = renderHook(() => useNDAForm());
+  it('should update form data and debounce debouncedFormData', () => {
+    const { result, rerender } = renderHook(() => useNDAForm());
 
     act(() => {
       // In hook, setFormData is state setter.
@@ -32,6 +33,16 @@ describe('useNDAForm', () => {
     });
 
     expect(result.current.formData.disclosing).toBe('New Company');
+    // Before timeout, debounced should still be default
+    expect(result.current.debouncedFormData.disclosing).toBe('');
+
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    rerender(); // Force re-render to get the updated debouncedFormData since useRef won't trigger it
+
+    expect(result.current.debouncedFormData.disclosing).toBe('New Company');
   });
 
   it('should reset form data', () => {
