@@ -1,5 +1,5 @@
 
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
 import NDAGeneratorForm from '../components/NDAGeneratorForm';
@@ -34,6 +34,7 @@ describe('NDAGeneratorForm', () => {
   });
 
   it('calls setFormData when Effective Date changes', () => {
+    vi.useFakeTimers();
     render(
       <NDAGeneratorForm
         formData={mockFormData}
@@ -45,7 +46,10 @@ describe('NDAGeneratorForm', () => {
     const dateInput = screen.getByLabelText(/Effective Date/i);
     fireEvent.change(dateInput, { target: { value: '2024-01-01' } });
 
+    act(() => { vi.advanceTimersByTime(300); });
+
     expect(mockSetFormData).toHaveBeenCalled();
+    vi.useRealTimers();
   });
 
   it('disables purchase button if date is invalid', () => {
