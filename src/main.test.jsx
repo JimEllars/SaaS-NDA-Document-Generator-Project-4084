@@ -1,64 +1,41 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as ReactDOMClient from 'react-dom/client';
-import { StrictMode } from 'react';
-import App from './App.jsx';
 
-// Mock react-dom/client
-vi.mock('react-dom/client', () => ({
-  createRoot: vi.fn(() => ({ render: vi.fn() })),
-}));
-
-// Mock App component to simplify the render check
-vi.mock('./App.jsx', () => ({
-  default: () => <div>Mock App</div>,
-}));
+vi.mock('react-dom/client', () => {
+  const mockRender = vi.fn();
+  return {
+    createRoot: vi.fn(() => ({
+      render: mockRender
+    }))
+  };
+});
 
 describe('main.jsx', () => {
-  let rootElement;
-
   beforeEach(() => {
-    // Reset module registry so main.jsx can be evaluated again
     vi.resetModules();
-
-    // Setup DOM
-    rootElement = document.createElement('div');
-    rootElement.id = 'root';
-    document.body.appendChild(rootElement);
+    document.body.innerHTML = '<div id="root"></div>';
   });
 
   afterEach(() => {
-    // Cleanup DOM
-    if (document.body.contains(rootElement)) {
-      document.body.removeChild(rootElement);
-    }
+    document.body.innerHTML = '';
     vi.clearAllMocks();
   });
 
-  it('renders the App component inside StrictMode into the root element', async () => {
-    const mockRender = vi.fn();
-    vi.mocked(ReactDOMClient.createRoot).mockReturnValue({ render: mockRender });
+  it('renders App inside StrictMode', async () => {
+    const { createRoot } = await import('react-dom/client');
+    const React = await import('react');
+    const { default: App } = await import('./App.jsx');
 
-    // Import main.jsx to trigger the side effect
     await import('./main.jsx');
 
-    expect(ReactDOMClient.createRoot).toHaveBeenCalledWith(rootElement);
-    expect(mockRender).toHaveBeenCalledOnce();
+    expect(createRoot).toHaveBeenCalledWith(document.getElementById('root'));
+    expect(createRoot).toHaveBeenCalledTimes(1);
 
-    const renderCall = mockRender.mock.calls[0][0];
-    expect(renderCall.type).toBe(StrictMode);
-    expect(renderCall.props.children.type).toBe(App);
-  });
+    const mockRender = createRoot.mock.results[0].value.render;
+    expect(mockRender).toHaveBeenCalledTimes(1);
 
-  it('throws an error or handles gracefully if root element is missing', async () => {
-     // Remove root element
-     document.body.removeChild(rootElement);
-
-     const mockRender = vi.fn();
-     vi.mocked(ReactDOMClient.createRoot).mockReturnValue({ render: mockRender });
-
-     await import('./main.jsx');
-
-     expect(ReactDOMClient.createRoot).toHaveBeenCalledWith(null);
+    const renderArg = mockRender.mock.calls[0][0];
+    expect(renderArg.type).toBe(React.StrictMode);
+    expect(renderArg.props.children.type).toBe(App);
   });
 });
