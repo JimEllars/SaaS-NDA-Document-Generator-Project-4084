@@ -151,4 +151,58 @@ describe('generatePlainText', () => {
         expect(text).toContain('1. Clause Title');
         expect(text).toContain('Clause content');
     });
+
+    it('should generate an exact text match given mock data', () => {
+        const docData = {
+            title: 'Exact Test NDA',
+            effectiveDate: 'October 27, 2023',
+            intro: 'Exact Intro text',
+            sections: [
+                {
+                    title: 'Article 1: Exact Section',
+                    content: [
+                        { type: 'paragraph', text: 'Exact Paragraph content' },
+                        { type: 'clause', number: 1, title: 'Exact Clause Title', text: 'Exact Clause content' }
+                    ]
+                }
+            ]
+        };
+        const formData = {
+            type: 'unilateral',
+            disclosing: 'Party A',
+            receiving: 'Party B'
+        };
+        const text = generatePlainText(docData, formData);
+
+        const expectedText = `Exact Test NDA
+Effective Date: October 27, 2023
+
+RECITALS
+Exact Intro text
+
+NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the parties agree as follows:
+
+ARTICLE 1: EXACT SECTION
+
+Exact Paragraph content
+
+1. Exact Clause Title
+Exact Clause content
+
+EXECUTION
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.
+
+DISCLOSING PARTY: Party A
+Print Name: _________________________
+Title: _______________________________
+Date: _______________________________
+
+RECEIVING PARTY: Party B
+Print Name: _________________________
+Title: _______________________________
+Date: _______________________________
+`;
+        expect(text).toBe(expectedText);
+    });
 });
