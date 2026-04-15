@@ -4,26 +4,6 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
 import App from '../App';
-
-vi.mock('../hooks/useNDAForm', () => ({
-  default: vi.fn(() => ({
-    formData: {
-      disclosing: 'Alice Corp',
-      receiving: 'Bob Inc',
-      type: 'unilateral',
-      industry: 'general',
-      strictness: 'standard',
-      jurisdiction: 'Delaware',
-      term: '3',
-      includeReturn: true,
-      effectiveDate: '2023-01-01',
-    },
-    setFormData: vi.fn(),
-    resetForm: vi.fn(),
-    debouncedFormData: {},
-  }))
-}));
-
 import * as paymentService from '../api/paymentService';
 
 
