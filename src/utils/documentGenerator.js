@@ -76,16 +76,15 @@ export const generateDocument = (formData) => {
   };
 };
 
-export const generatePlainText = (documentData, formData) => {
-  if (!documentData) return '';
-
-  const textParts = [];
+const generateHeaderParts = (documentData, textParts) => {
   textParts.push(`${documentData.title}\n`);
   textParts.push(`Effective Date: ${documentData.effectiveDate}\n\n`);
   textParts.push('RECITALS\n');
   textParts.push(`${documentData.intro}\n\n`);
   textParts.push('NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the parties agree as follows:\n\n');
+};
 
+const generateSectionsParts = (documentData, textParts) => {
   for (const section of documentData.sections) {
     textParts.push(`${section.title.toUpperCase()}\n\n`);
     for (const item of section.content) {
@@ -97,7 +96,9 @@ export const generatePlainText = (documentData, formData) => {
       }
     }
   }
+};
 
+const generateExecutionParts = (formData, textParts) => {
   textParts.push('EXECUTION\n\n');
   textParts.push('IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.\n\n');
 
@@ -114,6 +115,15 @@ export const generatePlainText = (documentData, formData) => {
   textParts.push('Print Name: _________________________\n');
   textParts.push('Title: _______________________________\n');
   textParts.push('Date: _______________________________\n');
+};
+
+export const generatePlainText = (documentData, formData) => {
+  if (!documentData) return '';
+
+  const textParts = [];
+  generateHeaderParts(documentData, textParts);
+  generateSectionsParts(documentData, textParts);
+  generateExecutionParts(formData, textParts);
 
   return textParts.join('');
 };
