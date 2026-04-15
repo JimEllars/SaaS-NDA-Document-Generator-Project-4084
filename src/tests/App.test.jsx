@@ -5,48 +5,6 @@ import * as matchers from '@testing-library/jest-dom/matchers';
 import App from '../App';
 import * as paymentService from '../api/paymentService';
 
-// Mock useNDAForm
-vi.mock('../hooks/useNDAForm', () => ({
-  default: vi.fn(() => ({
-    formData: {
-      disclosing: 'Alice Corp',
-      receiving: 'Bob Inc',
-      type: 'unilateral',
-      industry: 'general',
-      strictness: 'standard',
-      jurisdiction: 'Delaware',
-      term: '3',
-      includeReturn: true,
-      effectiveDate: '2023-01-01',
-    },
-    setFormData: vi.fn(),
-    resetForm: vi.fn(),
-    debouncedFormData: {},
-  }))
-}));
-
-
-// Mock useNDAForm
-vi.mock('../hooks/useNDAForm', () => ({
-  default: vi.fn(() => ({
-    formData: {
-      disclosing: 'Alice Corp',
-      receiving: 'Bob Inc',
-      type: 'unilateral',
-      industry: 'general',
-      strictness: 'standard',
-      jurisdiction: 'Delaware',
-      term: '3',
-      includeReturn: true,
-      effectiveDate: '2023-01-01',
-    },
-    setFormData: vi.fn(),
-    resetForm: vi.fn(),
-    debouncedFormData: {},
-  }))
-}));
-
-
 expect.extend(matchers);
 
 // Mock Stripe
@@ -76,17 +34,19 @@ window.alert = vi.fn();
 
 describe('App', () => {
   beforeEach(() => {
-        sessionStorage.clear();
+    vi.useFakeTimers();
+    sessionStorage.clear();
     window.print.mockClear();
     window.alert.mockClear();
   });
 
   afterEach(() => {
-            vi.clearAllMocks();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   it('handles error when payment verification fails', async () => {
-    vi.useFakeTimers();
     // Spy on console.error to avoid noise in test output
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -138,7 +98,6 @@ describe('App', () => {
   });
 
   it('handles error when document update fails', async () => {
-    vi.useFakeTimers();
     // Spy on console.error
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -213,7 +172,6 @@ describe('App', () => {
   });
 
   it('handles download, start over flow, and closing checkout', async () => {
-    vi.useFakeTimers();
     // To test the start over / close checkout / download flows.
     render(<App />);
 

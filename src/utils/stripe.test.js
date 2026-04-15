@@ -1,60 +1,96 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { loadStripe } from '@stripe/stripe-js';
+import { stripePromise as staticStripePromise } from './stripe.js';
 
-describe('stripe utils', () => {
+vi.mock('@stripe/stripe-js', () => ({
+  loadStripe: vi.fn(),
+}));
+
+describe('stripe utility', () => {
+  let consoleWarnSpy;
+
   beforeEach(() => {
     vi.resetModules();
-    vi.clearAllMocks();
-    vi.mock('@stripe/stripe-js', () => ({
-      loadStripe: vi.fn().mockResolvedValue('mocked_stripe_instance'),
-    }));
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
-    vi.restoreAllMocks();
+    consoleWarnSpy.mockRestore();
+    vi.clearAllMocks();
   });
 
-  it('calls loadStripe when env var is present', async () => {
-    vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', 'pk_test_123');
-    const { loadStripe } = await import('@stripe/stripe-js');
-    const { stripePromise } = await import('./stripe.js');
-
-    expect(loadStripe).toHaveBeenCalledWith('pk_test_123');
-    expect(console.warn).not.toHaveBeenCalled();
-    const result = await stripePromise;
-    expect(result).toBe('mocked_stripe_instance');
-  });
-
-  it('resolves to null and warns when env var is missing (empty string)', async () => {
+  it('resolves to null and warns if VITE_STRIPE_PUBLISHABLE_KEY is empty string', async () => {
     vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', '');
-    const { loadStripe } = await import('@stripe/stripe-js');
+
     const { stripePromise } = await import('./stripe.js');
 
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'VITE_STRIPE_PUBLISHABLE_KEY is not defined in the environment variables.'
+    );
     expect(loadStripe).not.toHaveBeenCalled();
-    expect(console.warn).toHaveBeenCalledWith('VITE_STRIPE_PUBLISHABLE_KEY is not defined in the environment variables.');
+
     const result = await stripePromise;
     expect(result).toBeNull();
   });
 
-  it('resolves to null and warns when env var is undefined', async () => {
+  it('resolves to null and warns if VITE_STRIPE_PUBLISHABLE_KEY is completely undefined', async () => {
     vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', undefined);
-    const { loadStripe } = await import('@stripe/stripe-js');
+
     const { stripePromise } = await import('./stripe.js');
 
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'VITE_STRIPE_PUBLISHABLE_KEY is not defined in the environment variables.'
+    );
     expect(loadStripe).not.toHaveBeenCalled();
-    expect(console.warn).toHaveBeenCalledWith('VITE_STRIPE_PUBLISHABLE_KEY is not defined in the environment variables.');
+
     const result = await stripePromise;
     expect(result).toBeNull();
   });
 
-  it('rejects when loadStripe fails', async () => {
-    vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', 'pk_test_123');
-    const { loadStripe } = await import('@stripe/stripe-js');
-    loadStripe.mockRejectedValue(new Error('Stripe failed to load'));
+  it('calls loadStripe and resolves with its return value if VITE_STRIPE_PUBLISHABLE_KEY is defined', async () => {
+    const fakeKey = 'pk_test_123';
+    vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', fakeKey);
+
+    const mockStripeInstance = { elements: vi.fn() };
+    loadStripe.mockResolvedValue(mockStripeInstance);
 
     const { stripePromise } = await import('./stripe.js');
 
-    await expect(stripePromise).rejects.toThrow('Stripe failed to load');
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+    expect(loadStripe).toHaveBeenCalledWith(fakeKey);
+
+    const result = await stripePromise;
+    expect(result).toBe(mockStripeInstance);
+  });
+});
+
+describe('stripe utility additional tests', () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.clearAllMocks();
+  });
+
+  it('exports a valid stripePromise that is a Promise', async () => {
+    expect(staticStripePromise).toBeInstanceOf(Promise);
+    const result = await staticStripePromise;
+    // Without setting the env variable during static import, it resolves to null
+    expect(result).toBeNull();
+  });
+
+  it('rejects if loadStripe rejects', async () => {
+    const fakeKey = 'pk_test_123';
+    vi.stubEnv('VITE_STRIPE_PUBLISHABLE_KEY', fakeKey);
+
+    const error = new Error('Network error');
+    loadStripe.mockRejectedValue(error);
+
+    const { stripePromise } = await import('./stripe.js');
+
+    await expect(stripePromise).rejects.toThrow('Network error');
   });
 });

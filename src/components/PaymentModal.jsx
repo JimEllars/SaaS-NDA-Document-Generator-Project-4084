@@ -43,6 +43,13 @@ const PaymentFormContent = React.memo(({ onClose, onPaymentComplete }) => {
   const [email, setEmail] = useState('');
 
   const { addToast } = useToast();
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

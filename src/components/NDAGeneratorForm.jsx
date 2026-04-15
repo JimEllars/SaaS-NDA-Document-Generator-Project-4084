@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React from 'react';
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
 import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
@@ -11,71 +11,17 @@ const SELECT_CLASSES = FIELD_BASE_CLASSES;
 const LABEL_CLASSES = "text-sm font-bold text-slate-600 mb-2";
 const TOGGLE_BUTTON_BASE_CLASSES = "flex-1 py-3 text-sm font-bold rounded-lg transition";
 
-
-const DebouncedInput = ({ id, name, value, onChange, placeholder, className, required, maxLength, type = "text", min, max }) => {
-  const [localValue, setLocalValue] = useState(value || '');
-
-  useEffect(() => {
-    setLocalValue(value || '');
-  }, [value]);
-
-  const handleChange = (e) => {
-    setLocalValue(e.target.value);
-    onChange(e);
-  };
-
-  return (
-    <input
-      id={id}
-      name={name}
-      type={type}
-      value={localValue}
-      onChange={handleChange}
-      placeholder={placeholder}
-      className={className}
-      required={required}
-      maxLength={maxLength}
-      min={min}
-      max={max}
-    />
-  );
-};
-
-
 const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEditing, onUpdate }) => {
 
-  const debounceTimeout = React.useRef(null);
-
-  const handleInputChange = useCallback((e) => {
+  const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-
-    if (type === 'text' || type === 'date') {
-        if (debounceTimeout.current) {
-            clearTimeout(debounceTimeout.current);
-        }
-
-        debounceTimeout.current = setTimeout(() => {
-            setFormData(prev => ({
-              ...prev,
-              [name]: value
-            }));
-        }, 300);
-    } else {
-        setFormData(prev => ({
-          ...prev,
-          [name]: type === 'checkbox' ? checked : value
-        }));
-    }
-  }, [setFormData]);
-
-  useEffect(() => {
-      return () => {
-          if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-      }
-  }, []);
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
 
   const { isValid: isFormValid, validationMessage } = useFormValidation(formData);
-
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -138,7 +84,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
               <label htmlFor="disclosing" className={`${LABEL_CLASSES} block`}>
                 Disclosing Party {formData.type === 'mutual' ? '(Party 1)' : ''}
               </label>
-              <DebouncedInput
+              <input
                 id="disclosing"
                 name="disclosing"
                 value={formData.disclosing}
@@ -153,7 +99,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
               <label htmlFor="receiving" className={`${LABEL_CLASSES} block`}>
                 Receiving Party {formData.type === 'mutual' ? '(Party 2)' : ''}
               </label>
-              <DebouncedInput
+              <input
                 id="receiving"
                 name="receiving"
                 value={formData.receiving}
@@ -170,7 +116,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
                 <SafeIcon icon={FiCalendar} size={14} />
                 Effective Date
               </label>
-              <DebouncedInput
+              <input
                 id="effectiveDate"
                 name="effectiveDate"
                 type="date"
