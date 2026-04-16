@@ -1,36 +1,24 @@
 import { CLAUSES } from '../data/ndaData';
 import { formatEffectiveDate } from './dateUtils';
 
-/**
- * Generates the NDA document structure based on form data.
- * @param {Object} formData - The data from the form.
- * @returns {Object|null} - The generated document data or null if not paid.
- */
-export const generateDocument = (formData) => {
-  if (!formData.isPaid) return null;
+const processContent = (content) => {
+  let clauseCounter = 0;
+  return content.map(item => {
+    if (typeof item === 'string') {
+      return { type: 'paragraph', text: item };
+    } else {
+      clauseCounter++;
+      return {
+        type: 'clause',
+        number: clauseCounter,
+        title: item.title,
+        text: item.text
+      };
+    }
+  });
+};
 
-  const industry = CLAUSES[formData.industry];
-  const isRobust = formData.strictness === 'robust';
-
-  const effectiveDateFormatted = formatEffectiveDate(formData.effectiveDate);
-
-  const processContent = (content) => {
-    let clauseCounter = 0;
-    return content.map(item => {
-      if (typeof item === 'string') {
-        return { type: 'paragraph', text: item };
-      } else {
-        clauseCounter++;
-        return {
-          type: 'clause',
-          number: clauseCounter,
-          title: item.title,
-          text: item.text
-        };
-      }
-    });
-  };
-
+const buildSections = (formData, isRobust, industry) => {
   const rawSections = [
     {
       title: "Definition of Confidential Information",
@@ -63,10 +51,25 @@ export const generateDocument = (formData) => {
     }
   ];
 
-  const sections = rawSections.map((section, index) => ({
+  return rawSections.map((section, index) => ({
     ...section,
     title: `Article ${index + 1}: ${section.title}`
   }));
+};
+
+/**
+ * Generates the NDA document structure based on form data.
+ * @param {Object} formData - The data from the form.
+ * @returns {Object|null} - The generated document data or null if not paid.
+ */
+export const generateDocument = (formData) => {
+  if (!formData.isPaid) return null;
+
+  const industry = CLAUSES[formData.industry];
+  const isRobust = formData.strictness === 'robust';
+  const effectiveDateFormatted = formatEffectiveDate(formData.effectiveDate);
+
+  const sections = buildSections(formData, isRobust, industry);
 
   return {
     title: `${formData.type === 'mutual' ? 'Mutual' : 'Unilateral'} Non-Disclosure Agreement`,
