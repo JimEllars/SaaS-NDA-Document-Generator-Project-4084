@@ -117,4 +117,79 @@ describe('generatePlainText', () => {
         expect(text).toContain('PARTY 1: Company A');
         expect(text).toContain('PARTY 2: Company B');
     });
+
+    it('should return empty string if documentData is falsy', () => {
+        expect(generatePlainText(null, baseFormData)).toBe('');
+        expect(generatePlainText(undefined, baseFormData)).toBe('');
+    });
+
+    it('should generate exactly constructed text with paragraphs and clauses', () => {
+        const mockDocData = {
+          title: 'Test Title',
+          effectiveDate: 'October 27, 2023',
+          intro: 'Test Intro.',
+          sections: [
+            {
+              title: 'Test Section',
+              content: [
+                { type: 'paragraph', text: 'Test paragraph.' },
+                { type: 'clause', number: 1, title: 'Test Clause', text: 'Clause text.' }
+              ]
+            }
+          ]
+        };
+
+        const mockFormData = {
+          type: 'unilateral',
+          disclosing: 'Party A',
+          receiving: 'Party B'
+        };
+
+        const result = generatePlainText(mockDocData, mockFormData);
+
+        const expectedResult = `Test Title
+Effective Date: October 27, 2023
+
+RECITALS
+Test Intro.
+
+NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the parties agree as follows:
+
+TEST SECTION
+
+Test paragraph.
+
+1. Test Clause
+Clause text.
+
+EXECUTION
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.
+
+DISCLOSING PARTY: Party A
+Print Name: _________________________
+Title: _______________________________
+Date: _______________________________
+
+RECEIVING PARTY: Party B
+Print Name: _________________________
+Title: _______________________________
+Date: _______________________________
+`;
+        expect(result).toBe(expectedResult);
+    });
+
+    it('should generate execution parts with fallback party names if missing in form data', () => {
+        const mockDocData = {
+          title: 'Test',
+          effectiveDate: 'October 27, 2023',
+          intro: 'Intro',
+          sections: []
+        };
+        const mockFormData = { type: 'unilateral' };
+
+        const result = generatePlainText(mockDocData, mockFormData);
+        expect(result).toContain('DISCLOSING PARTY: [Party Name]\n');
+        expect(result).toContain('RECEIVING PARTY: [Party Name]\n');
+    });
 });
