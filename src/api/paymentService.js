@@ -1,4 +1,5 @@
 import { generateDocument } from '../utils/documentGenerator';
+import { simulateDelay } from '../utils/simulateDelay';
 
 /**
  * Simulates a secure backend API for processing payments and generating documents.
@@ -7,30 +8,27 @@ import { generateDocument } from '../utils/documentGenerator';
  * verify the payment with Stripe, and then securely generate and return the document.
  */
 export const verifyPaymentAndGetDocument = async (paymentMethodId, formData) => {
-  return new Promise((resolve, reject) => {
-    // Simulate network delay and backend processing
-    setTimeout(() => {
-      if (!paymentMethodId) {
-        reject(new Error("Invalid payment method"));
-        return;
-      }
+  // Simulate network delay and backend processing
+  await simulateDelay(2000);
 
-      try {
-        // The server generates the document based on the provided data.
-        // We set a temporary flag `isPaid: true` just for the generator function
-        // because the generator function internally checks for `isPaid`.
-        // In a real backend, the generator wouldn't need a client-provided `isPaid` flag.
-        const documentData = generateDocument({ ...formData, isPaid: true });
+  if (!paymentMethodId) {
+    throw new Error("Invalid payment method");
+  }
 
-        resolve({
-          success: true,
-          document: documentData
-        });
-      } catch (error) {
-        reject(new Error("Failed to generate document securely"));
-      }
-    }, 2000);
-  });
+  try {
+    // The server generates the document based on the provided data.
+    // We set a temporary flag `isPaid: true` just for the generator function
+    // because the generator function internally checks for `isPaid`.
+    // In a real backend, the generator wouldn't need a client-provided `isPaid` flag.
+    const documentData = generateDocument({ ...formData, isPaid: true });
+
+    return {
+      success: true,
+      document: documentData
+    };
+  } catch (error) {
+    throw new Error("Failed to generate document securely");
+  }
 };
 
 /**
@@ -39,17 +37,15 @@ export const verifyPaymentAndGetDocument = async (paymentMethodId, formData) => 
  * to ensure they have the right to regenerate the document.
  */
 export const updateDocument = async (formData) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      try {
-        const documentData = generateDocument({ ...formData, isPaid: true });
-        resolve({
-          success: true,
-          document: documentData
-        });
-      } catch (error) {
-        reject(new Error("Failed to update document"));
-      }
-    }, 1000);
-  });
+  await simulateDelay(1000);
+
+  try {
+    const documentData = generateDocument({ ...formData, isPaid: true });
+    return {
+      success: true,
+      document: documentData
+    };
+  } catch (error) {
+    throw new Error("Failed to update document");
+  }
 };
