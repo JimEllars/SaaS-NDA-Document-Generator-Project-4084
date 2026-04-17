@@ -6,6 +6,9 @@ const Header = React.memo(({ isPaid, onClear, onStartOver }) => {
   return (
     <div className="max-w-3xl w-full flex justify-between items-center mb-8 no-print">
       <div>
+        <a href="https://axim.us.com" className="text-sm text-axim-teal hover:underline mb-2 inline-block font-semibold flex items-center gap-1 opacity-80 hover:opacity-100 transition">
+          &larr; Back to AXiM Ecosystem
+        </a>
         <h1 className="text-3xl font-extrabold text-zinc-100 flex items-center gap-3">
           <SafeIcon icon={FiShield} className="text-axim-teal" size={32} />
           AXiM NDA Generator
