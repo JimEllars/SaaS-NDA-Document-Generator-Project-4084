@@ -75,6 +75,7 @@ const buildSections = (formData, isRobust, industry) => {
  * @returns {Object|null} - The generated document data or null if not paid.
  */
 export const generateDocument = (formData) => {
+  if (!formData) return null;
   if (!formData.isPaid) return null;
 
   const industry = CLAUSES[formData.industry];
