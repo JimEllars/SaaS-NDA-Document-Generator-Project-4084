@@ -68,6 +68,21 @@ describe('paymentService', () => {
       });
     });
 
+
+    it('should throw an error for a network/403 failure during verification', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403
+      });
+
+      await expect(verifySession('real-session-id')).rejects.toThrow('Failed to verify session');
+    });
+
+    it('should throw an error for expired JWTs or timeouts during verification', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network timeout'));
+
+      await expect(verifySession('real-session-id')).rejects.toThrow('Network timeout');
+    });
     it('should fetch and return session data', async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,

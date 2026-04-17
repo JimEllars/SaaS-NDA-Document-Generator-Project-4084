@@ -11,13 +11,16 @@ const useFormValidation = (formData) => {
 
   useEffect(() => {
     const validate = () => {
-      // Validate Party Names
-      // Regex to allow letters, numbers, spaces, and basic punctuation (.,&'-) and accented characters
-      const nameRegex = /^[\p{L}0-9\s.,&'-]+$/u;
-
       const sanitize = (str) => {
         if (!str) return '';
-        return str.replace(/[^\p{L}0-9\s.,&'-]/gu, '');
+        // Strip HTML tags and replace layout-breaking characters
+        const stripped = str.replace(/<[^>]*>?/gm, '');
+        return stripped;
+      };
+
+      const checkCharacters = (str) => {
+        if (!str) return true;
+        return /^[\p{L}0-9\s.,&'-]+$/u.test(str);
       };
 
       const sanitizedDisclosing = sanitize(formData.disclosing);
@@ -28,7 +31,8 @@ const useFormValidation = (formData) => {
         setIsValid(false);
         return;
       }
-      if (formData.disclosing !== sanitizedDisclosing) {
+
+      if (!checkCharacters(sanitizedDisclosing) || formData.disclosing !== sanitizedDisclosing) {
         setValidationMessage('Disclosing Party name contains invalid characters.');
         setIsValid(false);
         return;
@@ -39,7 +43,8 @@ const useFormValidation = (formData) => {
         setIsValid(false);
         return;
       }
-      if (formData.receiving !== sanitizedReceiving) {
+
+      if (!checkCharacters(sanitizedReceiving) || formData.receiving !== sanitizedReceiving) {
         setValidationMessage('Receiving Party name contains invalid characters.');
         setIsValid(false);
         return;

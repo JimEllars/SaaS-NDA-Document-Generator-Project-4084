@@ -13,6 +13,8 @@ const SELECT_CLASSES = FIELD_BASE_CLASSES;
 const LABEL_CLASSES = "text-sm font-bold text-zinc-300 mb-2";
 const TOGGLE_BUTTON_BASE_CLASSES = "flex-1 py-3 text-sm font-bold rounded-lg transition";
 
+const isWeb3Enabled = import.meta.env.VITE_ENABLE_WEB3 === 'true';
+
 const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEditing, onUpdate }) => {
   const { hasToken, isChecking, client } = useWeb3Bypass();
 
@@ -253,7 +255,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
           )}
 
           <div className="flex flex-col gap-4">
-            {!isEditing && import.meta.env.VITE_ENABLE_WEB3 === 'true' && (
+            {!isEditing && isWeb3Enabled && (
               <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-black/30 p-4 rounded-xl border border-white/5">
                 <div className="flex flex-col">
                    <p className="text-sm font-semibold text-zinc-300">AXiM Node Holder?</p>
@@ -276,7 +278,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
                 }
               </button>
 
-              {!isEditing && hasToken && !isChecking && import.meta.env.VITE_ENABLE_WEB3 === 'true' && (
+              {!isEditing && hasToken && !isChecking && isWeb3Enabled && (
                  <button
                    onClick={handleBypass}
                    disabled={!isFormValid}

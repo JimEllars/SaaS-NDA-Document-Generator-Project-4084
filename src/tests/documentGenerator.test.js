@@ -29,4 +29,17 @@ describe('documentGenerator error handling', () => {
       expect(doc.intro).toContain('[Disclosing Party]'); // CLAUSES.general.intro handles missing names gracefully
       expect(doc.intro).toContain('[Receiving Party]'); // CLAUSES.general.intro handles missing names gracefully
   });
+
+  it('should gracefully handle malformed date', () => {
+    const data = { ...baseFormData, effectiveDate: 'invalid-date' };
+    const doc = generateDocument(data);
+    expect(doc).toBeDefined();
+    // Default logic typically yields 'Invalid Date' if parsing fails but shouldn't crash
+    expect(doc.effectiveDate).toBe('Invalid Date');
+  });
+
+  it('should handle completely empty formData gracefully but fail on isPaid', () => {
+    // if formData is falsy entirely
+    expect(generateDocument(null)).toBeNull();
+  });
 });

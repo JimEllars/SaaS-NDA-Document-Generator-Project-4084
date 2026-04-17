@@ -17,7 +17,7 @@ export const formatEffectiveDate = (dateString) => {
 
       if (isNaN(year) || isNaN(month) || isNaN(day)) {
           // Fallback for invalid format, though input type="date" enforces it mostly
-           return LOCAL_FORMATTER.format(new Date());
+           return 'Invalid Date';
       }
 
       // Create date using UTC to avoid timezone shifts
@@ -25,5 +25,5 @@ export const formatEffectiveDate = (dateString) => {
       return UTC_FORMATTER.format(date);
   }
 
-  return LOCAL_FORMATTER.format(new Date());
+  return 'Invalid Date';
 };
