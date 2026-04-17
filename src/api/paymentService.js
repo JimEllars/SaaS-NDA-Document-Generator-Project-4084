@@ -69,3 +69,7 @@ export const verifySession = async (sessionId) => {
 export const getValidAccessToken = () => {
   return sessionStorage.getItem('axim_access_token');
 };
+
+export const clearAccessToken = () => {
+  sessionStorage.removeItem('axim_access_token');
+};
