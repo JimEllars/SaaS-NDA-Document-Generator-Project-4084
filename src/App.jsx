@@ -38,6 +38,8 @@ function AppContent() {
       const response = await processPayment('nda_document');
 
       if (response && response.url) {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ event: 'Begin_Checkout' });
         window.location.href = response.url;
       } else {
         throw new Error('Failed to get checkout URL');
