@@ -1,16 +1,18 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { verifySession, getValidAccessToken } from '../api/paymentService';
+import { verifySession, getValidAccessToken, clearAccessToken } from '../api/paymentService';
 import { generateDocument } from '../utils/documentGenerator';
 import { FiCheckCircle, FiMail, FiSend } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';
+import useNDAForm from '../hooks/useNDAForm';
 
 export default function SuccessPage() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const sessionId = searchParams.get('session_id');
     const { addToast } = useToast();
+    const { resetForm } = useNDAForm();
 
     const [status, setStatus] = useState('verifying');
     const [documentData, setDocumentData] = useState(null);
@@ -25,8 +27,13 @@ export default function SuccessPage() {
     }, []);
 
     const handleStartOver = useCallback(() => {
+        resetForm();
+        localStorage.clear();
+        clearAccessToken();
+        sessionStorage.removeItem('axim_delivery_email');
+        setEmail('');
         navigate('/');
-    }, [navigate]);
+    }, [navigate, resetForm]);
 
     const handleSendEmail = useCallback(async () => {
         if (!email || !email.includes('@')) {
