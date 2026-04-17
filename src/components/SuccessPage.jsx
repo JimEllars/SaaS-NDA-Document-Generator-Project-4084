@@ -1,17 +1,24 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { verifySession } from '../api/paymentService';
 import { generateDocument } from '../utils/documentGenerator';
-import { FiCheckCircle } from 'react-icons/fi';
+import { FiCheckCircle, FiMail, FiSend } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import { useToast } from '../context/ToastContext';
 
 export default function SuccessPage() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const sessionId = searchParams.get('session_id');
+    const { addToast } = useToast();
 
     const [status, setStatus] = useState('verifying');
     const [documentData, setDocumentData] = useState(null);
+    const [email, setEmail] = useState('');
+    const [isSendingEmail, setIsSendingEmail] = useState(false);
+
+    // Use a ref to hold the formData so it's accessible outside the effect
+    const savedFormDataRef = useRef(null);
 
     const handleDownload = useCallback(() => {
         window.print();
@@ -20,6 +27,44 @@ export default function SuccessPage() {
     const handleStartOver = useCallback(() => {
         navigate('/');
     }, [navigate]);
+
+    const handleSendEmail = useCallback(async () => {
+        if (!email || !email.includes('@')) {
+            addToast('Please enter a valid email address.', 'error');
+            return;
+        }
+
+        if (!savedFormDataRef.current) {
+            addToast('Document data is missing. Please try downloading instead.', 'error');
+            return;
+        }
+
+        try {
+            setIsSendingEmail(true);
+            const response = await fetch('/api/send-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email,
+                    formData: savedFormDataRef.current
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to send email');
+            }
+
+            addToast('Email sent successfully!', 'success');
+            setEmail('');
+        } catch (err) {
+            console.error('Email error:', err);
+            addToast('Failed to send email. Please try downloading instead.', 'error');
+        } finally {
+            setIsSendingEmail(false);
+        }
+    }, [email, addToast]);
 
     useEffect(() => {
         if (!sessionId) {
@@ -48,10 +93,14 @@ export default function SuccessPage() {
                 }
 
                 if (formData) {
+                    savedFormDataRef.current = formData;
                     // Generate document and trigger download
                     const doc = generateDocument({ ...formData, isPaid: true });
                     setDocumentData(doc);
                     setStatus('success');
+
+                    window.dataLayer = window.dataLayer || [];
+                    window.dataLayer.push({ event: 'Purchase', product_id: 'nda_document' });
 
                     // Clear the session storage
                     sessionStorage.removeItem('axim_nda_draft');
@@ -119,7 +168,7 @@ export default function SuccessPage() {
                 <h2 className="text-3xl font-bold text-zinc-100 mb-4">Payment Successful!</h2>
                 <p className="text-zinc-300 mb-8 text-lg">Thank you for your purchase. Your secure Non-Disclosure Agreement is ready.</p>
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
                     <button
                         onClick={handleDownload}
                         className="bg-axim-teal text-black font-bold py-3 px-8 rounded-xl hover:bg-teal-400 hover:shadow-[0_0_20px_rgba(0,229,255,0.4)] transition-all flex items-center justify-center"
@@ -132,6 +181,35 @@ export default function SuccessPage() {
                     >
                         Create New NDA
                     </button>
+                </div>
+
+                <div className="bg-black/30 border border-white/10 rounded-xl p-6 text-left max-w-md mx-auto">
+                    <h3 className="text-lg font-bold text-zinc-100 mb-2 flex items-center gap-2">
+                        <SafeIcon icon={FiMail} className="text-axim-teal" />
+                        Email My Document
+                    </h3>
+                    <p className="text-sm text-zinc-400 mb-4">
+                        Send a copy of your generated NDA directly to your inbox.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                            type="email"
+                            placeholder="Enter your email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="flex-1 bg-black/50 border border-white/20 text-zinc-100 rounded-lg px-4 py-2 focus:outline-none focus:border-axim-teal focus:ring-1 focus:ring-axim-teal"
+                        />
+                        <button
+                            onClick={handleSendEmail}
+                            disabled={isSendingEmail || !email}
+                            className={`bg-zinc-800 text-zinc-100 font-medium py-2 px-6 rounded-lg hover:bg-zinc-700 transition flex items-center justify-center gap-2 ${
+                                (isSendingEmail || !email) ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                        >
+                            <SafeIcon icon={FiSend} size={14} />
+                            {isSendingEmail ? 'Sending...' : 'Send'}
+                        </button>
+                    </div>
                 </div>
             </div>
 
