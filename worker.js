@@ -30,6 +30,16 @@ export default {
       headers.set('Origin', env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com');
       headers.set('Referer', env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com');
 
+      if (request.method === 'OPTIONS') {
+        return new Response(null, {
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        });
+      }
+
       const proxyRequest = new Request(backendUrl, {
         method: request.method,
         headers: headers,
@@ -39,7 +49,12 @@ export default {
 
       try {
         const response = await fetch(proxyRequest);
-        return response;
+
+        // Ensure CORS headers allow Authorization
+        const newResponse = new Response(response.body, response);
+        newResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+        return newResponse;
       } catch (err) {
         return new Response(JSON.stringify({ error: 'Proxy error' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
       }

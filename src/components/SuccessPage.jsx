@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { verifySession } from '../api/paymentService';
+import { verifySession, getValidAccessToken } from '../api/paymentService';
 import { generateDocument } from '../utils/documentGenerator';
 import { FiCheckCircle, FiMail, FiSend } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
@@ -41,10 +41,12 @@ export default function SuccessPage() {
 
         try {
             setIsSendingEmail(true);
+            const token = getValidAccessToken();
             const response = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     email,
@@ -53,6 +55,10 @@ export default function SuccessPage() {
             });
 
             if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    addToast('Your secure session has expired. Please download your document directly using the button above.', 'error');
+                    return;
+                }
                 throw new Error('Failed to send email');
             }
 
@@ -101,6 +107,26 @@ export default function SuccessPage() {
 
                     window.dataLayer = window.dataLayer || [];
                     window.dataLayer.push({ event: 'Purchase', product_id: 'nda_document' });
+
+                    // Auto-send email if user previously entered it
+                    if (formData.email) {
+                        try {
+                            const token = getValidAccessToken();
+                            await fetch('/api/send-email', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({
+                                    email: formData.email,
+                                    formData: formData
+                                })
+                            });
+                        } catch (err) {
+                            console.error('Auto-send failed', err);
+                        }
+                    }
 
                     // Clear the session storage
                     sessionStorage.removeItem('axim_nda_draft');

@@ -23,7 +23,11 @@ export const processPayment = async (productId) => {
     throw new Error('Failed to create checkout session');
   }
 
-  return response.json();
+  const data = await response.json();
+  if (data.token) {
+    sessionStorage.setItem('axim_access_token', data.token);
+  }
+  return data;
 };
 
 export const verifySession = async (sessionId) => {
@@ -38,7 +42,8 @@ export const verifySession = async (sessionId) => {
     // Simulation logic for local development
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({ isPaid: true });
+        sessionStorage.setItem('axim_access_token', 'simulated_jwt_token');
+        resolve({ isPaid: true, token: 'simulated_jwt_token' });
       }, 1000);
     });
   }
@@ -54,5 +59,13 @@ export const verifySession = async (sessionId) => {
     throw new Error('Failed to verify session');
   }
 
-  return response.json();
+  const data = await response.json();
+  if (data.token) {
+    sessionStorage.setItem('axim_access_token', data.token);
+  }
+  return data;
+};
+
+export const getValidAccessToken = () => {
+  return sessionStorage.getItem('axim_access_token');
 };
