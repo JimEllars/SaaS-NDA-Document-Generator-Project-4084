@@ -28,6 +28,7 @@ describe('stripe utility', () => {
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       'VITE_STRIPE_PUBLISHABLE_KEY is not defined in the environment variables.'
     );
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
     expect(loadStripe).not.toHaveBeenCalled();
 
     const result = await stripePromise;
@@ -42,6 +43,7 @@ describe('stripe utility', () => {
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       'VITE_STRIPE_PUBLISHABLE_KEY is not defined in the environment variables.'
     );
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
     expect(loadStripe).not.toHaveBeenCalled();
 
     const result = await stripePromise;
@@ -59,13 +61,14 @@ describe('stripe utility', () => {
 
     expect(consoleWarnSpy).not.toHaveBeenCalled();
     expect(loadStripe).toHaveBeenCalledWith(fakeKey);
+    expect(loadStripe).toHaveBeenCalledTimes(1);
 
     const result = await stripePromise;
     expect(result).toBe(mockStripeInstance);
   });
 });
 
-describe('stripe utility additional tests', () => {
+describe('stripe utility static exports', () => {
   beforeEach(() => {
     vi.resetModules();
   });
@@ -78,7 +81,6 @@ describe('stripe utility additional tests', () => {
   it('exports a valid stripePromise that is a Promise', async () => {
     expect(staticStripePromise).toBeInstanceOf(Promise);
     const result = await staticStripePromise;
-    // Without setting the env variable during static import, it resolves to null
     expect(result).toBeNull();
   });
 
