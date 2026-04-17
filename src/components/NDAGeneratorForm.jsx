@@ -1,6 +1,8 @@
 import React from 'react';
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
-import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle } from 'react-icons/fi';
+import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle, FiUnlock } from 'react-icons/fi';
+import { ConnectButton } from 'thirdweb/react';
+import { useWeb3Bypass } from '../hooks/useWeb3Bypass';
 import SafeIcon from '../common/SafeIcon';
 import useFormValidation from '../hooks/useFormValidation';
 import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
@@ -12,6 +14,12 @@ const LABEL_CLASSES = "text-sm font-bold text-zinc-300 mb-2";
 const TOGGLE_BUTTON_BASE_CLASSES = "flex-1 py-3 text-sm font-bold rounded-lg transition";
 
 const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEditing, onUpdate }) => {
+  const { hasToken, isChecking, client } = useWeb3Bypass();
+
+  const handleBypass = React.useCallback(() => {
+    // Navigate using a dummy session ID to trigger successful state
+    window.location.href = '/success?session_id=AXM-BYPASS';
+  }, []);
 
   const handleInputChange = React.useCallback((e) => {
     const { name, value, type, checked } = e.target;
@@ -244,18 +252,41 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
             </>
           )}
 
-          <div className="flex flex-col md:flex-row gap-4">
-            <button
-              onClick={isEditing ? onUpdate : onPurchase}
-              disabled={!isFormValid}
-              className={`flex-1 bg-axim-teal text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 hover:shadow-[0_0_15px_rgba(0,229,255,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''}`}
-            >
-              <SafeIcon icon={isEditing ? FiRefreshCw : FiLock} size={20} />
-              {isEditing
-                ? 'Update Document'
-                : (isFormValid ? 'Purchase & Generate' : 'Complete Form')
-              }
-            </button>
+          <div className="flex flex-col gap-4">
+            {!isEditing && (
+              <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-black/30 p-4 rounded-xl border border-white/5">
+                <div className="flex flex-col">
+                   <p className="text-sm font-semibold text-zinc-300">AXiM Node Holder?</p>
+                   <p className="text-xs text-zinc-500">Connect wallet to bypass paywall.</p>
+                </div>
+                <ConnectButton client={client} />
+              </div>
+            )}
+
+            <div className="flex flex-col md:flex-row gap-4">
+              <button
+                onClick={isEditing ? onUpdate : onPurchase}
+                disabled={!isFormValid}
+                className={`flex-1 bg-axim-teal text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 hover:shadow-[0_0_15px_rgba(0,229,255,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''}`}
+              >
+                <SafeIcon icon={isEditing ? FiRefreshCw : FiLock} size={20} />
+                {isEditing
+                  ? 'Update Document'
+                  : (isFormValid ? 'Purchase & Generate' : 'Complete Form')
+                }
+              </button>
+
+              {!isEditing && hasToken && !isChecking && (
+                 <button
+                   onClick={handleBypass}
+                   disabled={!isFormValid}
+                   className={`flex-1 bg-purple-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-500 hover:shadow-[0_0_15px_rgba(147,51,234,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''}`}
+                 >
+                   <SafeIcon icon={FiUnlock} size={20} />
+                   Bypass Paywall
+                 </button>
+              )}
+            </div>
           </div>
 
           {!isFormValid && (

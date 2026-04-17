@@ -1,3 +1,16 @@
+vi.mock('../hooks/useWeb3Bypass', () => ({
+  useWeb3Bypass: () => ({
+    hasToken: false,
+    isChecking: false,
+    client: {}
+  })
+}));
+
+vi.mock('thirdweb/react', () => ({
+  ConnectButton: () => <div data-testid="mock-connect-button">Mock Connect Button</div>,
+  useActiveAccount: () => null,
+  useReadContract: () => ({ data: undefined, isLoading: false })
+}));
 
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
@@ -8,6 +21,11 @@ import { getDefaultFormData } from '../data/ndaData';
 // @vitest-environment jsdom
 
 expect.extend(matchers);
+
+const renderWithProvider = (ui, options) => render(
+  <ThirdwebProvider>{ui}</ThirdwebProvider>,
+  options
+);
 
 describe('NDAGeneratorForm', () => {
   afterEach(() => {
