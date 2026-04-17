@@ -12,14 +12,35 @@ const useFormValidation = (formData) => {
   useEffect(() => {
     const validate = () => {
       // Validate Party Names
-      if (!formData.disclosing || formData.disclosing.trim().length < 2 || formData.disclosing.length > 255) {
-        setValidationMessage('Please enter a valid Disclosing Party name (min 2 characters, max 255).');
+      // Regex to allow letters, numbers, spaces, and basic punctuation (.,&'-) and accented characters
+      const nameRegex = /^[\p{L}0-9\s.,&'-]+$/u;
+
+      const sanitize = (str) => {
+        if (!str) return '';
+        return str.replace(/[^\p{L}0-9\s.,&'-]/gu, '');
+      };
+
+      const sanitizedDisclosing = sanitize(formData.disclosing);
+      const sanitizedReceiving = sanitize(formData.receiving);
+
+      if (!formData.disclosing || formData.disclosing.trim().length < 2 || formData.disclosing.length > 100) {
+        setValidationMessage('Please enter a valid Disclosing Party name (min 2 characters, max 100).');
+        setIsValid(false);
+        return;
+      }
+      if (formData.disclosing !== sanitizedDisclosing) {
+        setValidationMessage('Disclosing Party name contains invalid characters.');
         setIsValid(false);
         return;
       }
 
-      if (!formData.receiving || formData.receiving.trim().length < 2 || formData.receiving.length > 255) {
-        setValidationMessage('Please enter a valid Receiving Party name (min 2 characters, max 255).');
+      if (!formData.receiving || formData.receiving.trim().length < 2 || formData.receiving.length > 100) {
+        setValidationMessage('Please enter a valid Receiving Party name (min 2 characters, max 100).');
+        setIsValid(false);
+        return;
+      }
+      if (formData.receiving !== sanitizedReceiving) {
+        setValidationMessage('Receiving Party name contains invalid characters.');
         setIsValid(false);
         return;
       }

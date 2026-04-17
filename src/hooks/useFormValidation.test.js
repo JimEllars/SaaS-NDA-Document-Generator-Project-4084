@@ -17,22 +17,33 @@ describe('useFormValidation', () => {
 
   it('should return false if names are too long', () => {
     const formData = {
-      disclosing: 'A'.repeat(256),
+      disclosing: 'A'.repeat(101),
       receiving: 'B',
       effectiveDate: '2023-10-27'
     };
     const { result } = renderHook(() => useFormValidation(formData));
     expect(result.current.isValid).toBe(false);
-    expect(result.current.validationMessage).toMatch(/max 255/);
+    expect(result.current.validationMessage).toMatch(/max 100/);
 
     const formData2 = {
       disclosing: 'Alice',
-      receiving: 'B'.repeat(256),
+      receiving: 'B'.repeat(101),
       effectiveDate: '2023-10-27'
     };
     const { result: result2 } = renderHook(() => useFormValidation(formData2));
     expect(result2.current.isValid).toBe(false);
-    expect(result2.current.validationMessage).toMatch(/max 255/);
+    expect(result2.current.validationMessage).toMatch(/max 100/);
+  });
+
+  it('should return false if names contain invalid characters', () => {
+    const formData = {
+      disclosing: 'Alice <script>',
+      receiving: 'Bob',
+      effectiveDate: '2023-10-27'
+    };
+    const { result } = renderHook(() => useFormValidation(formData));
+    expect(result.current.isValid).toBe(false);
+    expect(result.current.validationMessage).toMatch(/invalid characters/);
   });
 
   it('should return false if date is invalid', () => {

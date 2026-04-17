@@ -253,7 +253,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
           )}
 
           <div className="flex flex-col gap-4">
-            {!isEditing && (
+            {!isEditing && import.meta.env.VITE_ENABLE_WEB3 === 'true' && (
               <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-black/30 p-4 rounded-xl border border-white/5">
                 <div className="flex flex-col">
                    <p className="text-sm font-semibold text-zinc-300">AXiM Node Holder?</p>
@@ -276,7 +276,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
                 }
               </button>
 
-              {!isEditing && hasToken && !isChecking && (
+              {!isEditing && hasToken && !isChecking && import.meta.env.VITE_ENABLE_WEB3 === 'true' && (
                  <button
                    onClick={handleBypass}
                    disabled={!isFormValid}
