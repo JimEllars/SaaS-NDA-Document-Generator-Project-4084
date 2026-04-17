@@ -5,10 +5,10 @@ import SafeIcon from '../common/SafeIcon';
 import useFormValidation from '../hooks/useFormValidation';
 import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
 
-const FIELD_BASE_CLASSES = "w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none";
+const FIELD_BASE_CLASSES = "w-full p-4 bg-black/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-axim-teal focus:border-axim-teal outline-none text-zinc-100 placeholder-zinc-500";
 const INPUT_CLASSES = `${FIELD_BASE_CLASSES} transition`;
 const SELECT_CLASSES = FIELD_BASE_CLASSES;
-const LABEL_CLASSES = "text-sm font-bold text-slate-600 mb-2";
+const LABEL_CLASSES = "text-sm font-bold text-zinc-300 mb-2";
 const TOGGLE_BUTTON_BASE_CLASSES = "flex-1 py-3 text-sm font-bold rounded-lg transition";
 
 const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEditing, onUpdate }) => {
@@ -26,24 +26,24 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Instructions */}
-      <div className="bg-white/50 border border-blue-100 rounded-xl p-4 text-sm text-slate-600">
+      <div className="bg-axim-teal/5 border border-axim-teal/20 rounded-xl p-4 text-sm text-zinc-300">
         <p className="flex gap-2">
-          <SafeIcon icon={FiBriefcase} className="text-blue-500 mt-0.5" size={16} />
+          <SafeIcon icon={FiBriefcase} className="text-axim-teal mt-0.5" size={16} />
           Please fill out the details below to generate your custom Non-Disclosure Agreement. Once completed, you can purchase and download the legally binding document in PDF format.
         </p>
       </div>
 
       {/* Configuration Panel */}
-      <section className="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
+      <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-lg">
         <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <SafeIcon icon={FiFileText} size={20} className="text-blue-600" />
+          <SafeIcon icon={FiFileText} size={20} className="text-axim-teal" />
           Agreement Details
         </h2>
 
         <div className="space-y-5">
           {/* Agreement Type Toggle */}
           <div className="flex flex-col gap-2 mb-6">
-            <div className="flex p-1 bg-slate-100 rounded-xl" role="radiogroup" aria-label="Agreement Type">
+            <div className="flex p-1 bg-black/50 rounded-xl border border-white/10" role="radiogroup" aria-label="Agreement Type">
               <button
                 type="button"
                 role="radio"
@@ -51,8 +51,8 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
                 onClick={() => setFormData(p => ({...p, type: 'unilateral'}))}
                 className={`${TOGGLE_BUTTON_BASE_CLASSES} ${
                   formData.type === 'unilateral'
-                    ? 'bg-white shadow-sm text-blue-600'
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-axim-teal/20 shadow-sm text-axim-teal'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 Unilateral NDA
@@ -64,14 +64,14 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
                 onClick={() => setFormData(p => ({...p, type: 'mutual'}))}
                 className={`${TOGGLE_BUTTON_BASE_CLASSES} ${
                   formData.type === 'mutual'
-                    ? 'bg-white shadow-sm text-blue-600'
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-axim-teal/20 shadow-sm text-axim-teal'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 Mutual NDA
               </button>
             </div>
-            <p className="text-xs text-slate-500 px-1">
+            <p className="text-xs text-zinc-400 px-1">
               {formData.type === 'unilateral'
                 ? 'One party (Disclosing) shares information with another (Receiving).'
                 : 'Both parties share confidential information with each other.'}
@@ -198,16 +198,16 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
           </div>
 
           {/* Additional Options */}
-          <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl">
+          <div className="flex items-center gap-3 p-4 bg-black/50 border border-white/10 rounded-xl">
             <input
               id="includeReturn"
               type="checkbox"
               name="includeReturn"
               checked={formData.includeReturn}
               onChange={handleInputChange}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-axim-teal border-zinc-600 rounded focus:ring-axim-teal bg-black"
             />
-            <label htmlFor="includeReturn" className="text-sm font-medium text-slate-700">
+            <label htmlFor="includeReturn" className="text-sm font-medium text-zinc-300">
               Include document return clause
             </label>
           </div>
@@ -215,30 +215,30 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
       </section>
 
       {/* Download/Purchase Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <section className="bg-white/5 backdrop-blur-md border border-white/10 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
         <div className="relative z-10">
           {!isEditing && (
             <>
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xl font-bold">Generate Professional PDF</h3>
-                <span className="bg-blue-500 text-xs font-bold px-3 py-1 rounded-full">$12.99</span>
+                <span className="bg-axim-teal/20 text-axim-teal border border-axim-teal/30 text-xs font-bold px-3 py-1 rounded-full">$12.99</span>
               </div>
-              <p className="text-blue-100 text-sm mb-6 leading-relaxed">
+              <p className="text-zinc-300 text-sm mb-6 leading-relaxed">
                 Get a watermark-free, legally formatted document ready for digital signatures and immediate use.
               </p>
 
-              <ul className="text-blue-100 text-sm mb-6 space-y-2">
-                <li className="flex items-center gap-2">
+              <ul className="text-zinc-300 text-sm mb-6 space-y-2">
+                <li className="flex items-center gap-2 text-axim-teal">
                   <SafeIcon icon={FiCheck} size={16} />
-                  Professional formatting
+                  <span className="text-zinc-300">Professional formatting</span>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-2 text-axim-teal">
                   <SafeIcon icon={FiCheck} size={16} />
-                  Industry-specific clauses
+                  <span className="text-zinc-300">Industry-specific clauses</span>
                 </li>
-                <li className="flex items-center gap-2">
+                <li className="flex items-center gap-2 text-axim-teal">
                   <SafeIcon icon={FiCheck} size={16} />
-                  Instant download
+                  <span className="text-zinc-300">Instant download</span>
                 </li>
               </ul>
             </>
@@ -248,7 +248,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
             <button
               onClick={isEditing ? onUpdate : onPurchase}
               disabled={!isFormValid}
-              className={`flex-1 bg-white text-blue-800 font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`flex-1 bg-axim-teal text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 hover:shadow-[0_0_15px_rgba(0,229,255,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''}`}
             >
               <SafeIcon icon={isEditing ? FiRefreshCw : FiLock} size={20} />
               {isEditing
@@ -259,13 +259,13 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, onPurchase, isEdit
           </div>
 
           {!isFormValid && (
-             <p className="text-sm text-blue-200 mt-4 font-medium flex items-center justify-center gap-2 animate-pulse">
+             <p className="text-sm text-red-400 mt-4 font-medium flex items-center justify-center gap-2 animate-pulse">
                <SafeIcon icon={FiAlertCircle} size={16} />
                {validationMessage}
              </p>
           )}
         </div>
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-blue-700 rounded-full opacity-40 blur-3xl"></div>
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-axim-teal rounded-full opacity-10 blur-3xl pointer-events-none"></div>
       </section>
     </div>
   );
