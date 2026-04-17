@@ -1,32 +1,34 @@
-import { generateDocument } from '../utils/documentGenerator';
+export const processPayment = async (productId) => {
+  const response = await fetch('/api/create-checkout-session', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ productId })
+  });
 
-// These functions are kept as stubs for now to avoid breaking App.jsx
-// until the full React Router integration is complete in Phase 2.
-
-export const verifyPaymentAndGetDocument = async (paymentMethodId, formData) => {
-  if (!paymentMethodId) {
-    throw new Error("Invalid payment method");
+  if (!response.ok) {
+    throw new Error('Failed to create checkout session');
   }
 
-  try {
-    const documentData = generateDocument({ ...formData, isPaid: true });
-    return {
-      success: true,
-      document: documentData
-    };
-  } catch (error) {
-    throw new Error("Failed to generate document securely");
-  }
+  return response.json();
 };
 
-export const updateDocument = async (formData) => {
-  try {
-    const documentData = generateDocument({ ...formData, isPaid: true });
-    return {
-      success: true,
-      document: documentData
-    };
-  } catch (error) {
-    throw new Error("Failed to update document");
+export const verifySession = async (sessionId) => {
+  if (!sessionId) {
+    throw new Error("Invalid session ID");
   }
+
+  const response = await fetch(`/api/verify-session?session_id=${sessionId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to verify session');
+  }
+
+  return response.json();
 };
