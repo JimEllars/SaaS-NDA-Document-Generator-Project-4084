@@ -13,8 +13,12 @@ export default defineConfig({
   server: {
     historyApiFallback: true,
   },
-   build: {
+  build: {
     outDir: 'dist',
     sourcemap: true
+  },
+  esbuild: {
+    drop: ['debugger'],
+    pure: ['console.log', 'console.info'],
   },
 });
