@@ -1,6 +1,11 @@
 import { CLAUSES } from '../data/ndaData';
 import { formatEffectiveDate } from './dateUtils';
 
+/**
+ * Processes an array of content items, formatting them into paragraphs or clauses.
+ * @param {Array<string|Object>} content - The content items to process.
+ * @returns {Array<Object>} - Processed content items with standardized structure.
+ */
 const processContent = (content) => {
   let clauseCounter = 0;
   return content.map(item => {
@@ -18,6 +23,13 @@ const processContent = (content) => {
   });
 };
 
+/**
+ * Builds the array of document sections based on the provided configuration.
+ * @param {Object} formData - The data from the form.
+ * @param {boolean} isRobust - Whether to include robust clauses.
+ * @param {Object} industry - Industry-specific data and clauses.
+ * @returns {Array<Object>} - Array of configured sections with formatting.
+ */
 const buildSections = (formData, isRobust, industry) => {
   const rawSections = [
     {
