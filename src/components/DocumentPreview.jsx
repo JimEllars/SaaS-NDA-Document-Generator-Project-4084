@@ -31,24 +31,24 @@ const DocumentPreview = memo(({ formData, documentData, onDownload, onEdit }) =>
   return (
     <div className="space-y-6 animate-in fade-in zoom-in duration-500 relative">
        {/* Success Message */}
-       <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center shadow-sm no-print">
-          <div className="mx-auto bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mb-4">
-            <SafeIcon icon={FiCheckCircle} className="text-green-600" size={24} />
+       <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 text-center shadow-sm no-print">
+          <div className="mx-auto bg-axim-teal/20 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+            <SafeIcon icon={FiCheckCircle} className="text-axim-teal" size={24} />
           </div>
-          <h2 className="text-xl font-bold text-green-900 mb-2">Payment Successful!</h2>
-          <p className="text-green-800">Your document is ready. You can now download or print your NDA.</p>
+          <h2 className="text-xl font-bold text-zinc-100 mb-2">Payment Successful!</h2>
+          <p className="text-zinc-400">Your document is ready. You can now download or print your NDA.</p>
 
           <div className="flex flex-col gap-3 max-w-sm mx-auto mt-6">
             <button
                 onClick={onDownload}
-                className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-lg"
+                className="w-full bg-axim-teal text-black font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 transition shadow-lg hover:shadow-[0_0_15px_rgba(0,229,255,0.4)]"
             >
                 <SafeIcon icon={FiPrinter} size={20} />
                 Print / Download PDF
             </button>
             <button
                 onClick={onEdit}
-                className="w-full bg-white text-blue-600 border border-blue-200 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition shadow-sm"
+                className="w-full bg-transparent text-axim-teal border border-axim-teal/30 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/10 transition shadow-sm"
             >
                 <SafeIcon icon={FiEdit} size={20} />
                 Edit Document
@@ -57,9 +57,9 @@ const DocumentPreview = memo(({ formData, documentData, onDownload, onEdit }) =>
        </div>
 
        {/* Document Display (Read Only View) */}
-       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden relative">
+       <div className="bg-white text-slate-800 rounded-2xl shadow-lg border border-slate-200 overflow-hidden relative">
 
-          <div className="bg-slate-50 px-6 py-4 border-b flex justify-between items-center no-print">
+          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center no-print">
             <span className="text-sm font-bold text-slate-600 flex items-center gap-2">
               <SafeIcon icon={FiFileText} size={16} />
               Document Preview

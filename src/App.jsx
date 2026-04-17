@@ -54,31 +54,11 @@ function AppContent() {
   }, []);
 
   const handlePaymentComplete = useCallback(async (paymentMethodId) => {
+    // This function will be refactored in Phase 2 to handle the React Router
+    // success page redirect rather than local state setting.
+    // For now, it stays as a stub.
     setShowCheckout(false);
-    setIsProcessingPayment(true);
-
-    try {
-      // Send the paymentMethodId to our "backend" API
-      // The backend verifies the payment, and only if successful, generates the document
-      const response = await verifyPaymentAndGetDocument(paymentMethodId, formData);
-
-      if (response.success) {
-        setPurchasedDocument(response.document);
-        setShowSuccessModal(true);
-        addToast('Payment successful!', 'success');
-
-        // Hide success modal after a delay
-        setTimeout(() => {
-          setShowSuccessModal(false);
-        }, 2000);
-      }
-    } catch (err) {
-      console.error("Verification error:", err);
-      addToast("Payment verification failed. Please try again.", "error");
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  }, [formData, addToast]);
+  }, []);
 
   const handleUpdate = useCallback(async () => {
     setIsEditing(false);
@@ -104,22 +84,29 @@ function AppContent() {
   }, [formData, purchasedDocument, addToast]);
 
   const handlePurchase = useCallback(() => {
-    setShowCheckout(true);
-  }, []);
+    // In Phase 2, this will redirect to the Stripe Checkout Session
+    // via our Cloudflare Worker proxy.
+    addToast('Redirecting to Stripe Checkout...', 'info');
+    console.log('Preparing to redirect to Stripe Checkout...');
+    // We don't show checkout anymore as this is being replaced by a redirect
+  }, [addToast]);
 
   // PREVENT_PREVIEW: Do not implement document preview to prevent theft.
 
   const isPaid = !!purchasedDocument;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col items-center p-4 md:p-8 font-sans text-slate-900">
+    <div className="min-h-screen bg-black text-zinc-100 flex flex-col items-center p-4 md:p-8 font-sans relative overflow-hidden">
+      {/* Ambient teal blur effect behind the form */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-axim-teal rounded-full opacity-10 blur-[120px] pointer-events-none"></div>
+
       <Header
         isPaid={isPaid}
         onClear={handleStartOverRequest}
         onStartOver={handleStartOverRequest}
       />
 
-      <div className="max-w-3xl w-full no-print">
+      <div className="max-w-3xl w-full no-print relative z-10">
         {!isPaid || isEditing ? (
           <NDAGeneratorForm
             formData={formData}

@@ -1,27 +1,15 @@
 import { generateDocument } from '../utils/documentGenerator';
-import { simulateDelay } from '../utils/simulateDelay';
 
-/**
- * Simulates a secure backend API for processing payments and generating documents.
- * In a real-world application, this logic would live on a secure server.
- * The client would send the paymentMethodId to the server, the server would
- * verify the payment with Stripe, and then securely generate and return the document.
- */
+// These functions are kept as stubs for now to avoid breaking App.jsx
+// until the full React Router integration is complete in Phase 2.
+
 export const verifyPaymentAndGetDocument = async (paymentMethodId, formData) => {
-  // Simulate network delay and backend processing
-  await simulateDelay(2000);
-
   if (!paymentMethodId) {
     throw new Error("Invalid payment method");
   }
 
   try {
-    // The server generates the document based on the provided data.
-    // We set a temporary flag `isPaid: true` just for the generator function
-    // because the generator function internally checks for `isPaid`.
-    // In a real backend, the generator wouldn't need a client-provided `isPaid` flag.
     const documentData = generateDocument({ ...formData, isPaid: true });
-
     return {
       success: true,
       document: documentData
@@ -31,14 +19,7 @@ export const verifyPaymentAndGetDocument = async (paymentMethodId, formData) => 
   }
 };
 
-/**
- * Simulates a secure backend API for updating a document that has already been paid for.
- * In a real-world application, the server would verify the user's session or a secure token
- * to ensure they have the right to regenerate the document.
- */
 export const updateDocument = async (formData) => {
-  await simulateDelay(1000);
-
   try {
     const documentData = generateDocument({ ...formData, isPaid: true });
     return {
