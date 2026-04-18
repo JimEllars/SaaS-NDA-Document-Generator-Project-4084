@@ -6,17 +6,50 @@ const STORAGE_KEY = 'axim_nda_draft';
 const useNDAForm = () => {
   const [formData, setFormDataInternal] = useState(() => {
     try {
-      const savedData = sessionStorage.getItem(STORAGE_KEY);
+      const savedData = localStorage.getItem(STORAGE_KEY);
       if (savedData) {
-        return JSON.parse(savedData);
+        const parsed = JSON.parse(savedData);
+        if (parsed.formData) return parsed.formData;
+        return parsed;
       }
     } catch (err) {
-      console.warn("Failed to read from sessionStorage:", err);
+      console.warn("Failed to read from localStorage:", err);
     }
     return getDefaultFormData();
   });
 
+  const [currentStep, setCurrentStepInternal] = useState(() => {
+    try {
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.currentStep !== undefined) return parsed.currentStep;
+      }
+    } catch (err) {
+      console.warn("Failed to read from localStorage:", err);
+    }
+    return 1;
+  });
+
+  const [isResumed, setIsResumed] = useState(() => {
+    try {
+        return localStorage.getItem(STORAGE_KEY) !== null;
+    } catch (err) {
+        return false;
+    }
+  });
+
+  const currentStepRef = useRef(currentStep);
+
   const formDataRef = useRef(formData);
+
+  const setCurrentStep = useCallback((value) => {
+    setCurrentStepInternal((prev) => {
+      const nextData = typeof value === 'function' ? value(prev) : value;
+      currentStepRef.current = nextData;
+      return nextData;
+    });
+  }, []);
 
   const setFormData = useCallback((value) => {
     setFormDataInternal((prev) => {
@@ -29,27 +62,32 @@ const useNDAForm = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       try {
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formDataRef.current));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            formData: formDataRef.current,
+            currentStep: currentStepRef.current
+        }));
       } catch (err) {
-        console.warn("Failed to save to sessionStorage:", err);
+        console.warn("Failed to save to localStorage:", err);
       }
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [formData]); // We trigger the effect when formData changes
+  }, [formData, currentStep]); // We trigger the effect when formData changes
 
   const resetForm = useCallback(() => {
     const defaultData = getDefaultFormData();
     setFormDataInternal(defaultData);
+    setCurrentStepInternal(1);
     formDataRef.current = defaultData;
+    currentStepRef.current = 1;
     try {
-      sessionStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY);
     } catch (err) {
-      console.warn("Failed to remove from sessionStorage:", err);
+      console.warn("Failed to remove from localStorage:", err);
     }
   }, []);
 
-  return { formData, setFormData, resetForm };
+  return { formData, setFormData, currentStep, setCurrentStep, resetForm, isResumed };
 };
 
 export default useNDAForm;

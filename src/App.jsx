@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
 import NDAGeneratorForm from './components/NDAGeneratorForm';
 import SuccessPage from './components/SuccessPage';
+import AdminDashboard from './components/AdminDashboard';
 import ConfirmModal from './components/ConfirmModal';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider, useToast } from './context/ToastContext';
@@ -74,6 +76,7 @@ function AppContent() {
             />
           } />
           <Route path="/success" element={<SuccessPage />} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </div>
 
