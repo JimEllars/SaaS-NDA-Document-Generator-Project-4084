@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { verifySession, getValidAccessToken, clearAccessToken } from '../api/paymentService';
+import { verifySession, getValidAccessToken, clearAccessToken, deliverOrchestratedDocument } from '../api/paymentService';
 import { generateDocument } from '../utils/documentGenerator';
 import { FiCheckCircle, FiMail, FiSend } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
@@ -49,17 +49,7 @@ export default function SuccessPage() {
         try {
             setIsSendingEmail(true);
             const token = getValidAccessToken();
-            const response = await fetch('/api/send-email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    email,
-                    formData: savedFormDataRef.current
-                })
-            });
+            const response = await deliverOrchestratedDocument(token, { templateId: 'nda_v1', email, formData: documentData });
 
             if (!response.ok) {
                 if (response.status === 401 || response.status === 403) {
@@ -119,17 +109,7 @@ export default function SuccessPage() {
                     if (formData.email) {
                         try {
                             const token = getValidAccessToken();
-                            await fetch('/api/send-email', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${token}`
-                                },
-                                body: JSON.stringify({
-                                    email: formData.email,
-                                    formData: formData
-                                })
-                            });
+                            await deliverOrchestratedDocument(token, { templateId: 'nda_v1', email: formData.email, formData: formData });
                         } catch (err) {
                             console.error('Auto-send failed', err);
                         }
