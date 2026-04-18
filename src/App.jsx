@@ -1,5 +1,4 @@
-import { useState, useCallback } from 'react';
-import { useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
@@ -12,13 +11,36 @@ import { ToastProvider, useToast } from './context/ToastContext';
 import ToastContainer from './components/Toast';
 import useNDAForm from './hooks/useNDAForm';
 import { processPayment } from './api/paymentService';
+import SafeIcon from './common/SafeIcon';
+import { FiLifeBuoy } from 'react-icons/fi';
+
 
 function AppContent() {
-  const { formData, setFormData, resetForm } = useNDAForm();
+    const { formData, setFormData, currentStep, setCurrentStep, resetForm, isResumed } = useNDAForm();
   const { addToast } = useToast();
+  const toastRef = useRef(false);
+
+  useEffect(() => {
+      if (isResumed && !toastRef.current) {
+          addToast('Welcome back! Your draft has been restored.', 'info');
+          toastRef.current = true;
+      }
+  }, [isResumed, addToast]);
 
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [userSession, setUserSession] = useState({ health_index: 100 });
+
+  useEffect(() => {
+      // Mock AXiM Passport session check
+      const checkPassport = () => {
+          setTimeout(() => {
+              setUserSession({ health_index: 35 }); // Simulate low health index
+          }, 2000);
+      };
+      checkPassport();
+  }, []);
+
 
   const handleStartOverRequest = useCallback(() => {
     setShowStartOverConfirm(true);
@@ -58,6 +80,14 @@ function AppContent() {
       {/* Ambient teal blur effect behind the form */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-axim-teal rounded-full opacity-10 blur-[120px] pointer-events-none"></div>
 
+
+      {userSession.health_index < 40 && (
+          <div className="bg-purple-900/50 border border-purple-500/30 text-purple-200 text-sm py-3 px-4 flex items-center justify-center gap-3 w-full shadow-[0_4px_20px_rgba(147,51,234,0.15)] relative z-20 backdrop-blur-md">
+              <SafeIcon icon={FiLifeBuoy} className="text-purple-400" />
+              Need expert help? Our technical team is available to assist with your document configuration.
+          </div>
+      )}
+
       <Header
         isPaid={false}
         onClear={handleStartOverRequest}
@@ -70,6 +100,8 @@ function AppContent() {
             <NDAGeneratorForm
               formData={formData}
               setFormData={setFormData}
+              currentStep={currentStep}
+              setCurrentStep={setCurrentStep}
               onPurchase={handlePurchase}
               isEditing={false}
               onUpdate={() => {}}
