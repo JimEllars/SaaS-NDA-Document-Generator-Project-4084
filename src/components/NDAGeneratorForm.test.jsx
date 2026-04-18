@@ -131,6 +131,7 @@ describe('NDAGeneratorForm', () => {
   });
 
   it('enables the submit button when valid', () => {
+    defaultProps.currentStep = 3;
     const validFormData = {
       ...defaultProps.formData,
       disclosing: 'Acme Corp',
@@ -146,6 +147,7 @@ describe('NDAGeneratorForm', () => {
   });
 
   it('calls onPurchase when clicking submit on a valid form', () => {
+    defaultProps.currentStep = 3;
     const validFormData = {
       ...defaultProps.formData,
       disclosing: 'Acme Corp',
@@ -164,6 +166,7 @@ describe('NDAGeneratorForm', () => {
   });
 
   it('renders and calls onUpdate when in editing mode', () => {
+    defaultProps.currentStep = 3;
     const validFormData = {
       ...defaultProps.formData,
       disclosing: 'Acme Corp',
@@ -203,7 +206,7 @@ describe('NDAGeneratorForm', () => {
   });
   it('renders effective date as empty string if not provided', () => {
     const dataWithoutDate = { ...defaultProps.formData, effectiveDate: null };
-    render(<NDAGeneratorForm {...defaultProps} formData={dataWithoutDate} />);
+    render(<NDAGeneratorForm {...defaultProps} formData={dataWithoutDate} currentStep={2} />);
 
     const dateInput = screen.getByLabelText(/Effective Date/);
     expect(dateInput.value).toBe('');
@@ -281,7 +284,7 @@ describe('Validation Edge Cases', () => {
       receiving: 'Globex Inc',
       effectiveDate: 'invalid-date'
     };
-    render(<NDAGeneratorForm {...defaultProps} formData={invalidFormData} />);
+    render(<NDAGeneratorForm {...defaultProps} formData={invalidFormData} currentStep={2} />);
     expect(screen.getByText(/Please enter a valid effective date/i)).toBeInTheDocument();
   });
 });
@@ -312,33 +315,35 @@ describe('Simulating user input changes', () => {
   });
 
   it('triggers setFormData callbacks correctly when multiple fields are changed', () => {
-    render(<NDAGeneratorForm {...defaultProps} />);
 
+    let nextState = defaultProps.formData;
+    const mockSetFormData = vi.fn((updater) => {
+        if (typeof updater === 'function') {
+            nextState = updater(nextState);
+        } else {
+            nextState = updater;
+        }
+    });
+
+    const { unmount } = render(<NDAGeneratorForm {...defaultProps} setFormData={mockSetFormData} currentStep={1} />);
     const disclosingInput = screen.getByLabelText(/Disclosing Party/i);
     const receivingInput = screen.getByLabelText(/Receiving Party/i);
-    const dateInput = screen.getByLabelText(/Effective Date/i);
 
     fireEvent.change(disclosingInput, { target: { name: 'disclosing', value: 'New Disclosing' } });
-    expect(defaultProps.setFormData).toHaveBeenCalledTimes(1);
-
-    // Simulate what the updater function does
-    let updaterFn = defaultProps.setFormData.mock.calls[0][0];
-    let nextState = updaterFn(defaultProps.formData);
+    expect(mockSetFormData).toHaveBeenCalledTimes(1);
     expect(nextState.disclosing).toBe('New Disclosing');
 
     fireEvent.change(receivingInput, { target: { name: 'receiving', value: 'New Receiving' } });
-    expect(defaultProps.setFormData).toHaveBeenCalledTimes(2);
-
-    updaterFn = defaultProps.setFormData.mock.calls[1][0];
-    nextState = updaterFn(defaultProps.formData);
+    expect(mockSetFormData).toHaveBeenCalledTimes(2);
     expect(nextState.receiving).toBe('New Receiving');
 
+    unmount();
+    render(<NDAGeneratorForm {...defaultProps} formData={nextState} setFormData={mockSetFormData} currentStep={2} />);
+    const dateInput = screen.getByLabelText(/Effective Date/i);
     fireEvent.change(dateInput, { target: { name: 'effectiveDate', value: '2023-12-31' } });
-    expect(defaultProps.setFormData).toHaveBeenCalledTimes(3);
-
-    updaterFn = defaultProps.setFormData.mock.calls[2][0];
-    nextState = updaterFn(defaultProps.formData);
+    expect(mockSetFormData).toHaveBeenCalledTimes(3);
     expect(nextState.effectiveDate).toBe('2023-12-31');
+
   });
 });
 
@@ -382,7 +387,7 @@ describe('Testing onChange callbacks', () => {
   });
 
   it('simulates user input changes on receiving party', () => {
-    render(<NDAGeneratorForm {...defaultProps} />);
+    render(<NDAGeneratorForm {...defaultProps} currentStep={1} />);
 
     const receivingInput = screen.getByLabelText(/Receiving Party/i);
     fireEvent.change(receivingInput, { target: { name: 'receiving', value: 'New Receiving' } });

@@ -73,3 +73,19 @@ export const getValidAccessToken = () => {
 export const clearAccessToken = () => {
   sessionStorage.removeItem('axim_access_token');
 };
+
+
+export const deliverOrchestratedDocument = async (token, payload) => {
+  const response = await fetch('https://api.axim.us.com/v1/functions/document-orchestrator', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+      throw new Error('Failed to deliver orchestrated document');
+  }
+  return response;
+};
