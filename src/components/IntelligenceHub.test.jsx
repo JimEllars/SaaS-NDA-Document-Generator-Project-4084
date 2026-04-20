@@ -89,6 +89,13 @@ describe('IntelligenceHub component', () => {
         content: 'API documentation updated',
         similarity: 0.88,
         timestamp: '2023-10-12T14:15:00Z'
+      },
+      {
+        id: '3',
+        type: 'Discussion',
+        content: 'System architecture review',
+        similarity: 0.75,
+        timestamp: '2023-10-10T10:00:00Z'
       }
     ];
 
@@ -104,10 +111,13 @@ describe('IntelligenceHub component', () => {
     expect(screen.getByText('Semantic Matches')).toBeInTheDocument();
     expect(screen.getByText('Fixed the cache spike')).toBeInTheDocument();
     expect(screen.getByText('API documentation updated')).toBeInTheDocument();
+    expect(screen.getByText('System architecture review')).toBeInTheDocument();
     expect(screen.getByText('Resolution')).toBeInTheDocument();
     expect(screen.getByText('Knowledge Base')).toBeInTheDocument();
+    expect(screen.getByText('Discussion')).toBeInTheDocument();
     expect(screen.getByText('95%')).toBeInTheDocument();
     expect(screen.getByText('88%')).toBeInTheDocument();
+    expect(screen.getByText('75%')).toBeInTheDocument();
   });
 
   it('displays error message when search fails', () => {
