@@ -1,6 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { FiActivity, FiServer, FiGlobe, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 
+const TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: 'numeric',
+  second: 'numeric',
+  hour12: false
+});
+
+const generateRecentEvents = (status, latency) => {
+  const now = Date.now();
+  if (status === 'operational') {
+    return [
+      `[${TIME_FORMATTER.format(now - 10000)}] Health check passed (${latency}ms)`,
+      `[${TIME_FORMATTER.format(now - 60000)}] Traffic steady at 45 req/s`,
+      `[${TIME_FORMATTER.format(now - 120000)}] Edge cache hit ratio: 94%`
+    ];
+  } else if (status === 'degraded') {
+    return [
+      `[${TIME_FORMATTER.format(now - 5000)}] Warning: Elevated latency (${latency}ms)`,
+      `[${TIME_FORMATTER.format(now - 15000)}] Connection pool utilization > 80%`,
+      `[${TIME_FORMATTER.format(now - 45000)}] Health check marginal`
+    ];
+  } else {
+    return [
+      `[${TIME_FORMATTER.format(now - 2000)}] CRITICAL: Endpoint returning 500 Error`,
+      `[${TIME_FORMATTER.format(now - 8000)}] Connection timeout after 5000ms`,
+      `[${TIME_FORMATTER.format(now - 15000)}] Health check failed`
+    ];
+  }
+};
+
 const generateMockFleetData = () => {
   return [
     { id: 'app-1', name: 'axim.us.com', status: 'operational', type: 'marketing', latency: 45 },
@@ -13,7 +43,7 @@ const generateMockFleetData = () => {
     { id: 'app-8', name: 'worker-ai-nlp', status: 'operational', type: 'worker', latency: 89 },
     { id: 'app-9', name: 'auth.axim.us.com', status: 'operational', type: 'auth', latency: 65 },
     { id: 'app-10', name: 'payments-stripe-proxy', status: 'operational', type: 'worker', latency: 110 },
-  ];
+  ].map(app => ({ ...app, events: generateRecentEvents(app.status, app.latency) }));
 };
 
 const getStatusColor = (status) => {
@@ -53,7 +83,7 @@ const FleetHeatmap = () => {
 
     // Simulate real-time telemetry updates
     const interval = setInterval(() => {
-      setFleetData(prev => [...prev].map(app => {
+      setFleetData(prev => prev.map(app => {
         // Randomly fluctuate latency slightly
         const latChange = Math.floor(Math.random() * 20) - 10;
         let newLat = Math.max(5, app.latency + latChange);
@@ -65,35 +95,19 @@ const FleetHeatmap = () => {
           else if (app.status === 'degraded' && Math.random() > 0.5) newStatus = 'operational';
         }
 
-        return { ...app, latency: newLat, status: newStatus };
+        // Only regenerate events if status or latency changed significantly
+        // or just regenerate every 3s since it's cheap now
+        return {
+          ...app,
+          latency: newLat,
+          status: newStatus,
+          events: generateRecentEvents(newStatus, newLat)
+        };
       }));
     }, 3000);
 
     return () => clearInterval(interval);
   }, []);
-
-  const getRecentEvents = (app) => {
-    // Mock events based on status
-    if (app.status === 'operational') {
-      return [
-        `[${new Date(Date.now() - 10000).toLocaleTimeString()}] Health check passed (${app.latency}ms)`,
-        `[${new Date(Date.now() - 60000).toLocaleTimeString()}] Traffic steady at 45 req/s`,
-        `[${new Date(Date.now() - 120000).toLocaleTimeString()}] Edge cache hit ratio: 94%`
-      ];
-    } else if (app.status === 'degraded') {
-      return [
-        `[${new Date(Date.now() - 5000).toLocaleTimeString()}] Warning: Elevated latency (${app.latency}ms)`,
-        `[${new Date(Date.now() - 15000).toLocaleTimeString()}] Connection pool utilization > 80%`,
-        `[${new Date(Date.now() - 45000).toLocaleTimeString()}] Health check marginal`
-      ];
-    } else {
-      return [
-        `[${new Date(Date.now() - 2000).toLocaleTimeString()}] CRITICAL: Endpoint returning 500 Error`,
-        `[${new Date(Date.now() - 8000).toLocaleTimeString()}] Connection timeout after 5000ms`,
-        `[${new Date(Date.now() - 15000).toLocaleTimeString()}] Health check failed`
-      ];
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -143,7 +157,7 @@ const FleetHeatmap = () => {
                     <span className="font-bold text-sm text-zinc-100 truncate">{app.name}</span>
                 </div>
                 <div className="space-y-1.5">
-                    {getRecentEvents(app).map((event, idx) => (
+                    {app.events.map((event, idx) => (
                         <div key={idx} className="text-[10px] font-mono text-zinc-400 leading-tight">
                             {event}
                         </div>
