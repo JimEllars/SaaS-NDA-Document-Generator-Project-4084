@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 
 // Logging admin clicks "Approve" or "Deny" to hitl_audit_logs
 export const logHitlAction = async (action, toolName, originalAlert, adminId) => {
-    // In a real app this would be: await supabase.from('hitl_audit_logs').insert([...])
-    console.log('Logged HITL Action:', { action, toolName, originalAlert, adminId, created_at: new Date() });
+    // In a real app this would be: await supabase.from('hitl_audit_logs').insert([{ action, toolName, originalAlert, adminId, created_at: new Date() }])
+    // This is currently a stub since the Admin Dashboard uses mock data for the audit logs.
 };
 
 const ChatInterface = () => {
