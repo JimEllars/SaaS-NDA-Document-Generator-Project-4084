@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { getDefaultFormData } from '../data/ndaData';
+import { encrypt, decrypt } from '../utils/crypto';
 
 const STORAGE_KEY = 'axim_nda_draft';
 
@@ -8,7 +9,8 @@ const useNDAForm = () => {
     try {
       const savedData = localStorage.getItem(STORAGE_KEY);
       if (savedData) {
-        const parsed = JSON.parse(savedData);
+        const decrypted = decrypt(savedData);
+        const parsed = JSON.parse(decrypted);
         if (parsed.formData) return parsed.formData;
         return parsed;
       }
@@ -22,7 +24,8 @@ const useNDAForm = () => {
     try {
       const savedData = localStorage.getItem(STORAGE_KEY);
       if (savedData) {
-        const parsed = JSON.parse(savedData);
+        const decrypted = decrypt(savedData);
+        const parsed = JSON.parse(decrypted);
         if (parsed.currentStep !== undefined) return parsed.currentStep;
       }
     } catch (err) {
@@ -62,10 +65,11 @@ const useNDAForm = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        const dataToSave = JSON.stringify({
             formData: formDataRef.current,
             currentStep: currentStepRef.current
-        }));
+        });
+        localStorage.setItem(STORAGE_KEY, encrypt(dataToSave));
       } catch (err) {
         console.warn("Failed to save to localStorage:", err);
       }
