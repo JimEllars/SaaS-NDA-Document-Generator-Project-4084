@@ -23,4 +23,9 @@ export default defineConfig({
     drop: ['debugger'],
     pure: ['console.log', 'console.info', 'console.debug', 'console.trace'],
   },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/vitest.setup.jsx'],
+    globals: true
+  }
 });
