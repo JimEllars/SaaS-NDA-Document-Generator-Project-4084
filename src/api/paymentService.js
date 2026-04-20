@@ -1,8 +1,7 @@
 export const processPayment = async (productId) => {
-  if (!import.meta.env.VITE_PAYMENT_API_URL) {
-    if (import.meta.env.PROD) {
-      throw new Error('Simulation logic is not permitted in production environment.');
-    }
+  // Use relative path for proxying through Cloudflare worker
+  // Only use simulation in local dev without the env var
+  if (!import.meta.env.VITE_PAYMENT_API_URL && !import.meta.env.PROD) {
     // Simulation logic for local development
     return new Promise((resolve) => {
       setTimeout(() => {

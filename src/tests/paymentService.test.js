@@ -96,10 +96,18 @@ describe('paymentService', () => {
   });
 
   describe('processPayment', () => {
-    it('should throw if simulation and PROD is true', async () => {
+    it('should fall through to fetch when simulated if PROD is true', async () => {
       vi.stubEnv('PROD', true);
       vi.stubEnv('VITE_PAYMENT_API_URL', '');
-      await expect(processPayment('prod_123')).rejects.toThrow('Simulation logic is not permitted');
+
+      // With our changes, processPayment no longer throws in this condition, it attempts the fetch.
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ token: 'mock-token' }),
+      });
+
+      await processPayment('prod_123');
+      expect(global.fetch).toHaveBeenCalledWith('/api/create-checkout-session', expect.any(Object));
     });
 
     it('should resolve simulation if not PROD', async () => {

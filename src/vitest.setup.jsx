@@ -9,12 +9,8 @@ vi.mock('react-icons/fi', async () => {
   const actual = await vi.importActual('react-icons/fi');
   const mockIcons = { ...actual };
 
-  // Ensure we mock specific missing icons or just create a dynamic mock fallback
-  const createMockIcon = (name) => (props) => <div data-testid={`mock-icon-${name}`} {...props} />;
-
-  ['FiSearch', 'FiMessageSquare', 'FiBookOpen', 'FiShield', 'FiCpu', 'FiActivity', 'FiInfo', 'FiBriefcase', 'FiX', 'FiCheck', 'FiAlertCircle', 'FiLock', 'FiUnlock', 'FiRefreshCw', 'FiCalendar', 'FiAlertTriangle', 'FiArrowLeft', 'FiArrowRight'].forEach(name => {
-      mockIcons[name] = createMockIcon(name);
-  });
-
-  return mockIcons;
+  // By returning an unmocked module (or just what was actual), we make sure Vitest has the real icons.
+  // The rendering issues with missing icons were likely a symptom of other setup errors.
+  // Let's use the real ones so they render as SVGs properly, otherwise snapshots and DOM expectations fail.
+  return actual;
 });

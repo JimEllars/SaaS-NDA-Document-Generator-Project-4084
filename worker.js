@@ -5,7 +5,8 @@ export default {
     // Intercept API calls
     if (url.pathname.startsWith('/api/')) {
       // Modify the URL to point to the actual payment backend
-      const backendUrl = new URL(url.pathname, env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com');
+      const targetBackendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com';
+      const backendUrl = new URL(url.pathname, targetBackendUrl);
 
       let body;
 
@@ -13,8 +14,9 @@ export default {
         try {
           body = await request.json();
           // Inject the current origin for success and cancel URLs
-          body.success_url = `${url.origin}/success?session_id={CHECKOUT_SESSION_ID}`;
-          body.cancel_url = `${url.origin}/?canceled=true`;
+          const clientOrigin = request.headers.get('Origin') || url.origin;
+          body.success_url = `${clientOrigin}/success?session_id={CHECKOUT_SESSION_ID}`;
+          body.cancel_url = `${clientOrigin}/?canceled=true`;
           body = JSON.stringify(body);
         } catch (err) {
           // Fallback if we cannot parse JSON
@@ -27,8 +29,8 @@ export default {
       const headers = new Headers(request.headers);
 
       // Prevent Stripe backend from rejecting the request due to Origin/Referer issues
-      headers.set('Origin', env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com');
-      headers.set('Referer', env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com');
+      headers.set('Origin', targetBackendUrl);
+      headers.set('Referer', targetBackendUrl);
 
       if (request.method === 'OPTIONS') {
         return new Response(null, {
@@ -60,7 +62,11 @@ export default {
       }
     }
 
-    // Default: Return 404 for anything not handled by Vite/Pages in a production Cloudflare environment
+    // Default: Return static assets or route to app
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+
     return new Response('Not Found', { status: 404 });
   }
 };
