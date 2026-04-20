@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ConnectButton } from 'thirdweb/react';
 import { useWeb3Bypass } from '../hooks/useWeb3Bypass';
 import SafeIcon from '../common/SafeIcon';
+import UpsellCard from './UpsellCard';
 import useFormValidation from '../hooks/useFormValidation';
 import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
 
@@ -16,8 +17,9 @@ const TOGGLE_BUTTON_BASE_CLASSES = "flex-1 py-3 text-sm font-bold rounded-lg tra
 
 const isWeb3Enabled = import.meta.env.VITE_ENABLE_WEB3 === 'true';
 
-const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep, setCurrentStep, onPurchase, isEditing, onUpdate }) => {
+const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, setCurrentStep, onPurchase, isEditing, onUpdate, userSession, onPartnerCheckout }) => {
   const { hasToken, isChecking, client } = useWeb3Bypass();
+  const trackingSessionId = React.useRef(`sess_${Math.random().toString(36).substring(2, 9)}`);
 
   const handleBypass = React.useCallback(() => {
     // Navigate using a dummy session ID to trigger successful state
@@ -34,7 +36,18 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep, setCu
 
   const { isValid: isFormValid, validationMessage } = useFormValidation(formData);
 
-  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 3));
+  const nextStep = () => {
+    fetch("https://api.axim.us.com/v1/telemetry/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event: `nda_step_${currentStep}_completed`,
+        sessionId: trackingSessionId.current,
+        timestamp: new Date().toISOString()
+      })
+    }).catch(err => console.error("Telemetry error:", err));
+    setCurrentStep(prev => Math.min(prev + 1, 3));
+  };
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
   const renderProgressBar = () => (
@@ -322,12 +335,16 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep, setCu
             transition={{ duration: 0.3 }}
           >
             {/* Live Draft Preview Pane */}
-            <section className="bg-black/30 border border-white/10 rounded-2xl p-6 shadow-lg mb-6">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-axim-teal">
-                <SafeIcon icon={FiFileText} size={20} />
-                Live Agreement Summary
+            <section className="bg-white border border-zinc-200 rounded-lg p-8 shadow-[0_0_20px_rgba(0,0,0,0.5)] mb-6 text-black relative overflow-hidden"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50%25' y='50%25' font-size='24' fill='rgba(0,0,0,0.05)' font-family='sans-serif' font-weight='bold' text-anchor='middle' dominant-baseline='middle' transform='rotate(-45 100 100)'%3ESAMPLE DRAFT%3C/text%3E%3C/svg%3E")`,
+                backgroundRepeat: 'repeat'
+              }}
+            >
+              <h2 className="text-2xl font-serif font-bold mb-6 text-center border-b pb-4 border-zinc-300">
+                Non-Disclosure Agreement
               </h2>
-              <div className="text-zinc-300 text-sm leading-relaxed space-y-4">
+              <div className="text-zinc-800 text-base leading-loose space-y-6 font-serif">
                 <p>
                   This <strong>{formData.type === 'mutual' ? 'Mutual' : 'Unilateral'}</strong> agreement protects information shared between <strong>{formData.disclosing || '[Party A]'}</strong> and <strong>{formData.receiving || '[Party B]'}</strong>.
                 </p>
@@ -374,8 +391,12 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep, setCu
                   </>
                 )}
 
+
                 <div className="flex flex-col gap-4">
+                  {formData.strictness === 'robust' && <UpsellCard />}
+
                   {!isEditing && isWeb3Enabled && (
+
                     <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-black/30 p-4 rounded-xl border border-white/5">
                       <div className="flex flex-col">
                         <p className="text-sm font-semibold text-zinc-300">AXiM Node Holder?</p>
@@ -392,17 +413,28 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep, setCu
                     >
                       <SafeIcon icon={FiChevronLeft} size={18} /> Back
                     </button>
-                    <button
-                      onClick={isEditing ? onUpdate : onPurchase}
-                      disabled={!isFormValid}
-                      className={`flex-1 bg-axim-teal text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 hover:shadow-[0_0_15px_rgba(0,229,255,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''}`}
-                    >
-                      <SafeIcon icon={isEditing ? FiRefreshCw : FiLock} size={20} />
-                      {isEditing
-                        ? 'Update Document'
-                        : (isFormValid ? 'Purchase & Generate' : 'Complete Form')
-                      }
-                    </button>
+                    {userSession?.is_partner && !isEditing ? (
+                      <button
+                        onClick={onPartnerCheckout}
+                        disabled={!isFormValid}
+                        className={`flex-1 bg-amber-500 text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''}`}
+                      >
+                        <SafeIcon icon={FiUnlock} size={20} />
+                        Generate with Partner Credit
+                      </button>
+                    ) : (
+                      <button
+                        onClick={isEditing ? onUpdate : onPurchase}
+                        disabled={!isFormValid}
+                        className={`flex-1 bg-axim-teal text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 hover:shadow-[0_0_15px_rgba(0,229,255,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''}`}
+                      >
+                        <SafeIcon icon={isEditing ? FiRefreshCw : FiLock} size={20} />
+                        {isEditing
+                          ? 'Update Document'
+                          : (isFormValid ? 'Purchase & Generate' : 'Complete Form')
+                        }
+                      </button>
+                    )}
 
                     {!isEditing && hasToken && !isChecking && isWeb3Enabled && (
                       <button

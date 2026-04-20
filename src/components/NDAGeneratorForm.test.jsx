@@ -40,12 +40,15 @@ describe('NDAGeneratorForm', () => {
   };
 
   it('renders correctly with default props', () => {
-    render(<NDAGeneratorForm {...defaultProps} />);
-    expect(screen.getByText('Agreement Details')).toBeInTheDocument();
+    const { unmount } = render(<NDAGeneratorForm {...defaultProps} currentStep={1} />);
+    expect(screen.getByText('The Parties')).toBeInTheDocument();
     expect(screen.getByText('Unilateral NDA')).toBeInTheDocument();
     expect(screen.getByText('Mutual NDA')).toBeInTheDocument();
     expect(screen.getByLabelText(/Disclosing Party/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Receiving Party/)).toBeInTheDocument();
+    unmount();
+
+    render(<NDAGeneratorForm {...defaultProps} currentStep={2} />);
     expect(screen.getByLabelText(/Effective Date/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Industry Sector/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Governing Law/)).toBeInTheDocument();
@@ -56,7 +59,7 @@ describe('NDAGeneratorForm', () => {
 
   it('handles text input changes correctly', () => {
     const mockSetFormData = vi.fn();
-    render(<NDAGeneratorForm {...defaultProps} setFormData={mockSetFormData} />);
+    render(<NDAGeneratorForm {...defaultProps} currentStep={1} setFormData={mockSetFormData} />);
 
     const disclosingInput = screen.getByLabelText(/Disclosing Party/);
     fireEvent.change(disclosingInput, { target: { value: 'Acme Corp', name: 'disclosing' } });
@@ -73,7 +76,7 @@ describe('NDAGeneratorForm', () => {
 
   it('handles toggle button changes correctly', () => {
     const mockSetFormData = vi.fn();
-    render(<NDAGeneratorForm {...defaultProps} setFormData={mockSetFormData} />);
+    render(<NDAGeneratorForm {...defaultProps} currentStep={1} setFormData={mockSetFormData} />);
 
     const mutualButton = screen.getByRole('radio', { name: /Mutual NDA/i });
     fireEvent.click(mutualButton);
@@ -89,7 +92,7 @@ describe('NDAGeneratorForm', () => {
 
   it('handles select changes correctly', () => {
     const mockSetFormData = vi.fn();
-    render(<NDAGeneratorForm {...defaultProps} setFormData={mockSetFormData} />);
+    render(<NDAGeneratorForm {...defaultProps} currentStep={2} setFormData={mockSetFormData} />);
 
     const industrySelect = screen.getByLabelText(/Industry Sector/);
     fireEvent.change(industrySelect, { target: { value: 'tech', name: 'industry' } });
@@ -105,7 +108,7 @@ describe('NDAGeneratorForm', () => {
 
   it('handles checkbox changes correctly', () => {
     const mockSetFormData = vi.fn();
-    render(<NDAGeneratorForm {...defaultProps} setFormData={mockSetFormData} />);
+    render(<NDAGeneratorForm {...defaultProps} currentStep={2} setFormData={mockSetFormData} />);
 
     const checkbox = screen.getByLabelText(/Include document return clause/);
     fireEvent.click(checkbox);
@@ -120,10 +123,10 @@ describe('NDAGeneratorForm', () => {
   });
 
   it('validates the form correctly', () => {
-    render(<NDAGeneratorForm {...defaultProps} />);
+    render(<NDAGeneratorForm {...defaultProps} currentStep={3} />);
 
     // Default form is invalid due to missing disclosing/receiving parties
-    expect(screen.getByText(/Please enter a valid Disclosing Party name/i)).toBeInTheDocument();
+    expect(screen.getByText(/Please enter a valid Disclosing Party name/i, { exact: false })).toBeInTheDocument();
 
     const purchaseButton = screen.getByRole('button', { name: /Complete Form/i });
     expect(purchaseButton).toBeDisabled();
@@ -191,7 +194,7 @@ describe('NDAGeneratorForm', () => {
   it('handles unilateral toggle button changes correctly', () => {
     const mockSetFormData = vi.fn();
     const mutualData = { ...defaultProps.formData, type: 'mutual' };
-    render(<NDAGeneratorForm {...defaultProps} formData={mutualData} setFormData={mockSetFormData} />);
+    render(<NDAGeneratorForm {...defaultProps} currentStep={1} formData={mutualData} setFormData={mockSetFormData} />);
 
     const unilateralButton = screen.getByRole('radio', { name: /Unilateral NDA/i });
     fireEvent.click(unilateralButton);
@@ -243,8 +246,8 @@ describe('Validation Edge Cases', () => {
       disclosing: 'A',
       receiving: 'Globex Inc'
     };
-    render(<NDAGeneratorForm {...defaultProps} formData={invalidFormData} />);
-    expect(screen.getByText(/Please enter a valid Disclosing Party name/i)).toBeInTheDocument();
+    render(<NDAGeneratorForm {...defaultProps} currentStep={3} formData={invalidFormData} />);
+    expect(screen.getByText(/Please enter a valid Disclosing Party name/i, { exact: false })).toBeInTheDocument();
   });
 
   it('validates too long disclosing party length', () => {
@@ -253,8 +256,8 @@ describe('Validation Edge Cases', () => {
       disclosing: 'A'.repeat(256),
       receiving: 'Globex Inc'
     };
-    render(<NDAGeneratorForm {...defaultProps} formData={invalidFormData} />);
-    expect(screen.getByText(/Please enter a valid Disclosing Party name/i)).toBeInTheDocument();
+    render(<NDAGeneratorForm {...defaultProps} currentStep={3} formData={invalidFormData} />);
+    expect(screen.getByText(/Please enter a valid Disclosing Party name/i, { exact: false })).toBeInTheDocument();
   });
 
   it('validates too short receiving party length', () => {
@@ -263,8 +266,8 @@ describe('Validation Edge Cases', () => {
       disclosing: 'Acme Corp',
       receiving: 'B'
     };
-    render(<NDAGeneratorForm {...defaultProps} formData={invalidFormData} />);
-    expect(screen.getByText(/Please enter a valid Receiving Party name/i)).toBeInTheDocument();
+    render(<NDAGeneratorForm {...defaultProps} currentStep={3} formData={invalidFormData} />);
+    expect(screen.getByText(/Please enter a valid Receiving Party name/i, { exact: false })).toBeInTheDocument();
   });
 
   it('validates too long receiving party length', () => {
@@ -273,8 +276,8 @@ describe('Validation Edge Cases', () => {
       disclosing: 'Acme Corp',
       receiving: 'B'.repeat(256)
     };
-    render(<NDAGeneratorForm {...defaultProps} formData={invalidFormData} />);
-    expect(screen.getByText(/Please enter a valid Receiving Party name/i)).toBeInTheDocument();
+    render(<NDAGeneratorForm {...defaultProps} currentStep={3} formData={invalidFormData} />);
+    expect(screen.getByText(/Please enter a valid Receiving Party name/i, { exact: false })).toBeInTheDocument();
   });
 
   it('validates invalid effective date', () => {
@@ -284,8 +287,8 @@ describe('Validation Edge Cases', () => {
       receiving: 'Globex Inc',
       effectiveDate: 'invalid-date'
     };
-    render(<NDAGeneratorForm {...defaultProps} formData={invalidFormData} currentStep={2} />);
-    expect(screen.getByText(/Please enter a valid effective date/i)).toBeInTheDocument();
+    render(<NDAGeneratorForm {...defaultProps} formData={invalidFormData} currentStep={3} />);
+    expect(screen.getByText(/Please enter a valid effective date/i, { exact: false })).toBeInTheDocument();
   });
 });
 
@@ -375,7 +378,7 @@ describe('Testing onChange callbacks', () => {
   });
 
   it('verifies that onChange callbacks are triggered correctly on input change', () => {
-    render(<NDAGeneratorForm {...defaultProps} />);
+    render(<NDAGeneratorForm {...defaultProps} currentStep={1} />);
 
     const disclosingInput = screen.getByLabelText(/Disclosing Party/i);
     fireEvent.change(disclosingInput, { target: { name: 'disclosing', value: 'Test Value' } });

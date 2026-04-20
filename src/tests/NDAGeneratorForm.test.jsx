@@ -46,6 +46,7 @@ describe('NDAGeneratorForm', () => {
         formData={mockFormData}
         setFormData={mockSetFormData}
         onPurchase={mockOnPurchase}
+        currentStep={2}
       />
     );
     expect(screen.getByLabelText(/Effective Date/i)).toBeInTheDocument();
@@ -57,6 +58,7 @@ describe('NDAGeneratorForm', () => {
         formData={mockFormData}
         setFormData={mockSetFormData}
         onPurchase={mockOnPurchase}
+        currentStep={2}
       />
     );
 
@@ -73,6 +75,7 @@ describe('NDAGeneratorForm', () => {
         formData={invalidFormData}
         setFormData={mockSetFormData}
         onPurchase={mockOnPurchase}
+        currentStep={3}
       />
     );
 
