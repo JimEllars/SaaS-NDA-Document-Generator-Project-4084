@@ -29,13 +29,13 @@ function AppContent() {
 
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [userSession, setUserSession] = useState({ health_index: 100 });
+  const [userSession, setUserSession] = useState({ health_index: 100, is_partner: true });
 
   useEffect(() => {
       // Mock AXiM Passport session check
       const checkPassport = () => {
           setTimeout(() => {
-              setUserSession({ health_index: 35 }); // Simulate low health index
+              setUserSession(prev => ({ ...prev, health_index: 35 })); // Simulate low health index
           }, 2000);
       };
       checkPassport();
@@ -54,6 +54,14 @@ function AppContent() {
   const handleCancelStartOver = useCallback(() => {
     setShowStartOverConfirm(false);
   }, []);
+
+
+  const handlePartnerCheckout = useCallback(() => {
+    addToast('Processing partner credit...', 'info');
+    setTimeout(() => {
+      window.location.href = '/success?session_id=AXM-PARTNER';
+    }, 1000);
+  }, [addToast]);
 
   const handlePurchase = useCallback(async () => {
     try {
@@ -105,6 +113,8 @@ function AppContent() {
               onPurchase={handlePurchase}
               isEditing={false}
               onUpdate={() => {}}
+              userSession={userSession}
+              onPartnerCheckout={handlePartnerCheckout}
             />
           } />
           <Route path="/success" element={<SuccessPage />} />
