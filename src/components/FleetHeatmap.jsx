@@ -10,43 +10,56 @@ const TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
 
 const generateRecentEvents = (() => {
   let lastTick = 0;
-  let cachedTimes = {};
+
+  let t10000, t60000, t120000, t5000, t15000, t45000, t2000, t8000;
+
+  let op1, op2, deg1, deg2;
+
+  let cachedEvents = {
+    critical: null
+  };
 
   return (status, latency) => {
     const now = Date.now();
     // Only update cache if more than 1 second has passed
     if (now - lastTick > 1000) {
       lastTick = now;
-      cachedTimes = {
-        10000: TIME_FORMATTER.format(now - 10000),
-        60000: TIME_FORMATTER.format(now - 60000),
-        120000: TIME_FORMATTER.format(now - 120000),
-        5000: TIME_FORMATTER.format(now - 5000),
-        15000: TIME_FORMATTER.format(now - 15000),
-        45000: TIME_FORMATTER.format(now - 45000),
-        2000: TIME_FORMATTER.format(now - 2000),
-        8000: TIME_FORMATTER.format(now - 8000),
-      };
+      t10000 = TIME_FORMATTER.format(now - 10000);
+      t60000 = TIME_FORMATTER.format(now - 60000);
+      t120000 = TIME_FORMATTER.format(now - 120000);
+      t5000 = TIME_FORMATTER.format(now - 5000);
+      t15000 = TIME_FORMATTER.format(now - 15000);
+      t45000 = TIME_FORMATTER.format(now - 45000);
+      t2000 = TIME_FORMATTER.format(now - 2000);
+      t8000 = TIME_FORMATTER.format(now - 8000);
+
+      op1 = `[${t60000}] Traffic steady at 45 req/s`;
+      op2 = `[${t120000}] Edge cache hit ratio: 94%`;
+
+      deg1 = `[${t15000}] Connection pool utilization > 80%`;
+      deg2 = `[${t45000}] Health check marginal`;
+
+      const crit0 = `[${t2000}] CRITICAL: Endpoint returning 500 Error`;
+      const crit1 = `[${t8000}] Connection timeout after 5000ms`;
+      const crit2 = `[${t15000}] Health check failed`;
+
+      cachedEvents.critical = [crit0, crit1, crit2];
     }
 
     if (status === 'operational') {
       return [
-        `[${cachedTimes[10000]}] Health check passed (${latency}ms)`,
-        `[${cachedTimes[60000]}] Traffic steady at 45 req/s`,
-        `[${cachedTimes[120000]}] Edge cache hit ratio: 94%`
+        `[${t10000}] Health check passed (${latency}ms)`,
+        op1,
+        op2
       ];
     } else if (status === 'degraded') {
       return [
-        `[${cachedTimes[5000]}] Warning: Elevated latency (${latency}ms)`,
-        `[${cachedTimes[15000]}] Connection pool utilization > 80%`,
-        `[${cachedTimes[45000]}] Health check marginal`
+        `[${t5000}] Warning: Elevated latency (${latency}ms)`,
+        deg1,
+        deg2
       ];
     } else {
-      return [
-        `[${cachedTimes[2000]}] CRITICAL: Endpoint returning 500 Error`,
-        `[${cachedTimes[8000]}] Connection timeout after 5000ms`,
-        `[${cachedTimes[15000]}] Health check failed`
-      ];
+      return cachedEvents.critical;
     }
   };
 })();
