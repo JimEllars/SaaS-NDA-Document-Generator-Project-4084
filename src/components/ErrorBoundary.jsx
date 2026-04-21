@@ -16,7 +16,7 @@ class ErrorBoundary extends React.Component {
     console.error("ErrorBoundary caught an error", error, errorInfo);
 
     try {
-      fetch('https://api.axim.us.com/v1/telemetry/errors', {
+      fetch('/api/v1/telemetry/errors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

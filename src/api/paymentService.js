@@ -75,7 +75,7 @@ export const clearAccessToken = () => {
 
 
 export const deliverOrchestratedDocument = async (token, payload) => {
-  const response = await fetch('https://api.axim.us.com/v1/functions/document-orchestrator', {
+  const response = await fetch('/api/v1/functions/document-orchestrator', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
