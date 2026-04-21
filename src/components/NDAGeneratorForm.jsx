@@ -51,7 +51,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
   const { isValid: isFormValid, validationMessage } = useFormValidation(formData);
 
   const nextStep = () => {
-    fetch("https://api.axim.us.com/v1/telemetry/events", {
+    fetch("/api/v1/telemetry/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

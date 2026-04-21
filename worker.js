@@ -148,6 +148,16 @@ export default {
       headers.set('Origin', targetBackendUrl);
       headers.set('Referer', targetBackendUrl);
 
+      const internalRoutes = ['/api/v1/telemetry/ingest', '/api/v1/telemetry/events', '/api/v1/telemetry/errors', '/api/v1/telemetry/feedback', '/api/v1/user/document-history', '/api/verify-session'];
+
+      if (internalRoutes.some(route => url.pathname.startsWith(route))) {
+        if (!headers.has('Authorization') && env.AXIM_SERVICE_KEY) {
+          headers.set('Authorization', `Bearer ${env.AXIM_SERVICE_KEY}`);
+        } else if (!env.AXIM_SERVICE_KEY) {
+          console.warn("AXIM_SERVICE_KEY is missing from worker environment.");
+        }
+      }
+
       if (request.method === 'OPTIONS') {
         return new Response(null, {
           headers: {

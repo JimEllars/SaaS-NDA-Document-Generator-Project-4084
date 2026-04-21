@@ -6,6 +6,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "VITE_ENABLE_WEB3": "false",
-    "BACKEND_URL": "https://api.axim.us.com"
+    "BACKEND_URL": "https://api.axim.us.com",
+    "AXIM_SERVICE_KEY": ""
   }
 }
