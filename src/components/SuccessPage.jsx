@@ -17,6 +17,7 @@ export default function SuccessPage() {
 
     const [status, setStatus] = useState('verifying');
     const [documentData, setDocumentData] = useState(null);
+    const [documentBlobUrl, setDocumentBlobUrl] = useState(null);
     const [email, setEmail] = useState('');
     const [isSendingEmail, setIsSendingEmail] = useState(false);
 
@@ -24,8 +25,17 @@ export default function SuccessPage() {
     const savedFormDataRef = useRef(null);
 
     const handleDownload = useCallback(() => {
-        window.print();
-    }, []);
+        if (documentBlobUrl) {
+            const a = document.createElement('a');
+            a.href = documentBlobUrl;
+            a.download = 'NDA.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } else {
+            addToast('Document is not ready yet.', 'error');
+        }
+    }, [documentBlobUrl, addToast]);
 
     const handleStartOver = useCallback(() => {
         resetForm();
@@ -100,31 +110,48 @@ export default function SuccessPage() {
 
                 if (formData) {
                     savedFormDataRef.current = formData;
-                    // Generate document and trigger download
-                    const doc = generateDocument({ ...formData, isPaid: true });
-                    setDocumentData(doc);
-                    setStatus('success');
+                    // Generate document using Edge API
+                    setStatus('generating');
 
-                    window.dataLayer = window.dataLayer || [];
-                    window.dataLayer.push({ event: 'Purchase', product_id: 'nda_document' });
+                    try {
+                        const blob = await generateDocument({ ...formData, isPaid: true });
+                        if (blob) {
+                            const url = URL.createObjectURL(blob);
+                            setDocumentBlobUrl(url);
+                            setDocumentData(formData);
+                            setStatus('success');
 
-                    // Auto-send email if user previously entered it
-                    if (formData.email) {
-                        try {
-                            const token = getValidAccessToken();
-                            await deliverOrchestratedDocument(token, { templateId: 'nda_v1', email: formData.email, formData: formData });
-                        } catch (err) {
-                            console.error('Auto-send failed', err);
+                            window.dataLayer = window.dataLayer || [];
+                            window.dataLayer.push({ event: 'Purchase', product_id: 'nda_document' });
+
+                            // Auto-send email if user previously entered it
+                            if (formData.email) {
+                                try {
+                                    const token = getValidAccessToken();
+                                    await deliverOrchestratedDocument(token, { templateId: 'nda_v1', email: formData.email, formData: formData });
+                                } catch (err) {
+                                    console.error('Auto-send failed', err);
+                                }
+                            }
+
+                            // Clear the session storage
+                            sessionStorage.removeItem('axim_nda_draft');
+
+                            // Auto-download document
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'NDA.pdf';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                        } else {
+                            setStatus('error');
+                            console.error('Failed to generate document blob');
                         }
+                    } catch (genErr) {
+                        console.error('Generation failed:', genErr);
+                        setStatus('error');
                     }
-
-                    // Clear the session storage
-                    sessionStorage.removeItem('axim_nda_draft');
-
-                    // Auto-download after a short delay to allow rendering
-                    setTimeout(() => {
-                        window.print();
-                    }, 1000);
                 } else {
                     setStatus('error');
                     console.error('No form data found to generate the document');
@@ -150,6 +177,18 @@ export default function SuccessPage() {
                     <div className="animate-spin rounded-full h-12 w-12 border-4 border-axim-teal border-t-transparent mx-auto mb-4"></div>
                     <h3 className="text-xl font-bold text-zinc-100 mb-2">Verifying Payment</h3>
                     <p className="text-zinc-400">Please wait while we secure your document...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (status === 'generating') {
+        return (
+            <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+                <div className="bg-white/5 border border-white/10 rounded-3xl p-8 text-center max-w-sm w-full shadow-2xl">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-axim-teal border-t-transparent mx-auto mb-4"></div>
+                    <h3 className="text-xl font-bold text-zinc-100 mb-2">Generating PDF</h3>
+                    <p className="text-zinc-400">Please wait while your document is assembled at the Edge...</p>
                 </div>
             </div>
         );
@@ -229,59 +268,6 @@ export default function SuccessPage() {
                 </div>
             </div>
 
-            {/* Hidden Document Content for Printing */}
-            {documentData && (
-                <div className="hidden print:block text-black bg-white p-8">
-                    <h1 className="text-2xl font-bold text-center mb-6">{documentData.title}</h1>
-                    <p className="mb-4"><strong>Effective Date:</strong> {documentData.effectiveDate}</p>
-
-                    <h2 className="text-xl font-bold mt-6 mb-2">RECITALS</h2>
-                    <p className="mb-6">{documentData.intro}</p>
-
-                    <p className="mb-6 uppercase text-sm font-semibold tracking-wide border-b border-gray-300 pb-2">
-                        NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the parties agree as follows:
-                    </p>
-
-                    {documentData.sections.map((section, index) => (
-                        <div key={index} className="mb-6">
-                            <h3 className="font-bold text-lg mb-3 uppercase">{section.title}</h3>
-                            {section.content.map((item, itemIdx) => (
-                                <div key={itemIdx} className="mb-2">
-                                    {item.type === 'paragraph' ? (
-                                        <p className="text-justify leading-relaxed">{item.text}</p>
-                                    ) : (
-                                        <div className="pl-4">
-                                            <p className="font-semibold mb-1">{item.number}. {item.title}</p>
-                                            <p className="text-justify leading-relaxed pl-4">{item.text}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    ))}
-
-                    <div className="mt-12 pt-8 border-t border-gray-300">
-                        <h3 className="text-xl font-bold mb-4">EXECUTION</h3>
-                        <p className="mb-8">IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.</p>
-                        <div className="flex justify-between">
-                            <div className="w-2/5">
-                                <p className="font-bold mb-6">[DISCLOSING PARTY / PARTY 1]</p>
-                                <p className="mb-4">Signature: _________________________</p>
-                                <p className="mb-4">Print Name: ________________________</p>
-                                <p className="mb-4">Title: _____________________________</p>
-                                <p>Date: ______________________________</p>
-                            </div>
-                            <div className="w-2/5">
-                                <p className="font-bold mb-6">[RECEIVING PARTY / PARTY 2]</p>
-                                <p className="mb-4">Signature: _________________________</p>
-                                <p className="mb-4">Print Name: ________________________</p>
-                                <p className="mb-4">Title: _____________________________</p>
-                                <p>Date: ______________________________</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

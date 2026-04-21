@@ -1,5 +1,5 @@
-import { CLAUSES } from '../data/ndaData';
-import { formatEffectiveDate } from './dateUtils';
+import { CLAUSES } from './workerNdaData.js';
+import { formatEffectiveDate } from './workerDateUtils.js';
 
 /**
  * Processes an array of content items, formatting them into paragraphs or clauses.
@@ -69,39 +69,16 @@ const buildSections = (formData, isRobust, industry) => {
   }));
 };
 
-import { getValidAccessToken } from '../api/paymentService';
-
 /**
- * Generates the NDA document structure based on form data by calling the Edge worker.
+ * Generates the NDA document structure based on form data.
  * @param {Object} formData - The data from the form.
- * @returns {Promise<Blob|null>} - The generated PDF Blob or null if not paid.
+ * @returns {Object|null} - The generated document data or null if not paid.
  */
-export const generateDocument = async (formData) => {
+export const generateDocument = (formData) => {
   if (!formData) return null;
   if (!formData.isPaid) return null;
 
-  const token = getValidAccessToken();
-
-  const response = await fetch('/api/generate-nda', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(formData)
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to generate document at Edge');
-  }
-
-  return await response.blob();
-};
-
-export const generateDocumentData = (formData) => {
-  if (!formData || !formData.isPaid) return null;
-
-  const industry = formData.industry ? CLAUSES[formData.industry] : CLAUSES['general'];
+  const industry = CLAUSES[formData.industry];
   const isRobust = formData.strictness === 'robust';
   const effectiveDateFormatted = formatEffectiveDate(formData.effectiveDate);
 
