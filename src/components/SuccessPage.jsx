@@ -6,6 +6,7 @@ import { FiCheckCircle, FiMail, FiSend } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';
 import useNDAForm from '../hooks/useNDAForm';
+import { decrypt } from '../utils/crypto';
 
 export default function SuccessPage() {
     const [searchParams] = useSearchParams();
@@ -89,7 +90,9 @@ export default function SuccessPage() {
                 let formData = null;
                 if (savedData) {
                     try {
-                        formData = JSON.parse(savedData);
+                        const decrypted = decrypt(savedData);
+                        const parsed = JSON.parse(decrypted);
+                        formData = parsed.formData ? parsed.formData : parsed;
                     } catch (err) {
                         console.error('Failed to parse form data from sessionStorage', err);
                     }

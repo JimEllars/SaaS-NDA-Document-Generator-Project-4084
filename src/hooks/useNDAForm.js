@@ -7,7 +7,7 @@ const STORAGE_KEY = 'axim_nda_draft';
 const useNDAForm = () => {
   const [formData, setFormDataInternal] = useState(() => {
     try {
-      const savedData = localStorage.getItem(STORAGE_KEY);
+      const savedData = sessionStorage.getItem(STORAGE_KEY);
       if (savedData) {
         const decrypted = decrypt(savedData);
         const parsed = JSON.parse(decrypted);
@@ -15,28 +15,28 @@ const useNDAForm = () => {
         return parsed;
       }
     } catch (err) {
-      console.warn("Failed to read from localStorage:", err);
+      console.warn("Failed to read from sessionStorage:", err);
     }
     return getDefaultFormData();
   });
 
   const [currentStep, setCurrentStepInternal] = useState(() => {
     try {
-      const savedData = localStorage.getItem(STORAGE_KEY);
+      const savedData = sessionStorage.getItem(STORAGE_KEY);
       if (savedData) {
         const decrypted = decrypt(savedData);
         const parsed = JSON.parse(decrypted);
         if (parsed.currentStep !== undefined) return parsed.currentStep;
       }
     } catch (err) {
-      console.warn("Failed to read from localStorage:", err);
+      console.warn("Failed to read from sessionStorage:", err);
     }
     return 1;
   });
 
   const [isResumed, setIsResumed] = useState(() => {
     try {
-        return localStorage.getItem(STORAGE_KEY) !== null;
+        return sessionStorage.getItem(STORAGE_KEY) !== null;
     } catch (err) {
         return false;
     }
@@ -69,9 +69,9 @@ const useNDAForm = () => {
             formData: formDataRef.current,
             currentStep: currentStepRef.current
         });
-        localStorage.setItem(STORAGE_KEY, encrypt(dataToSave));
+        sessionStorage.setItem(STORAGE_KEY, encrypt(dataToSave));
       } catch (err) {
-        console.warn("Failed to save to localStorage:", err);
+        console.warn("Failed to save to sessionStorage:", err);
       }
     }, 500);
 
@@ -85,9 +85,9 @@ const useNDAForm = () => {
     formDataRef.current = defaultData;
     currentStepRef.current = 1;
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
     } catch (err) {
-      console.warn("Failed to remove from localStorage:", err);
+      console.warn("Failed to remove from sessionStorage:", err);
     }
   }, []);
 
