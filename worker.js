@@ -52,7 +52,7 @@ export default {
           }
 
           if (line.trim() !== '') {
-             const isHeader = line === line.toUpperCase() && line.match(/[A-Z]/) || line.startsWith('Article');
+             const isHeader = (line === line.toUpperCase() && line.trim().length > 0) || line.startsWith('Article');
              const currentFont = isHeader ? timesRomanBoldFont : timesRomanFont;
              const currentFontSize = isHeader ? 14 : fontSize;
              const currentLineHeight = currentFontSize * 1.5;
@@ -95,7 +95,7 @@ export default {
                  currentY -= currentLineHeight;
 
                  if (isHeader) {
-                    currentY -= currentLineHeight * 0.5; // Additional spacing after headers
+                    currentY -= (lineHeight * 1.5); // Additional spacing after headers
                  }
              }
           } else {
