@@ -7,7 +7,21 @@ import { useWeb3Bypass } from '../hooks/useWeb3Bypass';
 import SafeIcon from '../common/SafeIcon';
 import UpsellCard from './UpsellCard';
 import useFormValidation from '../hooks/useFormValidation';
-import { INDUSTRY_OPTIONS, JURISDICTIONS } from '../data/ndaData';
+export const JURISDICTIONS = [
+  "Delaware", "California", "New York", "Texas", "Florida", "Illinois",
+  "Washington", "Nevada", "Colorado", "Georgia", "North Carolina",
+  "Virginia", "Massachusetts", "Pennsylvania", "Other"
+];
+
+export const INDUSTRY_OPTIONS = [
+  { value: 'general', label: 'General Business' },
+  { value: 'tech', label: 'Technology & Software' },
+  { value: 'creative', label: 'Creative & Design' },
+  { value: 'realestate', label: 'Real Estate' },
+  { value: 'healthcare', label: 'Healthcare & Life Sciences' },
+  { value: 'financial', label: 'Financial Services' }
+];
+
 
 const FIELD_BASE_CLASSES = "w-full p-4 bg-black/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-axim-teal focus:border-axim-teal outline-none text-zinc-100 placeholder-zinc-500";
 const INPUT_CLASSES = `${FIELD_BASE_CLASSES} transition`;

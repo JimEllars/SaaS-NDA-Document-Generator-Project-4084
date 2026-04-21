@@ -52,24 +52,29 @@ export default {
           }
 
           if (line.trim() !== '') {
+             const isHeader = line === line.toUpperCase() && line.match(/[A-Z]/) || line.startsWith('Article');
+             const currentFont = isHeader ? timesRomanBoldFont : timesRomanFont;
+             const currentFontSize = isHeader ? 14 : fontSize;
+             const currentLineHeight = currentFontSize * 1.5;
+
              // Basic word wrap
              const words = line.split(' ');
              let currentLine = '';
 
              for (let i = 0; i < words.length; i++) {
                 const testLine = currentLine + words[i] + ' ';
-                const textWidth = timesRomanFont.widthOfTextAtSize(testLine, fontSize);
+                const textWidth = currentFont.widthOfTextAtSize(testLine, currentFontSize);
 
                 if (textWidth > width - 2 * margin && i > 0) {
                    page.drawText(currentLine, {
                      x: margin,
                      y: currentY,
-                     size: fontSize,
-                     font: timesRomanFont,
+                     size: currentFontSize,
+                     font: currentFont,
                      color: rgb(0, 0, 0),
                    });
                    currentLine = words[i] + ' ';
-                   currentY -= lineHeight;
+                   currentY -= currentLineHeight;
                    if (currentY < margin) {
                       page = pdfDoc.addPage();
                       currentY = height - margin;
@@ -83,11 +88,15 @@ export default {
                  page.drawText(currentLine, {
                    x: margin,
                    y: currentY,
-                   size: fontSize,
-                   font: timesRomanFont,
+                   size: currentFontSize,
+                   font: currentFont,
                    color: rgb(0, 0, 0),
                  });
-                 currentY -= lineHeight;
+                 currentY -= currentLineHeight;
+
+                 if (isHeader) {
+                    currentY -= currentLineHeight * 0.5; // Additional spacing after headers
+                 }
              }
           } else {
              currentY -= lineHeight;
