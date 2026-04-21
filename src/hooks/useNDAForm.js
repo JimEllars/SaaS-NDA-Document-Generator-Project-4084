@@ -1,5 +1,16 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { getDefaultFormData } from '../data/ndaData';
+export const getDefaultFormData = () => ({
+  disclosing: '',
+  receiving: '',
+  industry: 'general',
+  strictness: 'standard',
+  type: 'unilateral',
+  jurisdiction: 'Delaware',
+  term: '3',
+  includeReturn: true,
+  effectiveDate: new Date().toISOString().split('T')[0]
+});
+
 import { encrypt, decrypt } from '../utils/crypto';
 
 const STORAGE_KEY = 'axim_nda_draft';

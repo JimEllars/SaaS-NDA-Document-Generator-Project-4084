@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { verifySession, getValidAccessToken, clearAccessToken, deliverOrchestratedDocument } from '../api/paymentService';
-import { generateDocument } from '../utils/documentGenerator';
+
 import { FiCheckCircle, FiMail, FiSend } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';
@@ -114,7 +114,18 @@ export default function SuccessPage() {
                     setStatus('generating');
 
                     try {
-                        const blob = await generateDocument({ ...formData, isPaid: true });
+                        const token = getValidAccessToken();
+                        const response = await fetch('/api/generate-nda', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ ...formData, isPaid: true })
+                        });
+
+                        if (!response.ok) throw new Error('Edge generation failed');
+                        const blob = await response.blob();
                         if (blob) {
                             const url = URL.createObjectURL(blob);
                             setDocumentBlobUrl(url);
