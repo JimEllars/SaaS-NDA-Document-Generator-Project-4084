@@ -1,6 +1,113 @@
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { generateDocument, generatePlainText } from './workerDocumentGenerator.js';
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      });
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/generate-nda') {
+      try {
+        const authHeader = request.headers.get('Authorization');
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        const formData = await request.json();
+
+        // Ensure the formData has isPaid = true before generating
+        const docData = generateDocument({ ...formData, isPaid: true });
+        if (!docData) {
+          return new Response(JSON.stringify({ error: 'Failed to generate document data' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        const plainText = generatePlainText(docData, formData);
+
+        const pdfDoc = await PDFDocument.create();
+        const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+        const timesRomanBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
+
+        let page = pdfDoc.addPage();
+        const { width, height } = page.getSize();
+        const margin = 50;
+        let currentY = height - margin;
+        const fontSize = 12;
+        const lineHeight = fontSize * 1.5;
+
+        const lines = plainText.split('\n');
+
+        for (const line of lines) {
+          if (currentY < margin) {
+            page = pdfDoc.addPage();
+            currentY = height - margin;
+          }
+
+          if (line.trim() !== '') {
+             // Basic word wrap
+             const words = line.split(' ');
+             let currentLine = '';
+
+             for (let i = 0; i < words.length; i++) {
+                const testLine = currentLine + words[i] + ' ';
+                const textWidth = timesRomanFont.widthOfTextAtSize(testLine, fontSize);
+
+                if (textWidth > width - 2 * margin && i > 0) {
+                   page.drawText(currentLine, {
+                     x: margin,
+                     y: currentY,
+                     size: fontSize,
+                     font: timesRomanFont,
+                     color: rgb(0, 0, 0),
+                   });
+                   currentLine = words[i] + ' ';
+                   currentY -= lineHeight;
+                   if (currentY < margin) {
+                      page = pdfDoc.addPage();
+                      currentY = height - margin;
+                   }
+                } else {
+                   currentLine = testLine;
+                }
+             }
+
+             if (currentLine.trim() !== '') {
+                 page.drawText(currentLine, {
+                   x: margin,
+                   y: currentY,
+                   size: fontSize,
+                   font: timesRomanFont,
+                   color: rgb(0, 0, 0),
+                 });
+                 currentY -= lineHeight;
+             }
+          } else {
+             currentY -= lineHeight;
+          }
+        }
+
+        const pdfBytes = await pdfDoc.save();
+
+        return new Response(pdfBytes, {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': 'attachment; filename="NDA.pdf"',
+            'Access-Control-Allow-Origin': '*',
+          }
+        });
+      } catch (err) {
+        console.error('PDF Generation Error:', err);
+        return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      }
+    }
 
     // Intercept API calls
     if (url.pathname.startsWith('/api/')) {

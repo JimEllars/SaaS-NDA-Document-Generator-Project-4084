@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateDocument, generatePlainText } from '../utils/documentGenerator';
+import { generateDocument, generateDocumentData, generatePlainText } from '../utils/documentGenerator';
 import { getDefaultFormData } from '../data/ndaData';
 
 const baseFormData = {
@@ -16,15 +16,15 @@ describe('documentGenerator error handling', () => {
     // Attempting to generate a document with undefined should probably throw or return null gracefully.
     // The implementation currently expects formData to be an object. Let's pass an empty object.
     expect(() => {
-        generateDocument({});
+        generateDocumentData({});
     }).not.toThrow();
 
-    expect(generateDocument({})).toBeNull(); // because isPaid is not true
+    expect(generateDocumentData({})).toBeNull(); // because isPaid is not true
   });
 
   it('should not throw if receiving or disclosing party is missing but isPaid is true', () => {
       const data = { ...baseFormData, disclosing: undefined, receiving: undefined };
-      const doc = generateDocument(data);
+      const doc = generateDocumentData(data);
       expect(doc).toBeDefined();
       expect(doc.intro).toContain('[Disclosing Party]'); // CLAUSES.general.intro handles missing names gracefully
       expect(doc.intro).toContain('[Receiving Party]'); // CLAUSES.general.intro handles missing names gracefully
@@ -32,7 +32,7 @@ describe('documentGenerator error handling', () => {
 
   it('should gracefully handle malformed date', () => {
     const data = { ...baseFormData, effectiveDate: 'invalid-date' };
-    const doc = generateDocument(data);
+    const doc = generateDocumentData(data);
     expect(doc).toBeDefined();
     // Default logic typically yields 'Invalid Date' if parsing fails but shouldn't crash
     expect(doc.effectiveDate).toBe('Invalid Date');
@@ -40,6 +40,6 @@ describe('documentGenerator error handling', () => {
 
   it('should handle completely empty formData gracefully but fail on isPaid', () => {
     // if formData is falsy entirely
-    expect(generateDocument(null)).toBeNull();
+    expect(generateDocumentData(null)).toBeNull();
   });
 });

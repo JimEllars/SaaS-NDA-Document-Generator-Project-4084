@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest';
-import { generateDocument, generatePlainText } from '../utils/documentGenerator';
+import { generateDocumentData, generatePlainText } from '../utils/documentGenerator';
 import { getDefaultFormData } from '../data/ndaData';
 
 const baseFormData = {
@@ -13,7 +13,7 @@ const baseFormData = {
   industry: 'tech'
 };
 
-const docData = generateDocument(baseFormData);
+const docData = generateDocumentData(baseFormData);
 
 // Create a larger document data for better measurement
 const largeDocData = {
