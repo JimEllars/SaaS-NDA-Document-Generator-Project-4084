@@ -114,51 +114,23 @@ export default function SuccessPage() {
                     setStatus('generating');
 
                     try {
-                        const token = getValidAccessToken();
+                        // Replace local generation with Edge API call
                         const response = await fetch('/api/generate-nda', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`
+                                'Authorization': `Bearer ${getValidAccessToken()}`
                             },
-                            body: JSON.stringify({ ...formData, isPaid: true })
+                            body: JSON.stringify(formData)
                         });
 
                         if (!response.ok) throw new Error('Edge generation failed');
+
                         const blob = await response.blob();
-                        if (blob) {
-                            const url = URL.createObjectURL(blob);
-                            setDocumentBlobUrl(url);
-                            setDocumentData(formData);
-                            setStatus('success');
-
-                            window.dataLayer = window.dataLayer || [];
-                            window.dataLayer.push({ event: 'Purchase', product_id: 'nda_document' });
-
-                            // Auto-send email if user previously entered it
-                            if (formData.email) {
-                                try {
-                                    const token = getValidAccessToken();
-                                    await deliverOrchestratedDocument(token, { templateId: 'nda_v1', email: formData.email, formData: formData });
-                                } catch (err) {
-                                    console.error('Auto-send failed', err);
-                                }
-                            }
-
-                            // Clear the session storage
-                            sessionStorage.removeItem('axim_nda_draft');
-
-                            // Auto-download document
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = 'NDA.pdf';
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                        } else {
-                            setStatus('error');
-                            console.error('Failed to generate document blob');
-                        }
+                        const url = URL.createObjectURL(blob);
+                        setDocumentBlobUrl(url);
+                        setDocumentData(formData);
+                        setStatus('success');
                     } catch (genErr) {
                         console.error('Generation failed:', genErr);
                         setStatus('error');
