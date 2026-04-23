@@ -8,7 +8,8 @@ describe('useFormValidation', () => {
     const formData = {
       disclosing: 'A',
       receiving: 'B',
-      effectiveDate: '2023-10-27'
+      effectiveDate: '2023-10-27',
+      jurisdiction: 'Delaware'
     };
     const { result } = renderHook(() => useFormValidation(formData));
     expect(result.current.isValid).toBe(false);
@@ -19,7 +20,8 @@ describe('useFormValidation', () => {
     const formData = {
       disclosing: 'A'.repeat(101),
       receiving: 'B',
-      effectiveDate: '2023-10-27'
+      effectiveDate: '2023-10-27',
+      jurisdiction: 'Delaware'
     };
     const { result } = renderHook(() => useFormValidation(formData));
     expect(result.current.isValid).toBe(false);
@@ -28,7 +30,8 @@ describe('useFormValidation', () => {
     const formData2 = {
       disclosing: 'Alice',
       receiving: 'B'.repeat(101),
-      effectiveDate: '2023-10-27'
+      effectiveDate: '2023-10-27',
+      jurisdiction: 'Delaware'
     };
     const { result: result2 } = renderHook(() => useFormValidation(formData2));
     expect(result2.current.isValid).toBe(false);
@@ -39,7 +42,8 @@ describe('useFormValidation', () => {
     const formData = {
       disclosing: 'Alice <script>',
       receiving: 'Bob',
-      effectiveDate: '2023-10-27'
+      effectiveDate: '2023-10-27',
+      jurisdiction: 'Delaware'
     };
     const { result } = renderHook(() => useFormValidation(formData));
     expect(result.current.isValid).toBe(false);
@@ -50,7 +54,8 @@ describe('useFormValidation', () => {
     const formData = {
       disclosing: 'Alice',
       receiving: 'Bob',
-      effectiveDate: 'invalid-date'
+      effectiveDate: 'invalid-date',
+      jurisdiction: 'Delaware'
     };
     const { result } = renderHook(() => useFormValidation(formData));
     expect(result.current.isValid).toBe(false);
@@ -61,10 +66,24 @@ describe('useFormValidation', () => {
     const formData = {
       disclosing: 'Alice',
       receiving: 'Bob',
-      effectiveDate: '2023-10-27'
+      effectiveDate: '2023-10-27',
+      jurisdiction: 'Delaware'
     };
     const { result } = renderHook(() => useFormValidation(formData));
     expect(result.current.isValid).toBe(true);
     expect(result.current.validationMessage).toBe('');
   });
+
+  it('should return false if jurisdiction is missing', () => {
+    const formData = {
+      disclosing: 'Alice',
+      receiving: 'Bob',
+      effectiveDate: '2023-10-27',
+      jurisdiction: ''
+    };
+    const { result } = renderHook(() => useFormValidation(formData));
+    expect(result.current.isValid).toBe(false);
+    expect(result.current.validationMessage).toMatch(/governing law jurisdiction/);
+  });
+
 });

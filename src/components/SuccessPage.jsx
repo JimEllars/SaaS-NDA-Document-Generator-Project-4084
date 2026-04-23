@@ -131,6 +131,22 @@ export default function SuccessPage() {
                         setDocumentBlobUrl(url);
                         setDocumentData(formData);
                         setStatus('success');
+
+                        // Background telemetry
+                        fetch('/api/v1/telemetry/ingest', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                event: 'document_generated',
+                                type: 'nda',
+                                session_id: sessionId
+                            })
+                        }).catch(e => console.error('Telemetry error:', e));
+
+                        // DataLayer sync
+                        if (window.dataLayer) {
+                            window.dataLayer.push({ event: 'purchase', document_type: 'nda' });
+                        }
                     } catch (genErr) {
                         console.error('Generation failed:', genErr);
                         setStatus('error');

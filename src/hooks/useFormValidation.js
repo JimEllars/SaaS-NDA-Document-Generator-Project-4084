@@ -58,6 +58,12 @@ const useFormValidation = (formData) => {
         return;
       }
 
+      if (!formData.jurisdiction || formData.jurisdiction.trim() === '') {
+        setValidationMessage('Please select a governing law jurisdiction.');
+        setIsValid(false);
+        return;
+      }
+
       // If all checks pass
       setValidationMessage('');
       setIsValid(true);
