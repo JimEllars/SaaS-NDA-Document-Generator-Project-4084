@@ -22,11 +22,7 @@ export const processPayment = async (productId) => {
     throw new Error('Failed to create checkout session');
   }
 
-  const data = await response.json();
-  if (data.token) {
-    sessionStorage.setItem('axim_access_token', data.token);
-  }
-  return data;
+  return await response.json();
 };
 
 export const verifySession = async (sessionId) => {
@@ -41,8 +37,7 @@ export const verifySession = async (sessionId) => {
     // Simulation logic for local development
     return new Promise((resolve) => {
       setTimeout(() => {
-        sessionStorage.setItem('axim_access_token', 'simulated_jwt_token');
-        resolve({ isPaid: true, token: 'simulated_jwt_token' });
+        resolve({ isPaid: true });
       }, 1000);
     });
   }
@@ -58,28 +53,16 @@ export const verifySession = async (sessionId) => {
     throw new Error('Failed to verify session');
   }
 
-  const data = await response.json();
-  if (data.token) {
-    sessionStorage.setItem('axim_access_token', data.token);
-  }
-  return data;
-};
-
-export const getValidAccessToken = () => {
-  return sessionStorage.getItem('axim_access_token');
-};
-
-export const clearAccessToken = () => {
-  sessionStorage.removeItem('axim_access_token');
+  return await response.json();
 };
 
 
-export const deliverOrchestratedDocument = async (token, payload) => {
+
+export const deliverOrchestratedDocument = async (payload) => {
   const response = await fetch('/api/v1/functions/document-orchestrator', {
       method: 'POST',
       headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
   });

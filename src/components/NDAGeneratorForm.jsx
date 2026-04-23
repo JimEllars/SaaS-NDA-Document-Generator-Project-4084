@@ -1,6 +1,7 @@
-import React from 'react';
+import SignatureCanvas from 'react-signature-canvas';
+import React, { useRef, useState } from 'react';
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
-import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle, FiUnlock, FiChevronRight, FiChevronLeft } from 'react-icons/fi';
+import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle, FiUnlock, FiChevronRight, FiChevronLeft, FiPenTool } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConnectButton } from 'thirdweb/react';
 import { useWeb3Bypass } from '../hooks/useWeb3Bypass';
@@ -49,6 +50,12 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
   }, [setFormData]);
 
   const { isValid: isFormValid, validationMessage } = useFormValidation(formData);
+  const sigCanvas = useRef(null);
+  const [isSigEmpty, setIsSigEmpty] = useState(true);
+
+  const clearSignature = () => { if(sigCanvas.current) sigCanvas.current.clear(); setIsSigEmpty(true); setFormData(prev => ({ ...prev, signatureImage: null })); };
+  const saveSignature = () => { if(sigCanvas.current && !sigCanvas.current.isEmpty()) { setFormData(prev => ({ ...prev, signatureImage: sigCanvas.current.getTrimmedCanvas().toDataURL('image/png') })); setIsSigEmpty(false); } };
+
 
   const nextStep = () => {
     fetch("/api/v1/telemetry/events", {
@@ -373,6 +380,23 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                   {formData.includeReturn ? ' A document return clause is included.' : ''}
                 </p>
               </div>
+                {/* Signature Block */}
+                <div className="mt-8 border-t border-zinc-300 pt-8">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><SafeIcon icon={FiPenTool} size={20} /> E-Signature</h3>
+                  <p className="text-sm text-zinc-600 mb-4">Please sign below to certify this document.</p>
+                  <div className="border border-zinc-400 bg-zinc-50 rounded-lg p-2 max-w-md">
+                     <SignatureCanvas
+                        ref={sigCanvas}
+                        penColor="black"
+                        canvasProps={{className: 'w-full h-32 cursor-crosshair'}}
+                        onEnd={() => { setIsSigEmpty(false); saveSignature(); }}
+                     />
+                  </div>
+                  <div className="flex gap-4 mt-4">
+                     <button onClick={clearSignature} className="text-sm font-medium text-axim-teal underline">Clear Signature</button>
+                  </div>
+                </div>
+
             </section>
 
             {/* Download/Purchase Section */}

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getValidAccessToken, verifySession, processPayment, clearAccessToken } from '../api/paymentService';
+import { verifySession, processPayment, deliverOrchestratedDocument } from '../api/paymentService';
 
 describe('paymentService', () => {
   beforeEach(() => {
@@ -13,25 +13,6 @@ describe('paymentService', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllEnvs();
-  });
-
-  describe('getValidAccessToken', () => {
-    it('should return null if no token is stored', () => {
-      expect(getValidAccessToken()).toBeNull();
-    });
-
-    it('should return the token from sessionStorage', () => {
-      sessionStorage.setItem('axim_access_token', 'test_token');
-      expect(getValidAccessToken()).toBe('test_token');
-    });
-  });
-
-  describe('clearAccessToken', () => {
-    it('should remove the token from sessionStorage', () => {
-      sessionStorage.setItem('axim_access_token', 'test_token');
-      clearAccessToken();
-      expect(sessionStorage.getItem('axim_access_token')).toBeNull();
-    });
   });
 
   describe('verifySession', () => {
@@ -51,8 +32,7 @@ describe('paymentService', () => {
       vi.advanceTimersByTime(1000);
       const result = await promise;
 
-      expect(result).toEqual({ isPaid: true, token: 'simulated_jwt_token' });
-      expect(sessionStorage.getItem('axim_access_token')).toBe('simulated_jwt_token');
+      expect(result).toEqual({ isPaid: true });
     });
 
     it('should throw an error for a network/401 failure during verification', async () => {
@@ -86,12 +66,11 @@ describe('paymentService', () => {
     it('should fetch and return session data', async () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ isPaid: true, token: 'real_jwt_token' })
+        json: async () => ({ isPaid: true })
       });
 
       const data = await verifySession('real-session-id');
-      expect(data).toEqual({ isPaid: true, token: 'real_jwt_token' });
-      expect(sessionStorage.getItem('axim_access_token')).toBe('real_jwt_token');
+      expect(data).toEqual({ isPaid: true });
     });
   });
 
@@ -137,7 +116,6 @@ describe('paymentService', () => {
 
       const data = await processPayment('prod_123');
       expect(data.url).toBe('https://checkout.stripe.com/123');
-      expect(sessionStorage.getItem('axim_access_token')).toBe('token123');
     });
   });
 });

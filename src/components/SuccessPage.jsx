@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { verifySession, getValidAccessToken, clearAccessToken, deliverOrchestratedDocument } from '../api/paymentService';
+import { verifySession, deliverOrchestratedDocument } from '../api/paymentService';
 
 import { FiCheckCircle, FiMail, FiSend } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
@@ -40,7 +40,6 @@ export default function SuccessPage() {
     const handleStartOver = useCallback(() => {
         resetForm();
         localStorage.clear();
-        clearAccessToken();
         sessionStorage.removeItem('axim_delivery_email');
         setEmail('');
         navigate('/');
@@ -59,8 +58,7 @@ export default function SuccessPage() {
 
         try {
             setIsSendingEmail(true);
-            const token = getValidAccessToken();
-            const response = await deliverOrchestratedDocument(token, { templateId: 'nda_v1', email, formData: documentData });
+                        const response = await deliverOrchestratedDocument({ templateId: 'nda_v1', email, formData: documentData });
 
             if (!response.ok) {
                 if (response.status === 401 || response.status === 403) {
@@ -118,8 +116,7 @@ export default function SuccessPage() {
                         const response = await fetch('/api/generate-nda', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${getValidAccessToken()}`
+                                'Content-Type': 'application/json'
                             },
                             body: JSON.stringify(formData)
                         });
