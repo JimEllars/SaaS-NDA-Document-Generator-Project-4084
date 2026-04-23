@@ -7,14 +7,14 @@ describe('useNDAForm Security', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     localStorage.clear();
-    sessionStorage.clear();
+    localStorage.clear();
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('should store data in sessionStorage in an encrypted or obfuscated format', () => {
+  it('should store data in localStorage in an encrypted or obfuscated format', () => {
     const { result } = renderHook(() => useNDAForm());
     const sensitiveName = 'Super Secret Stealth Startup';
 
@@ -27,7 +27,7 @@ describe('useNDAForm Security', () => {
       vi.advanceTimersByTime(1000);
     });
 
-    const storedValue = sessionStorage.getItem('axim_nda_draft');
+    const storedValue = localStorage.getItem('axim_nda_draft');
     expect(storedValue).not.toBeNull();
 
     // Verify that the sensitive name is NOT stored in plaintext

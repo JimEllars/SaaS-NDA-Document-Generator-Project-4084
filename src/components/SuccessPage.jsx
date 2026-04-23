@@ -40,7 +40,7 @@ export default function SuccessPage() {
     const handleStartOver = useCallback(() => {
         resetForm();
         localStorage.clear();
-        sessionStorage.removeItem('axim_delivery_email');
+        localStorage.removeItem('axim_delivery_email');
         setEmail('');
         navigate('/');
     }, [navigate, resetForm]);
@@ -93,8 +93,8 @@ export default function SuccessPage() {
 
                 if (!isMounted) return;
 
-                // Rehydrate form data from sessionStorage
-                const savedData = sessionStorage.getItem('axim_nda_draft');
+                // Rehydrate form data from localStorage
+                const savedData = localStorage.getItem('axim_nda_draft');
                 let formData = null;
                 if (savedData) {
                     try {
@@ -102,7 +102,7 @@ export default function SuccessPage() {
                         const parsed = JSON.parse(decrypted);
                         formData = parsed.formData ? parsed.formData : parsed;
                     } catch (err) {
-                        console.error('Failed to parse form data from sessionStorage', err);
+                        console.error('Failed to parse form data from localStorage', err);
                     }
                 }
 
