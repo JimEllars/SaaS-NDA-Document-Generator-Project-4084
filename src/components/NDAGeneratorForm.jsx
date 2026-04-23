@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
 import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle, FiUnlock, FiChevronRight, FiChevronLeft, FiPenTool } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../context/ToastContext';
 import { ConnectButton } from 'thirdweb/react';
 import { useWeb3Bypass } from '../hooks/useWeb3Bypass';
 import SafeIcon from '../common/SafeIcon';
@@ -33,6 +34,7 @@ const TOGGLE_BUTTON_BASE_CLASSES = "flex-1 py-3 text-sm font-bold rounded-lg tra
 const isWeb3Enabled = import.meta.env.VITE_ENABLE_WEB3 === 'true';
 
 const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, setCurrentStep, onPurchase, isEditing, onUpdate, userSession, onPartnerCheckout }) => {
+  const { addToast } = useToast();
   const { hasToken, isChecking, client } = useWeb3Bypass();
   const trackingSessionId = React.useRef(`sess_${Math.random().toString(36).substring(2, 9)}`);
 
@@ -95,6 +97,42 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
     exit: { opacity: 0, x: -20 }
   };
 
+
+
+
+  const fireTelemetry = async (eventName) => {
+    try {
+      fetch('/api/v1/telemetry/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: eventName })
+      });
+    } catch (e) { /* fire and forget */ }
+  };
+
+
+  const handlePurchaseClick = () => {
+    fireTelemetry('nda_checkout_initiated');
+    onPurchase();
+  };
+
+  const handlePreview = async () => {
+    try {
+      addToast('Generating preview...', 'info');
+      const response = await fetch('/api/generate-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (!response.ok) throw new Error('Preview failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to generate preview', 'error');
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -307,6 +345,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                       <option value="3">3 Years</option>
                       <option value="5">5 Years</option>
                       <option value="10">10 Years</option>
+                      <option value="Indefinitely">Indefinitely</option>
                     </select>
                   </div>
                 </div>
@@ -323,6 +362,19 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                   />
                   <label htmlFor="includeReturn" className="text-sm font-medium text-zinc-300">
                     Include document return clause
+                  </label>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-black/50 border border-white/10 rounded-xl mt-3">
+                  <input
+                    id="includeNonSolicitation"
+                    type="checkbox"
+                    name="includeNonSolicitation"
+                    checked={formData.includeNonSolicitation || false}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 text-axim-teal border-zinc-600 rounded focus:ring-axim-teal bg-black"
+                  />
+                  <label htmlFor="includeNonSolicitation" className="text-sm font-medium text-zinc-300">
+                    Include Non-Solicitation Clause
                   </label>
                 </div>
 
@@ -355,6 +407,15 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
             exit="exit"
             transition={{ duration: 0.3 }}
           >
+
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={handlePreview}
+                className="bg-zinc-800 text-zinc-100 font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-700 transition shadow"
+              >
+                <SafeIcon icon={FiFileText} size={16} /> View Watermarked PDF
+              </button>
+            </div>
             {/* Live Draft Preview Pane */}
             <section className="bg-white border border-zinc-200 rounded-lg p-8 shadow-[0_0_20px_rgba(0,0,0,0.5)] mb-6 text-black relative overflow-hidden"
               style={{
@@ -370,7 +431,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                   This <strong>{formData.type === 'mutual' ? 'Mutual' : 'Unilateral'}</strong> agreement protects information shared between <strong>{formData.disclosing || '[Party A]'}</strong> and <strong>{formData.receiving || '[Party B]'}</strong>.
                 </p>
                 <p>
-                  The agreement will become effective on <strong>{formData.effectiveDate || '[Date]'}</strong> and will remain in effect for a duration of <strong>{formData.term} {formData.term === '1' ? 'year' : 'years'}</strong>.
+                  The agreement will become effective on <strong>{formData.effectiveDate || '[Date]'}</strong> and will remain in effect {formData.term === "Indefinitely" ? <strong>indefinitely</strong> : <>for a duration of <strong>{formData.term} {formData.term === '1' ? 'year' : 'years'}</strong></>}.
                 </p>
                 <p>
                   This agreement focuses on the <strong>{INDUSTRY_OPTIONS.find(o => o.value === formData.industry)?.label || formData.industry}</strong> sector and will be governed under the laws of <strong>{formData.jurisdiction}</strong>.
@@ -378,6 +439,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                 <p>
                   Protection level is set to <strong>{formData.strictness === 'robust' ? 'Enhanced (with Penalties)' : 'Standard'}</strong>.
                   {formData.includeReturn ? ' A document return clause is included.' : ''}
+                  {formData.includeNonSolicitation ? ' A non-solicitation clause is included.' : ''}
                 </p>
               </div>
                 {/* Signature Block */}
@@ -462,7 +524,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                       </button>
                     ) : (
                       <button
-                        onClick={isEditing ? onUpdate : onPurchase}
+                        onClick={isEditing ? onUpdate : handlePurchaseClick}
                         disabled={!isFormValid}
                         className={`flex-1 bg-axim-teal text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 hover:shadow-[0_0_15px_rgba(0,229,255,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''}`}
                       >

@@ -48,7 +48,8 @@ const buildSections = (formData, isRobust, industry) => {
       content: processContent([
         CLAUSES.general.exclusions,
         CLAUSES.general.term(formData.term),
-        ...(formData.includeReturn ? [CLAUSES.general.return] : [])
+        ...(formData.includeReturn ? [CLAUSES.general.return] : []),
+        ...(formData.includeNonSolicitation ? [{ title: "Non-Solicitation", text: CLAUSES.general.nonSolicitation }] : [])
       ])
     },
     ...(isRobust ? [{

@@ -7,8 +7,9 @@ export const CLAUSES = {
     },
     definition: "Confidential Information shall include all information, whether oral, written, or electronic, relating to the business of the Disclosing Party, including but not limited to financial data, customer lists, trade secrets, strategic plans, technical specifications, and proprietary methodologies.",
     exclusions: "Confidential Information does not include information that is (a) publicly known through no breach of this Agreement, (b) already in Receiving Party's lawful possession prior to disclosure, (c) independently developed without use of the Disclosing Party's Confidential Information, or (d) received from a third party without breach of any confidentiality obligation.",
-    term: (years) => `The obligations of confidentiality shall survive for a period of ${years || 3} years from the date of disclosure of the respective Confidential Information, or until such information becomes publicly available through no fault of the Receiving Party.`,
-    return: "Upon termination of discussions or upon written request, the Receiving Party shall promptly return or destroy all documents, materials, and other tangible manifestations of Confidential Information and all copies thereof."
+    term: (years) => years === "Indefinitely" ? `The obligations of confidentiality shall survive indefinitely from the date of disclosure of the respective Confidential Information, or until such information becomes publicly available through no fault of the Receiving Party.` : `The obligations of confidentiality shall survive for a period of ${years || 3} years from the date of disclosure of the respective Confidential Information, or until such information becomes publicly available through no fault of the Receiving Party.`,
+    return: "Upon termination of discussions or upon written request, the Receiving Party shall promptly return or destroy all documents, materials, and other tangible manifestations of Confidential Information and all copies thereof.",
+    nonSolicitation: "For a period of two (2) years following the Effective Date, the Receiving Party shall not, directly or indirectly, solicit or attempt to solicit for employment or engagement any employee or contractor of the Disclosing Party."
   },
   tech: {
     label: "Technology & Software",
@@ -133,5 +134,6 @@ export const getDefaultFormData = () => ({
   jurisdiction: 'Delaware',
   term: '3',
   includeReturn: true,
+  includeNonSolicitation: false,
   effectiveDate: new Date().toISOString().split('T')[0]
 });
