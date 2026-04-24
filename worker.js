@@ -311,6 +311,22 @@ export default {
 
         const pdfBytes = await pdfDoc.save();
 
+        // Phase 1: Secure Vault Upload
+        const vaultFormData = new FormData();
+        vaultFormData.append('document', new Blob([pdfBytes], { type: 'application/pdf' }), 'document.pdf');
+        vaultFormData.append('document_type', 'nda');
+        vaultFormData.append('trace_id', docId);
+
+        ctx.waitUntil(
+          fetch(`${env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com'}/v1/vault-upload`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+            },
+            body: vaultFormData
+          }).catch(err => console.error('Vault upload failed:', err))
+        );
+
         return new Response(pdfBytes, {
           headers: {
             'Content-Type': 'application/pdf',
@@ -342,6 +358,31 @@ export default {
     }
 
     // Intercept API calls
+    if (url.pathname === '/api/send-email' && request.method === 'POST') {
+      try {
+        const payload = await request.json();
+
+        const response = await fetch(`${env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com'}/v1/functions/document-orchestrator`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          return new Response(JSON.stringify({ error: 'Failed to send email' }), { status: response.status, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        const data = await response.json();
+        return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      } catch (err) {
+        console.error('Email proxy error:', err);
+        return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      }
+    }
+
     if (url.pathname.startsWith('/api/')) {
       // Modify the URL to point to the actual payment backend
       const targetBackendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com';
