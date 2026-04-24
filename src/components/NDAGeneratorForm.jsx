@@ -53,6 +53,27 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
 
   const { isValid: isFormValid, validationMessage } = useFormValidation(formData);
   const sigCanvas = useRef(null);
+
+  // Handle window resize for SignatureCanvas
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (sigCanvas.current) {
+        // Save current drawn data
+        const data = sigCanvas.current.toData();
+        // Force re-render of canvas by clearing, but we actually just need to re-apply data after resize
+        sigCanvas.current.clear();
+        setTimeout(() => {
+          if (sigCanvas.current && data) {
+             sigCanvas.current.fromData(data);
+          }
+        }, 50);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [isSigEmpty, setIsSigEmpty] = useState(true);
 
   const clearSignature = () => { if(sigCanvas.current) sigCanvas.current.clear(); setIsSigEmpty(true); setFormData(prev => ({ ...prev, signatureImage: null })); };
@@ -73,21 +94,35 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
   };
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
+  const progressSteps = [
+    { id: 1, label: '1. Details' },
+    { id: 2, label: '2. Clauses' },
+    { id: 3, label: '3. Sign' },
+    { id: 4, label: '4. Preview & Pay' }
+  ];
+
   const renderProgressBar = () => (
-    <div className="flex justify-between items-center mb-8 relative">
-      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-white/10 rounded-full z-0"></div>
-      <div
-        className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-axim-teal rounded-full z-0 transition-all duration-300"
-        style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
-      ></div>
-      {[1, 2, 3].map(step => (
+    <div className="flex flex-col mb-8 relative px-4">
+      <div className="flex justify-between items-center relative">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-white/10 rounded-full z-0"></div>
         <div
-          key={step}
-          className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${currentStep >= step ? 'bg-axim-teal text-black shadow-[0_0_10px_rgba(0,229,255,0.5)]' : 'bg-zinc-800 text-zinc-500 border border-white/10'}`}
-        >
-          {step}
-        </div>
-      ))}
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-axim-teal rounded-full z-0 transition-all duration-300"
+          style={{ width: `${((currentStep - 1) / (progressSteps.length - 1)) * 100}%` }}
+        ></div>
+        {progressSteps.map(step => (
+          <div key={step.id} className="relative z-10 flex flex-col items-center">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${currentStep >= step.id ? 'bg-axim-teal text-black shadow-[0_0_10px_rgba(0,229,255,0.5)]' : 'bg-zinc-800 text-zinc-500 border border-white/10'}`}
+            >
+              {step.id}
+            </div>
+            <div className={`absolute top-10 whitespace-nowrap text-xs font-semibold ${currentStep >= step.id ? 'text-axim-teal' : 'text-zinc-500'}`}>
+              {step.label}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="h-6"></div> {/* Spacer for labels */}
     </div>
   );
 
@@ -446,7 +481,10 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                 <div className="mt-8 border-t border-zinc-300 pt-8">
                   <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><SafeIcon icon={FiPenTool} size={20} /> E-Signature</h3>
                   <p className="text-sm text-zinc-600 mb-4">Please sign below to certify this document.</p>
-                  <div className="border border-zinc-400 bg-zinc-50 rounded-lg p-2 max-w-md">
+                  <div
+                    className="border border-zinc-400 bg-zinc-50 rounded-lg p-2 max-w-md w-full"
+                    style={{ touchAction: 'none' }}
+                  >
                      <SignatureCanvas
                         ref={sigCanvas}
                         penColor="black"
@@ -455,7 +493,12 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                      />
                   </div>
                   <div className="flex gap-4 mt-4">
-                     <button onClick={clearSignature} className="text-sm font-medium text-axim-teal underline">Clear Signature</button>
+                     <button
+                       onClick={clearSignature}
+                       className="px-4 py-2 bg-zinc-800 text-zinc-300 border border-zinc-600 hover:bg-zinc-700 hover:text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2 shadow-sm"
+                     >
+                       <SafeIcon icon={FiRefreshCw} size={14} /> Clear Signature
+                     </button>
                   </div>
                 </div>
 

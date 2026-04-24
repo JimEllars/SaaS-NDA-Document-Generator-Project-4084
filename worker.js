@@ -125,6 +125,23 @@ export default {
         });
       } catch (err) {
         console.error('PDF Preview Generation Error:', err);
+
+        ctx.waitUntil(
+          fetch(`${env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com'}/v1/telemetry/ingest`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+            },
+            body: JSON.stringify({
+              event: 'pdf_generation_failed',
+              app_type: 'nda',
+              severity: 'CRITICAL',
+              error_message: err.message
+            })
+          })
+        );
+
         return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
       }
     }
@@ -303,6 +320,23 @@ export default {
         });
       } catch (err) {
         console.error('PDF Generation Error:', err);
+
+        ctx.waitUntil(
+          fetch(`${env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com'}/v1/telemetry/ingest`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+            },
+            body: JSON.stringify({
+              event: 'pdf_generation_failed',
+              app_type: 'nda',
+              severity: 'CRITICAL',
+              error_message: err.message
+            })
+          })
+        );
+
         return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
       }
     }
