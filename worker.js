@@ -1,9 +1,35 @@
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
 import { generateDocument, generatePlainText } from './workerDocumentGenerator.js';
 
+
+// In-memory rate limiter
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const MAX_REQUESTS = 5;
+
+// Note: Cloudflare Workers are stateless per isolate and can't use setInterval like Node.
+// But we can clean up passively.
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    if (url.pathname === '/api/health' && request.method === 'GET') {
+      return new Response(JSON.stringify({ status: "operational", service: "nda_generator", timestamp: Date.now() }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+
+    // Passive cleanup of rate limits every ~100 requests to avoid memory leaks in isolate
+    if (Math.random() < 0.01) {
+      const now = Date.now();
+      for (const [ip, data] of rateLimitMap.entries()) {
+        if (now - data.timestamp > RATE_LIMIT_WINDOW) {
+          rateLimitMap.delete(ip);
+        }
+      }
+    }
 
     if (request.method === 'OPTIONS') {
       return new Response(null, {
@@ -17,6 +43,25 @@ export default {
 
 
     if (request.method === 'POST' && url.pathname === '/api/generate-preview') {
+      // Edge Rate Limiting
+      const clientIP = request.headers.get('CF-Connecting-IP');
+      if (clientIP) {
+        const now = Date.now();
+        const userLimit = rateLimitMap.get(clientIP);
+
+        if (userLimit && now - userLimit.timestamp < RATE_LIMIT_WINDOW) {
+          if (userLimit.count >= MAX_REQUESTS) {
+            return new Response(JSON.stringify({ error: "Rate limit exceeded. Please finalize your document to continue." }), {
+              status: 429,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+          userLimit.count += 1;
+          rateLimitMap.set(clientIP, userLimit);
+        } else {
+          rateLimitMap.set(clientIP, { count: 1, timestamp: now });
+        }
+      }
       try {
         const formData = await request.json();
 
