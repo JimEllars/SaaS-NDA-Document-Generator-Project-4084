@@ -72,6 +72,32 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
   }, []);
 
   const [isSigEmpty, setIsSigEmpty] = useState(true);
+  const [saveProfile, setSaveProfile] = useState(() => {
+    try {
+      return localStorage.getItem('axim_nda_b2b_profile') !== null;
+    } catch {
+      return false;
+    }
+  });
+
+  const persistProfileIfNeeded = () => {
+    if (saveProfile) {
+      try {
+        localStorage.setItem('axim_nda_b2b_profile', JSON.stringify({
+          disclosing: formData.disclosing,
+          industry: formData.industry,
+          jurisdiction: formData.jurisdiction
+        }));
+      } catch (e) {
+        console.warn("Failed to save profile:", e);
+      }
+    } else {
+      try {
+        localStorage.removeItem('axim_nda_b2b_profile');
+      } catch (e) { /* ignore */ }
+    }
+  };
+
 
   const clearSignature = () => { if(sigCanvas.current) sigCanvas.current.clear(); setIsSigEmpty(true); setFormData(prev => ({ ...prev, signatureImage: null })); };
   const saveSignature = () => { if(sigCanvas.current && !sigCanvas.current.isEmpty()) { setFormData(prev => ({ ...prev, signatureImage: sigCanvas.current.getTrimmedCanvas().toDataURL('image/png') })); setIsSigEmpty(false); } };
@@ -145,6 +171,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
 
   const handlePurchaseClick = () => {
     fireTelemetry('nda_checkout_initiated');
+    persistProfileIfNeeded();
     onPurchase();
   };
 
@@ -248,6 +275,15 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                       required
                       maxLength="255"
                     />
+                    <label className="flex items-center gap-2 mt-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={saveProfile}
+                        onChange={(e) => setSaveProfile(e.target.checked)}
+                        className="w-4 h-4 rounded border-white/20 bg-black/50 text-axim-teal focus:ring-axim-teal"
+                      />
+                      <span className="text-sm text-zinc-300">Save my details for future NDAs</span>
+                    </label>
                   </div>
                   <div>
                     <label htmlFor="receiving" className={`${LABEL_CLASSES} block`}>
@@ -544,7 +580,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                     </button>
                     {userSession?.is_partner && !isEditing ? (
                       <button
-                        onClick={onPartnerCheckout}
+                        onClick={() => { persistProfileIfNeeded(); onPartnerCheckout(); }}
                         disabled={!isFormValid}
                         className={`flex-1 bg-amber-500 text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''}`}
                       >

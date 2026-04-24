@@ -1,16 +1,28 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-export const getDefaultFormData = () => ({
-  disclosing: '',
-  receiving: '',
-  industry: 'general',
-  strictness: 'standard',
-  type: 'unilateral',
-  jurisdiction: 'Delaware',
-  term: '3',
-  includeReturn: true,
-  includeNonSolicitation: false,
-  effectiveDate: new Date().toISOString().split('T')[0]
-});
+export const getDefaultFormData = () => {
+  let profileData = {};
+  try {
+    const profile = localStorage.getItem('axim_nda_b2b_profile');
+    if (profile) {
+      profileData = JSON.parse(profile);
+    }
+  } catch (e) {
+    console.warn("Failed to read profile:", e);
+  }
+
+  return {
+    disclosing: profileData.disclosing || '',
+    receiving: '',
+    industry: profileData.industry || 'general',
+    strictness: 'standard',
+    type: 'unilateral',
+    jurisdiction: profileData.jurisdiction || 'Delaware',
+    term: '3',
+    includeReturn: true,
+    includeNonSolicitation: false,
+    effectiveDate: new Date().toISOString().split('T')[0]
+  };
+};
 
 import { encrypt, decrypt } from '../utils/crypto';
 
