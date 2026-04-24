@@ -58,7 +58,7 @@ export default function SuccessPage() {
 
         try {
             setIsSendingEmail(true);
-                        const response = await deliverOrchestratedDocument({ templateId: 'nda_v1', email, formData: documentData });
+                                                const response = await deliverOrchestratedDocument({ templateId: 'nda_v1', email, formData: documentData, session_id: sessionId });
 
             if (!response.ok) {
                 if (response.status === 401 || response.status === 403) {

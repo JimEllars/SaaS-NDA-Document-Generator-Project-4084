@@ -59,7 +59,7 @@ export const verifySession = async (sessionId) => {
 
 
 export const deliverOrchestratedDocument = async (payload) => {
-  const response = await fetch('/api/v1/functions/document-orchestrator', {
+  const response = await fetch('/api/send-email', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'

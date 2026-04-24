@@ -4,8 +4,6 @@ import React, { useRef, useState } from 'react';
 import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle, FiUnlock, FiChevronRight, FiChevronLeft, FiPenTool } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../context/ToastContext';
-import { ConnectButton } from 'thirdweb/react';
-import { useWeb3Bypass } from '../hooks/useWeb3Bypass';
 import SafeIcon from '../common/SafeIcon';
 import UpsellCard from './UpsellCard';
 import useFormValidation from '../hooks/useFormValidation';
@@ -35,7 +33,6 @@ const isWeb3Enabled = import.meta.env.VITE_ENABLE_WEB3 === 'true';
 
 const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, setCurrentStep, onPurchase, isEditing, onUpdate, userSession, onPartnerCheckout }) => {
   const { addToast } = useToast();
-  const { hasToken, isChecking, client } = useWeb3Bypass();
   const trackingSessionId = React.useRef(`sess_${Math.random().toString(36).substring(2, 9)}`);
 
   const handleBypass = React.useCallback(() => {
@@ -538,18 +535,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                 <div className="flex flex-col gap-4">
                   {formData.strictness === 'robust' && <UpsellCard />}
 
-                  {!isEditing && isWeb3Enabled && (
-
-                    <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-black/30 p-4 rounded-xl border border-white/5">
-                      <div className="flex flex-col">
-                        <p className="text-sm font-semibold text-zinc-300">AXiM Node Holder?</p>
-                        <p className="text-xs text-zinc-500">Connect wallet to bypass paywall.</p>
-                      </div>
-                      <ConnectButton client={client} />
-                    </div>
-                  )}
-
-                  <div className="flex flex-col md:flex-row gap-4">
+<div className="flex flex-col md:flex-row gap-4">
                     <button
                       onClick={prevStep}
                       className="bg-transparent border border-white/20 text-zinc-200 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-white/10 transition"
@@ -579,17 +565,7 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                       </button>
                     )}
 
-                    {!isEditing && hasToken && !isChecking && isWeb3Enabled && (
-                      <button
-                        onClick={handleBypass}
-                        disabled={!isFormValid}
-                        className={`flex-1 bg-purple-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-500 hover:shadow-[0_0_15px_rgba(147,51,234,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? 'opacity-50 cursor-not-allowed hover:shadow-none' : ''}`}
-                      >
-                        <SafeIcon icon={FiUnlock} size={20} />
-                        Bypass Paywall
-                      </button>
-                    )}
-                  </div>
+</div>
                 </div>
 
                 {!isFormValid && (
