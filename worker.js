@@ -372,6 +372,24 @@ export default {
           }).catch(err => console.error('Vault upload failed:', err))
         );
 
+        // --- NEW: Telemetry hook for B2B Lead Converted ---
+        ctx.waitUntil(
+          fetch(`${env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com'}/v1/telemetry/ingest`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+            },
+            body: JSON.stringify({
+              event: 'b2b_lead_converted',
+              app_type: 'nda',
+              client_email: formData.email || '',
+              disclosing_party: formData.disclosing || ''
+            })
+          }).catch(err => console.error('Telemetry ingest failed:', err))
+        );
+        // ----------------------------------------------------
+
         return new Response(pdfBytes, {
           headers: {
             'Content-Type': 'application/pdf',
