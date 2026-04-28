@@ -118,7 +118,7 @@ export default function SuccessPage() {
                             headers: {
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify(formData)
+                            body: JSON.stringify({ ...formData, sessionId })
                         });
 
                         if (!response.ok) throw new Error('Edge generation failed');

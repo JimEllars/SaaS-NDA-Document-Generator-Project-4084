@@ -1,22 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 export const getDefaultFormData = () => {
-  let profileData = {};
-  try {
-    const profile = localStorage.getItem('axim_nda_b2b_profile');
-    if (profile) {
-      profileData = JSON.parse(profile);
-    }
-  } catch (e) {
-    console.warn("Failed to read profile:", e);
-  }
-
   return {
-    disclosing: profileData.disclosing || '',
+    disclosing: '',
     receiving: '',
-    industry: profileData.industry || 'general',
+    industry: 'general',
     strictness: 'standard',
     type: 'unilateral',
-    jurisdiction: profileData.jurisdiction || 'Delaware',
+    jurisdiction: 'Delaware',
     term: '3',
     includeReturn: true,
     includeNonSolicitation: false,

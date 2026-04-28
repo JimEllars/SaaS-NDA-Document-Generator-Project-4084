@@ -32,11 +32,22 @@ function AppContent() {
   const [userSession, setUserSession] = useState({ health_index: 100, is_partner: true });
 
   useEffect(() => {
-      // Mock AXiM Passport session check
-      const checkPassport = () => {
-          setTimeout(() => {
-              setUserSession(prev => ({ ...prev, health_index: 35 })); // Simulate low health index
-          }, 2000);
+      const checkPassport = async () => {
+          try {
+              const response = await fetch('/api/v1/auth/session', {
+                  method: 'GET',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  }
+              });
+
+              if (response.ok) {
+                  const data = await response.json();
+                  setUserSession(data);
+              }
+          } catch (err) {
+              console.error('Failed to fetch passport session:', err);
+          }
       };
       checkPassport();
   }, []);
