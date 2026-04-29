@@ -193,12 +193,30 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/api/generate-nda') {
       try {
-        const authHeader = request.headers.get('Authorization');
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+        const formData = await request.json();
+        const sessionId = formData.sessionId;
+
+        if (!sessionId) {
+          return new Response(JSON.stringify({ error: 'Unauthorized: Missing sessionId' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
         }
 
-        const formData = await request.json();
+        const backendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com';
+        const verifyRes = await fetch(`${backendUrl}/api/verify-session?session_id=${sessionId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+          }
+        });
+
+        if (!verifyRes.ok) {
+          return new Response(JSON.stringify({ error: 'Unauthorized: Invalid session' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        const sessionData = await verifyRes.json();
+        if (!sessionData.isPaid) {
+          return new Response(JSON.stringify({ error: 'Unauthorized: Session not paid' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+        }
 
         // Ensure the formData has isPaid = true before generating
         const docData = generateDocument({ ...formData, isPaid: true });
@@ -475,7 +493,7 @@ export default {
       headers.set('Origin', targetBackendUrl);
       headers.set('Referer', targetBackendUrl);
 
-      const internalRoutes = ['/api/v1/telemetry/ingest', '/api/v1/telemetry/events', '/api/v1/telemetry/errors', '/api/v1/telemetry/feedback', '/api/v1/user/document-history', '/api/verify-session'];
+      const internalRoutes = ['/api/v1/telemetry/ingest', '/api/v1/telemetry/events', '/api/v1/telemetry/errors', '/api/v1/telemetry/feedback', '/api/v1/user/document-history', '/api/verify-session', '/api/v1/auth/session'];
 
       if (internalRoutes.some(route => url.pathname.startsWith(route))) {
         if (!headers.has('Authorization') && env.AXIM_SERVICE_KEY) {
