@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { hashFormData } from './utils/crypto';
 import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
@@ -29,7 +30,7 @@ function AppContent() {
 
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [userSession, setUserSession] = useState({ health_index: 100, is_partner: true });
+  const [userSession, setUserSession] = useState(null);
 
   useEffect(() => {
       const checkPassport = async () => {
@@ -44,8 +45,11 @@ function AppContent() {
               if (response.ok) {
                   const data = await response.json();
                   setUserSession(data);
+              } else {
+                  setUserSession(null);
               }
           } catch (err) {
+              setUserSession(null);
               console.error('Failed to fetch passport session:', err);
           }
       };
@@ -78,7 +82,8 @@ function AppContent() {
     try {
       setIsProcessingPayment(true);
       addToast('Redirecting to Stripe Checkout...', 'info');
-      const response = await processPayment('nda_document');
+      const formHash = await hashFormData(formData);
+      const response = await processPayment('nda_document', formHash);
 
       if (response && response.url) {
         window.dataLayer = window.dataLayer || [];
@@ -100,7 +105,7 @@ function AppContent() {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-axim-teal rounded-full opacity-10 blur-[120px] pointer-events-none"></div>
 
 
-      {userSession.health_index < 40 && (
+      {userSession && userSession.health_index < 40 && (
           <div className="bg-purple-900/50 border border-purple-500/30 text-purple-200 text-sm py-3 px-4 flex items-center justify-center gap-3 w-full shadow-[0_4px_20px_rgba(147,51,234,0.15)] relative z-20 backdrop-blur-md">
               <SafeIcon icon={FiLifeBuoy} className="text-purple-400" />
               Need expert help? Our technical team is available to assist with your document configuration.
