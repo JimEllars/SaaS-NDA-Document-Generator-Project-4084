@@ -252,9 +252,9 @@ export default function SuccessPage() {
                         />
                         <button
                             onClick={handleSendEmail}
-                            disabled={isSendingEmail || !email}
+                            disabled={isSendingEmail || !email || !documentBlobUrl}
                             className={`bg-zinc-800 text-zinc-100 font-medium py-2 px-6 rounded-lg hover:bg-zinc-700 transition flex items-center justify-center gap-2 ${
-                                (isSendingEmail || !email) ? 'opacity-50 cursor-not-allowed' : ''
+                                (isSendingEmail || !email || !documentBlobUrl) ? 'opacity-50 cursor-not-allowed' : ''
                             }`}
                         >
                             <SafeIcon icon={FiSend} size={14} />

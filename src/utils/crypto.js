@@ -59,7 +59,10 @@ export const decrypt = (encoded) => {
 
 export const hashFormData = async (formData) => {
     // Generate a simple SHA-256 hash of the form data to ensure integrity
-    const message = JSON.stringify(formData, Object.keys(formData).sort());
+    // Exclude sessionId before hashing if it exists
+    const dataToHash = { ...formData };
+    delete dataToHash.sessionId;
+    const message = JSON.stringify(dataToHash, Object.keys(dataToHash).sort());
     const msgBuffer = new TextEncoder().encode(message);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));

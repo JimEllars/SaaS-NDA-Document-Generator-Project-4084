@@ -83,7 +83,7 @@ function AppContent() {
       setIsProcessingPayment(true);
       addToast('Redirecting to Stripe Checkout...', 'info');
       const formHash = await hashFormData(formData);
-      const response = await processPayment('nda_document', formHash);
+      const response = await processPayment('nda_document', formHash, formData.email);
 
       if (response && response.url) {
         window.dataLayer = window.dataLayer || [];
