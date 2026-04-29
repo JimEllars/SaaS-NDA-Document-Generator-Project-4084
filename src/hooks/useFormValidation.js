@@ -64,6 +64,15 @@ const useFormValidation = (formData) => {
         return;
       }
 
+
+      // Validate Email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!formData.email || !emailRegex.test(formData.email)) {
+        setValidationMessage('Please enter a valid email address.');
+        setIsValid(false);
+        return;
+      }
+
       // If all checks pass
       setValidationMessage('');
       setIsValid(true);

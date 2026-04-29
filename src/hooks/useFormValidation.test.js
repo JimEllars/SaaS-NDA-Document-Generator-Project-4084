@@ -9,7 +9,8 @@ describe('useFormValidation', () => {
       disclosing: 'A',
       receiving: 'B',
       effectiveDate: '2023-10-27',
-      jurisdiction: 'Delaware'
+      jurisdiction: 'Delaware',
+      email: 'test@example.com'
     };
     const { result } = renderHook(() => useFormValidation(formData));
     expect(result.current.isValid).toBe(false);
@@ -21,7 +22,8 @@ describe('useFormValidation', () => {
       disclosing: 'A'.repeat(101),
       receiving: 'B',
       effectiveDate: '2023-10-27',
-      jurisdiction: 'Delaware'
+      jurisdiction: 'Delaware',
+      email: 'test@example.com'
     };
     const { result } = renderHook(() => useFormValidation(formData));
     expect(result.current.isValid).toBe(false);
@@ -31,7 +33,8 @@ describe('useFormValidation', () => {
       disclosing: 'Alice',
       receiving: 'B'.repeat(101),
       effectiveDate: '2023-10-27',
-      jurisdiction: 'Delaware'
+      jurisdiction: 'Delaware',
+      email: 'test@example.com'
     };
     const { result: result2 } = renderHook(() => useFormValidation(formData2));
     expect(result2.current.isValid).toBe(false);
@@ -43,7 +46,8 @@ describe('useFormValidation', () => {
       disclosing: 'Alice <script>',
       receiving: 'Bob',
       effectiveDate: '2023-10-27',
-      jurisdiction: 'Delaware'
+      jurisdiction: 'Delaware',
+      email: 'test@example.com'
     };
     const { result } = renderHook(() => useFormValidation(formData));
     expect(result.current.isValid).toBe(false);
@@ -55,7 +59,8 @@ describe('useFormValidation', () => {
       disclosing: 'Alice',
       receiving: 'Bob',
       effectiveDate: 'invalid-date',
-      jurisdiction: 'Delaware'
+      jurisdiction: 'Delaware',
+      email: 'test@example.com'
     };
     const { result } = renderHook(() => useFormValidation(formData));
     expect(result.current.isValid).toBe(false);
@@ -67,7 +72,8 @@ describe('useFormValidation', () => {
       disclosing: 'Alice',
       receiving: 'Bob',
       effectiveDate: '2023-10-27',
-      jurisdiction: 'Delaware'
+      jurisdiction: 'Delaware',
+      email: 'test@example.com'
     };
     const { result } = renderHook(() => useFormValidation(formData));
     expect(result.current.isValid).toBe(true);

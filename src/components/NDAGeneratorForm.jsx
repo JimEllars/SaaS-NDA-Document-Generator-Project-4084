@@ -1,26 +1,13 @@
 import SignatureCanvas from 'react-signature-canvas';
 import React, { useRef, useState } from 'react';
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
-import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle, FiUnlock, FiChevronRight, FiChevronLeft, FiPenTool } from 'react-icons/fi';
+import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle, FiUnlock, FiChevronRight, FiChevronLeft, FiPenTool , FiMail} from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../context/ToastContext';
 import SafeIcon from '../common/SafeIcon';
 import UpsellCard from './UpsellCard';
 import useFormValidation from '../hooks/useFormValidation';
-export const JURISDICTIONS = [
-  "Delaware", "California", "New York", "Texas", "Florida", "Illinois",
-  "Washington", "Nevada", "Colorado", "Georgia", "North Carolina",
-  "Virginia", "Massachusetts", "Pennsylvania", "Other"
-];
-
-export const INDUSTRY_OPTIONS = [
-  { value: 'general', label: 'General Business' },
-  { value: 'tech', label: 'Technology & Software' },
-  { value: 'creative', label: 'Creative & Design' },
-  { value: 'realestate', label: 'Real Estate' },
-  { value: 'healthcare', label: 'Healthcare & Life Sciences' },
-  { value: 'financial', label: 'Financial Services' }
-];
+import { JURISDICTIONS, INDUSTRY_OPTIONS } from '../common/documentConstants';
 
 
 const FIELD_BASE_CLASSES = "w-full p-4 bg-black/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-axim-teal focus:border-axim-teal outline-none text-zinc-100 placeholder-zinc-500";
@@ -267,9 +254,27 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                   </div>
                 </div>
 
-                <div className="flex justify-end mt-6">
-                  <button
-                    onClick={nextStep}
+
+                <div className="space-y-4 col-span-1 md:col-span-2 mt-4 border-t border-white/10 pt-4">
+                  <h3 className="text-xl font-bold text-axim-teal flex items-center gap-2">
+                    <SafeIcon icon={FiMail} size={20} /> Contact Details
+                  </h3>
+                  <div>
+                    <label className={LABEL_CLASSES}>Email Address (for document delivery)</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email || ''}
+                      onChange={handleInputChange}
+                      className={INPUT_CLASSES}
+                      placeholder="Enter your email address"
+                      required
+                    />
+                  </div>
+                </div>
+
+              <div className="flex justify-end mt-6">
+                <button onClick={nextStep}
                     disabled={!formData.disclosing || !formData.receiving}
                     className={`bg-axim-teal text-black font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 transition transform active:scale-95 ${(!formData.disclosing || !formData.receiving) ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >

@@ -116,14 +116,7 @@ export const JURISDICTIONS = [
   "Virginia", "Massachusetts", "Pennsylvania", "Other"
 ];
 
-export const INDUSTRY_OPTIONS = [
-  { value: 'general', label: 'General Business' },
-  { value: 'tech', label: 'Technology & Software' },
-  { value: 'creative', label: 'Creative & Design' },
-  { value: 'realestate', label: 'Real Estate' },
-  { value: 'healthcare', label: 'Healthcare & Life Sciences' },
-  { value: 'financial', label: 'Financial Services' }
-];
+import { INDUSTRY_OPTIONS } from './src/common/documentConstants.js';
 
 export const getDefaultFormData = () => ({
   disclosing: '',

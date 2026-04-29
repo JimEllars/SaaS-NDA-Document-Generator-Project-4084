@@ -1,5 +1,16 @@
-import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
-import { generateDocument, generatePlainText } from './workerDocumentGenerator.js';
+import { generateDocument, generatePlainText, generatePdfBytes } from './workerDocumentGenerator.js';
+
+
+async function hashFormData(formData) {
+    const dataToHash = { ...formData };
+    delete dataToHash.sessionId; // Don't include sessionId in hash
+    const message = JSON.stringify(dataToHash, Object.keys(dataToHash).sort());
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 
 
 // In-memory rate limiter
@@ -73,93 +84,7 @@ export default {
 
         const plainText = generatePlainText(docData, formData);
 
-        const pdfDoc = await PDFDocument.create();
-        const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-        const timesRomanBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-
-        let page = pdfDoc.addPage();
-        const { width, height } = page.getSize();
-        const margin = 50;
-        let currentY = height - margin;
-        const fontSize = 12;
-        const lineHeight = fontSize * 1.5;
-
-        const lines = plainText.split('\n');
-
-        for (const line of lines) {
-          if (currentY < margin) {
-            page = pdfDoc.addPage();
-            currentY = height - margin;
-          }
-
-          if (line.trim() !== '') {
-             const isHeader = (line === line.toUpperCase() && line.trim().length > 0) || line.startsWith('Article');
-             const currentFont = isHeader ? timesRomanBoldFont : timesRomanFont;
-             const currentFontSize = isHeader ? 14 : fontSize;
-             const currentLineHeight = currentFontSize * 1.5;
-
-             // Basic word wrap
-             const words = line.split(' ');
-             let currentLine = '';
-
-             for (let i = 0; i < words.length; i++) {
-                const testLine = currentLine + words[i] + ' ';
-                const textWidth = currentFont.widthOfTextAtSize(testLine, currentFontSize);
-
-                if (textWidth > width - 2 * margin && i > 0) {
-                   page.drawText(currentLine, {
-                     x: margin,
-                     y: currentY,
-                     size: currentFontSize,
-                     font: currentFont,
-                     color: rgb(0, 0, 0),
-                   });
-                   currentLine = words[i] + ' ';
-                   currentY -= currentLineHeight;
-                   if (currentY < margin) {
-                      page = pdfDoc.addPage();
-                      currentY = height - margin;
-                   }
-                } else {
-                   currentLine = testLine;
-                }
-             }
-
-             if (currentLine.trim() !== '') {
-                 page.drawText(currentLine, {
-                   x: margin,
-                   y: currentY,
-                   size: currentFontSize,
-                   font: currentFont,
-                   color: rgb(0, 0, 0),
-                 });
-                 currentY -= currentLineHeight;
-
-                 if (isHeader) {
-                    currentY -= (lineHeight * 1.5); // Additional spacing after headers
-                 }
-             }
-          } else {
-             currentY -= lineHeight;
-          }
-        }
-
-        // Add Watermark to all pages
-        const pages = pdfDoc.getPages();
-
-        for (const p of pages) {
-            const { width, height } = p.getSize();
-            p.drawText('DRAFT - NOT FOR LEGAL USE', {
-                x: width / 2 - 250,
-                y: height / 2 - 50,
-                size: 60,
-                color: rgb(0.8, 0.8, 0.8),
-                opacity: 0.5,
-                rotate: degrees(45),
-            });
-        }
-
-        const pdfBytes = await pdfDoc.save();
+        const { pdfBytes, docId } = await generatePdfBytes(plainText, formData);
 
         return new Response(pdfBytes, {
           headers: {
@@ -213,10 +138,20 @@ export default {
           return new Response(JSON.stringify({ error: 'Unauthorized: Invalid session' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
         }
 
+
         const sessionData = await verifyRes.json();
         if (!sessionData.isPaid) {
           return new Response(JSON.stringify({ error: 'Unauthorized: Session not paid' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
         }
+
+        // Verify Cryptographic Binding
+        const incomingHash = await hashFormData(formData);
+        const storedHash = sessionData.metadata?.formHash;
+
+        if (!storedHash || incomingHash !== storedHash) {
+          return new Response(JSON.stringify({ error: 'Unauthorized: Data integrity verification failed' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+        }
+
 
         // Ensure the formData has isPaid = true before generating
         const docData = generateDocument({ ...formData, isPaid: true });
@@ -226,153 +161,7 @@ export default {
 
         const plainText = generatePlainText(docData, formData);
 
-        const pdfDoc = await PDFDocument.create();
-        const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-        const timesRomanBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-
-        let page = pdfDoc.addPage();
-        const { width, height } = page.getSize();
-        const margin = 50;
-        let currentY = height - margin;
-        const fontSize = 12;
-        const lineHeight = fontSize * 1.5;
-
-        const lines = plainText.split('\n');
-
-        for (const line of lines) {
-          if (currentY < margin) {
-            page = pdfDoc.addPage();
-            currentY = height - margin;
-          }
-
-          if (line.trim() !== '') {
-             const isHeader = (line === line.toUpperCase() && line.trim().length > 0) || line.startsWith('Article');
-             const currentFont = isHeader ? timesRomanBoldFont : timesRomanFont;
-             const currentFontSize = isHeader ? 14 : fontSize;
-             const currentLineHeight = currentFontSize * 1.5;
-
-             // Basic word wrap
-             const words = line.split(' ');
-             let currentLine = '';
-
-             for (let i = 0; i < words.length; i++) {
-                const testLine = currentLine + words[i] + ' ';
-                const textWidth = currentFont.widthOfTextAtSize(testLine, currentFontSize);
-
-                if (textWidth > width - 2 * margin && i > 0) {
-                   page.drawText(currentLine, {
-                     x: margin,
-                     y: currentY,
-                     size: currentFontSize,
-                     font: currentFont,
-                     color: rgb(0, 0, 0),
-                   });
-                   currentLine = words[i] + ' ';
-                   currentY -= currentLineHeight;
-                   if (currentY < margin) {
-                      page = pdfDoc.addPage();
-                      currentY = height - margin;
-                   }
-                } else {
-                   currentLine = testLine;
-                }
-             }
-
-             if (currentLine.trim() !== '') {
-                 page.drawText(currentLine, {
-                   x: margin,
-                   y: currentY,
-                   size: currentFontSize,
-                   font: currentFont,
-                   color: rgb(0, 0, 0),
-                 });
-                 currentY -= currentLineHeight;
-
-                 if (isHeader) {
-                    currentY -= (lineHeight * 1.5); // Additional spacing after headers
-                 }
-             }
-          } else {
-             currentY -= lineHeight;
-          }
-        }
-
-
-        // Phase 2: Render Signature
-        if (formData.signatureImage) {
-            const signatureImageBytes = Uint8Array.from(atob(formData.signatureImage.split(',')[1]), c => c.charCodeAt(0));
-            const pngImage = await pdfDoc.embedPng(signatureImageBytes);
-            const pngDims = pngImage.scale(0.5);
-
-            // Add new page if not enough space
-            if (currentY - pngDims.height - 100 < margin) {
-                page = pdfDoc.addPage();
-                currentY = page.getSize().height - margin;
-            }
-
-            page.drawImage(pngImage, {
-                x: margin,
-                y: currentY - pngDims.height - 20,
-                width: pngDims.width,
-                height: pngDims.height,
-            });
-
-            currentY -= pngDims.height + 40;
-
-            page.drawText(`${formData.disclosing}`, {
-                x: margin,
-                y: currentY,
-                size: 12,
-                font: timesRomanFont,
-                color: rgb(0, 0, 0),
-            });
-
-            page.drawLine({
-                start: { x: margin, y: currentY - 5 },
-                end: { x: margin + 200, y: currentY - 5 },
-                thickness: 1,
-                color: rgb(0, 0, 0),
-            });
-
-            currentY -= 20;
-
-            page.drawText('Signature of Disclosing Party', {
-                x: margin,
-                y: currentY,
-                size: 10,
-                font: timesRomanFont,
-                color: rgb(0.5, 0.5, 0.5),
-            });
-        }
-
-        // Phase 3: Authenticity Markers
-        const docId = 'AXIM-NDA-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-        const timestamp = new Date().toUTCString();
-        const authText = `Generated by AXiM Systems | Secure Trace: ${docId} | ${timestamp}`;
-
-        const pages = pdfDoc.getPages();
-
-        const pageCount = pages.length;
-        for (let i = 0; i < pageCount; i++) {
-            const p = pages[i];
-            const { width, height } = p.getSize();
-            p.drawText(authText, {
-                x: margin,
-                y: 20,
-                size: 8,
-                color: rgb(0.5, 0.5, 0.5),
-            });
-
-            p.drawText(`Page ${i + 1} of ${pageCount}`, {
-                x: width - margin - 50,
-                y: 20,
-                size: 8,
-                color: rgb(0.5, 0.5, 0.5),
-            });
-        }
-
-
-        const pdfBytes = await pdfDoc.save();
+        const { pdfBytes, docId } = await generatePdfBytes(plainText, formData);
 
         // Phase 1: Secure Vault Upload
         const vaultFormData = new FormData();
@@ -478,6 +267,11 @@ export default {
           const clientOrigin = request.headers.get('Origin') || url.origin;
           body.success_url = `${clientOrigin}/success?session_id={CHECKOUT_SESSION_ID}`;
           body.cancel_url = `${clientOrigin}/?canceled=true`;
+          // Customer email is already in body.customer_email
+          if (body.formHash) {
+            body.metadata = body.metadata || {};
+            body.metadata.formHash = body.formHash;
+          }
           body = JSON.stringify(body);
         } catch (err) {
           // Fallback if we cannot parse JSON
