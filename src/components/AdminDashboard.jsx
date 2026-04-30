@@ -7,26 +7,18 @@ import ChatInterface from './ChatInterface';
 // Placeholder mock data for the hitl_audit_logs table logic
 // In a real application, this would fetch from Supabase:
 // supabase.from('hitl_audit_logs').select('*').order('created_at', { ascending: false })
-const mockHitlAuditLogs = [
-  {
-    id: 'log-1',
-    admin_id: 'auth-user-999',
-    action: 'Approve',
-    tool_name: 'purge_cloudflare_cache',
-    original_alert: 'High latency detected on Edge worker, recommend purge',
-    created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 mins ago
-  },
-  {
-    id: 'log-2',
-    admin_id: 'auth-user-888',
-    action: 'Deny',
-    tool_name: 'reboot_instance',
-    original_alert: 'Instance memory at 90%, recommend reboot',
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-  }
-];
+
 
 export const SecurityAudit = () => {
+  const [auditLogs, setAuditLogs] = React.useState([]);
+
+  React.useEffect(() => {
+    fetch('/api/v1/telemetry/audit-logs')
+      .then(res => res.json())
+      .then(data => setAuditLogs(data.logs || []))
+      .catch(err => console.error('Failed to fetch audit logs', err));
+  }, []);
+
   return (
     <div className="space-y-4">
       <div className="mb-6">
@@ -53,7 +45,7 @@ export const SecurityAudit = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {mockHitlAuditLogs.map((log) => (
+            {auditLogs.map((log) => (
               <tr key={log.id} className="hover:bg-white/5 transition-colors">
                 <td className="px-4 py-3 text-zinc-400">
                   {new Date(log.created_at).toLocaleString()}

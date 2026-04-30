@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { verifySession, deliverOrchestratedDocument } from '../api/paymentService';
 
-import { FiCheckCircle, FiMail, FiSend } from 'react-icons/fi';
+import { FiCheckCircle, FiMail, FiSend, FiFileText } from 'react-icons/fi';
+
 import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';
 import useNDAForm from '../hooks/useNDAForm';
@@ -23,6 +24,47 @@ export default function SuccessPage() {
 
     // Use a ref to hold the formData so it's accessible outside the effect
     const savedFormDataRef = useRef(null);
+
+
+    const handleDownloadDocx = useCallback(async () => {
+        try {
+            if (!documentData) {
+                 addToast('No document data available for DOCX', 'error');
+                 return;
+            }
+
+            const { Document, Packer, Paragraph, TextRun } = await import('docx');
+
+            const paragraphs = [
+                new Paragraph({ children: [new TextRun({ text: `${documentData.title}`, bold: true, size: 28 })] }),
+                new Paragraph({ children: [new TextRun({ text: `Effective Date: ${documentData.effectiveDate}`, size: 24 })] }),
+                new Paragraph({ text: '' }),
+            ];
+
+            const doc = new Document({
+                sections: [{
+                    properties: {},
+                    children: paragraphs
+                }]
+            });
+
+            const blob = await Packer.toBlob(doc);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'NDA.docx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            addToast('DOCX downloaded successfully', 'success');
+
+        } catch (err) {
+            console.error('DOCX Error:', err);
+            addToast('Failed to generate DOCX', 'error');
+        }
+    }, [documentData, addToast]);
 
     const handleDownload = useCallback(() => {
         if (documentBlobUrl) {
@@ -225,6 +267,13 @@ export default function SuccessPage() {
                         className="bg-axim-teal text-black font-bold py-3 px-8 rounded-xl hover:bg-teal-400 hover:shadow-[0_0_20px_rgba(0,229,255,0.4)] transition-all flex items-center justify-center"
                     >
                         Download PDF
+                    </button>
+                    <button
+                        onClick={handleDownloadDocx}
+                        className="bg-zinc-800 text-zinc-100 font-bold py-3 px-8 rounded-xl border border-zinc-700 hover:bg-zinc-700 transition-all flex items-center justify-center gap-2"
+                    >
+                        <SafeIcon icon={FiFileText} />
+                        Download Editable (.docx)
                     </button>
                     <button
                         onClick={handleStartOver}

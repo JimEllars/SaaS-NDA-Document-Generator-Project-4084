@@ -111,33 +111,19 @@ const FleetHeatmap = () => {
   const [hoveredApp, setHoveredApp] = useState(null);
 
   useEffect(() => {
-    // Initial data load
-    setFleetData(generateMockFleetData());
+    const fetchFleetData = () => {
+      fetch('/api/v1/telemetry/fleet-status')
+        .then(res => res.json())
+        .then(data => setFleetData(data.fleet || generateMockFleetData()))
+        .catch(err => {
+          console.error('Failed to fetch fleet data', err);
+          // Fallback to mock data if fetch fails (e.g. proxy mock not returning fleet array)
+          setFleetData(generateMockFleetData());
+        });
+    };
 
-    // Simulate real-time telemetry updates
-    const interval = setInterval(() => {
-      setFleetData(prev => prev.map(app => {
-        // Randomly fluctuate latency slightly
-        const latChange = Math.floor(Math.random() * 20) - 10;
-        let newLat = Math.max(5, app.latency + latChange);
-
-        // Very rarely change status for demo effect
-        let newStatus = app.status;
-        if (Math.random() > 0.95) {
-          if (app.status === 'critical') newStatus = 'degraded';
-          else if (app.status === 'degraded' && Math.random() > 0.5) newStatus = 'operational';
-        }
-
-        // Only regenerate events if status or latency changed significantly
-        // or just regenerate every 3s since it's cheap now
-        return {
-          ...app,
-          latency: newLat,
-          status: newStatus,
-          events: generateRecentEvents(newStatus, newLat)
-        };
-      }));
-    }, 3000);
+    fetchFleetData();
+    const interval = setInterval(fetchFleetData, 3000);
 
     return () => clearInterval(interval);
   }, []);

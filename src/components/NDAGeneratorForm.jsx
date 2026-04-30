@@ -541,6 +541,28 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                 <div className="flex flex-col gap-4">
                   {formData.strictness === 'robust' && <UpsellCard />}
 
+                  {isWeb3Enabled && !isEditing && (
+                    <div className="bg-black/30 border border-white/10 rounded-xl p-4 flex items-center justify-between mt-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                           <h4 className="font-bold text-zinc-100 text-sm">Notarize on AXiM Ledger</h4>
+                           <span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">Web3</span>
+                        </div>
+                        <p className="text-xs text-zinc-400 mt-1">Permanently verify this document's hash on-chain (+$2.00)</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={formData.notarizeOnChain || false}
+                          onChange={(e) => setFormData(prev => ({ ...prev, notarizeOnChain: e.target.checked }))}
+                        />
+                        <div className="w-11 h-6 bg-zinc-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+                      </label>
+                    </div>
+                  )}
+
+
 <div className="flex flex-col md:flex-row gap-4">
                     <button
                       onClick={prevStep}

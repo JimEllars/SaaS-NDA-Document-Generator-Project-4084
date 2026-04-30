@@ -4,6 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
 import NDAGeneratorForm from './components/NDAGeneratorForm';
+import MyRecentNDAs from './components/MyRecentNDAs';
 import SuccessPage from './components/SuccessPage';
 import AdminDashboard from './components/AdminDashboard';
 import ConfirmModal from './components/ConfirmModal';
@@ -31,6 +32,30 @@ function AppContent() {
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [userSession, setUserSession] = useState(null);
+
+  // Dynamic SEO based on industry
+  useEffect(() => {
+      const industry = formData.industry !== 'general' ? formData.industry : 'Custom';
+      const capitalizedIndustry = industry.charAt(0).toUpperCase() + industry.slice(1);
+      const title = `${capitalizedIndustry} NDA Generator | AXiM Systems`;
+      const description = `Generate legally binding, zero-trust ${capitalizedIndustry} Non-Disclosure Agreements instantly.`;
+
+      document.title = title;
+
+      const setMetaTag = (selector, attribute, value) => {
+          let tag = document.querySelector(selector);
+          if (tag) {
+              tag.setAttribute(attribute, value);
+          }
+      };
+
+      setMetaTag('meta[name="description"]', 'content', description);
+      setMetaTag('meta[property="og:title"]', 'content', title);
+      setMetaTag('meta[property="og:description"]', 'content', description);
+      setMetaTag('meta[name="twitter:title"]', 'content', title);
+      setMetaTag('meta[name="twitter:description"]', 'content', description);
+  }, [formData.industry]);
+
 
   useEffect(() => {
       const checkPassport = async () => {
@@ -111,6 +136,8 @@ function AppContent() {
               Need expert help? Our technical team is available to assist with your document configuration.
           </div>
       )}
+
+      {userSession && <MyRecentNDAs />}
 
       <Header
         isPaid={false}

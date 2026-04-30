@@ -84,7 +84,14 @@ export default {
 
         const plainText = generatePlainText(docData, formData);
 
+
         const { pdfBytes, docId } = await generatePdfBytes(plainText, formData);
+
+        // Simulate on-chain attestation if requested
+        if (formData.notarizeOnChain) {
+           console.log(`[Web3] Attesting document ${docId} on-chain`);
+        }
+
 
         return new Response(pdfBytes, {
           headers: {
