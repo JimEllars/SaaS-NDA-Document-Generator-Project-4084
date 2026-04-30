@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+
 export const getDefaultFormData = () => {
   return {
     disclosing: '',
@@ -10,7 +11,8 @@ export const getDefaultFormData = () => {
     term: '3',
     includeReturn: true,
     includeNonSolicitation: false,
-    effectiveDate: new Date().toISOString().split('T')[0]
+    effectiveDate: new Date().toISOString().split('T')[0],
+    notarizeOnChain: false
   };
 };
 
@@ -90,7 +92,7 @@ const useNDAForm = () => {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [formData, currentStep]); // We trigger the effect when formData changes
+  }, [formData, currentStep]);
 
   const resetForm = useCallback(() => {
     const defaultData = getDefaultFormData();
