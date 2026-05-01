@@ -66,8 +66,8 @@ describe('ErrorBoundary Component', () => {
   });
 
   it('should display error details in development mode', () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+    const originalEnv = import.meta.env.MODE;
+    import.meta.env.MODE = 'development';
 
     render(
       <ErrorBoundary>
@@ -77,12 +77,12 @@ describe('ErrorBoundary Component', () => {
 
     expect(screen.getByText(/Error: Test error/)).toBeInTheDocument();
 
-    process.env.NODE_ENV = originalEnv;
+    import.meta.env.MODE = originalEnv;
   });
 
   it('should not display error details in production mode', () => {
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
+    import.meta.env.MODE = 'production';
 
     render(
       <ErrorBoundary>

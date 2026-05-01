@@ -28,7 +28,7 @@ export default {
     if (url.pathname === '/api/health' && request.method === 'GET') {
       return new Response(JSON.stringify({ status: "operational", service: "nda_generator", timestamp: Date.now() }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
       });
     }
 
@@ -45,7 +45,7 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': 'https://axim.us.com',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         }
@@ -87,17 +87,12 @@ export default {
 
         const { pdfBytes, docId } = await generatePdfBytes(plainText, formData);
 
-        // Simulate on-chain attestation if requested
-        if (formData.notarizeOnChain) {
-           console.log(`[Web3] Attesting document ${docId} on-chain`);
-        }
-
 
         return new Response(pdfBytes, {
           headers: {
             'Content-Type': 'application/pdf',
             'Content-Disposition': 'inline; filename="Preview.pdf"',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': 'https://axim.us.com',
           }
         });
       } catch (err) {
@@ -208,7 +203,7 @@ export default {
           headers: {
             'Content-Type': 'application/pdf',
             'Content-Disposition': 'attachment; filename="NDA.pdf"',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': 'https://axim.us.com',
           }
         });
       } catch (err) {
@@ -260,6 +255,35 @@ export default {
       }
     }
 
+
+    if (request.method === 'GET' && url.pathname === '/api/v1/vault-download') {
+      try {
+        const traceId = url.searchParams.get('trace_id');
+        if (!traceId) {
+          return new Response(JSON.stringify({ error: 'Missing trace_id' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        const backendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com';
+        const response = await fetch(`${backendUrl}/v1/vault-download?trace_id=${traceId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+          }
+        });
+
+        if (!response.ok) {
+          return new Response(JSON.stringify({ error: 'Failed to download from vault' }), { status: response.status, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        const newResponse = new Response(response.body, response);
+        newResponse.headers.set('Access-Control-Allow-Origin', 'https://axim.us.com');
+        return newResponse;
+      } catch (err) {
+        console.error('Vault Download Error:', err);
+        return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      }
+    }
+
     if (url.pathname.startsWith('/api/')) {
       // Modify the URL to point to the actual payment backend
       const targetBackendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com';
@@ -307,7 +331,7 @@ export default {
       if (request.method === 'OPTIONS') {
         return new Response(null, {
           headers: {
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': 'https://axim.us.com',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           }
