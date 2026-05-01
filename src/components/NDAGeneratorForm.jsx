@@ -1,7 +1,8 @@
 import SignatureCanvas from 'react-signature-canvas';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import useVectorSearch from '../hooks/useVectorSearch';
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
-import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle, FiUnlock, FiChevronRight, FiChevronLeft, FiPenTool , FiMail} from 'react-icons/fi';
+import { FiBriefcase, FiFileText, FiCheck, FiLock, FiRefreshCw, FiCalendar, FiAlertCircle, FiUnlock, FiChevronRight, FiChevronLeft, FiPenTool , FiMail, FiCheckShield, FiUser, FiHelpCircle, FiX} from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../context/ToastContext';
 import SafeIcon from '../common/SafeIcon';
@@ -16,7 +17,7 @@ const SELECT_CLASSES = FIELD_BASE_CLASSES;
 const LABEL_CLASSES = "text-sm font-bold text-zinc-300 mb-2";
 const TOGGLE_BUTTON_BASE_CLASSES = "flex-1 py-3 text-sm font-bold rounded-lg transition";
 
-const isWeb3Enabled = import.meta.env.VITE_ENABLE_WEB3 === 'true';
+
 
 const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, setCurrentStep, onPurchase, isEditing, onUpdate, userSession, onPartnerCheckout }) => {
   const { addToast } = useToast();
@@ -59,6 +60,19 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
   }, []);
 
   const [isSigEmpty, setIsSigEmpty] = useState(true);
+
+  // AI Advisor
+  const { search: searchIntelligence, results: aiResults, isSearching: isAiSearching } = useVectorSearch();
+  const [advisorModalOpen, setAdvisorModalOpen] = useState(false);
+  const [advisorTopic, setAdvisorTopic] = useState('');
+
+  const openAdvisor = async (topic, clause) => {
+    setAdvisorTopic(topic);
+    setAdvisorModalOpen(true);
+    const query = `Why is ${clause} beneficial for the ${formData.industry || 'general'} industry?`;
+    await searchIntelligence(query);
+  };
+
 
   const clearSignature = () => { if(sigCanvas.current) sigCanvas.current.clear(); setIsSigEmpty(true); setFormData(prev => ({ ...prev, signatureImage: null })); };
   const saveSignature = () => { if(sigCanvas.current && !sigCanvas.current.isEmpty()) { setFormData(prev => ({ ...prev, signatureImage: sigCanvas.current.getTrimmedCanvas().toDataURL('image/png') })); setIsSigEmpty(false); } };
@@ -165,6 +179,38 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
 
       {renderProgressBar()}
 
+      {advisorModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-xl max-w-sm w-full p-6 relative shadow-2xl">
+            <button
+              onClick={() => setAdvisorModalOpen(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white"
+            >
+              <SafeIcon icon={FiX} size={20} />
+            </button>
+            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+              <SafeIcon icon={FiHelpCircle} className="text-axim-teal" /> AI Advisor: {advisorTopic}
+            </h3>
+            {isAiSearching ? (
+              <div className="animate-pulse flex space-x-4 mt-4">
+                <div className="flex-1 space-y-4 py-1">
+                  <div className="h-2 bg-zinc-700 rounded w-3/4"></div>
+                  <div className="h-2 bg-zinc-700 rounded"></div>
+                  <div className="h-2 bg-zinc-700 rounded w-5/6"></div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 text-sm text-zinc-300 leading-relaxed">
+                {aiResults && aiResults.length > 0 ? (
+                  <p>{aiResults[0].content}</p>
+                ) : (
+                  <p>Recommended for {formData.industry || 'this'} to ensure optimal protection of sensitive assets and intellectual property.</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <AnimatePresence mode="wait">
         {currentStep === 1 && (
           <motion.div
@@ -225,16 +271,21 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                     <label htmlFor="disclosing" className={`${LABEL_CLASSES} block`}>
                       Disclosing Party {formData.type === 'mutual' ? '(Party 1)' : ''}
                     </label>
-                    <input
-                      id="disclosing"
-                      name="disclosing"
-                      value={formData.disclosing}
-                      onChange={handleInputChange}
-                      placeholder="Company or Individual Name"
-                      className={ INPUT_CLASSES }
-                      required
-                      maxLength="255"
-                    />
+                    <div className="relative">
+                      <input
+                        id="disclosing"
+                        name="disclosing"
+                        value={formData.disclosing}
+                        onChange={handleInputChange}
+                        placeholder="Company or Individual Name"
+                        className={ INPUT_CLASSES }
+                        required
+                        maxLength="255"
+                      />
+                      {userSession?.name && formData.disclosing === userSession.name && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-axim-teal" title="Verified by AXiM Passport"><SafeIcon icon={FiCheckShield} /></div>
+                      )}
+                    </div>
 
                   </div>
                   <div>
@@ -261,15 +312,20 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                   </h3>
                   <div>
                     <label className={LABEL_CLASSES}>Email Address (for document delivery)</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email || ''}
-                      onChange={handleInputChange}
-                      className={INPUT_CLASSES}
-                      placeholder="Enter your email address"
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email || ''}
+                        onChange={handleInputChange}
+                        className={INPUT_CLASSES}
+                        placeholder="Enter your email address"
+                        required
+                      />
+                      {userSession?.email && formData.email === userSession.email && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-axim-teal" title="Verified by AXiM Passport"><SafeIcon icon={FiCheckShield} /></div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -357,7 +413,12 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                 {/* Protection Level and Term */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="strictness" className={`${LABEL_CLASSES} block`}>Protection Level</label>
+                    <div className="flex justify-between items-center mb-2">
+                      <label htmlFor="strictness" className={`${LABEL_CLASSES} mb-0`}>Protection Level</label>
+                      <button type="button" onClick={() => openAdvisor('Protection Level', 'strict protection level')} className="text-axim-teal hover:text-teal-300 transition" title="AI Clause Advisor">
+                        <SafeIcon icon={FiHelpCircle} size={16} />
+                      </button>
+                    </div>
                     <select
                       id="strictness"
                       name="strictness"
@@ -411,9 +472,14 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
                     onChange={handleInputChange}
                     className="w-4 h-4 text-axim-teal border-zinc-600 rounded focus:ring-axim-teal bg-black"
                   />
-                  <label htmlFor="includeNonSolicitation" className="text-sm font-medium text-zinc-300">
-                    Include Non-Solicitation Clause
-                  </label>
+                  <div className="flex-1 flex justify-between items-center">
+                    <label htmlFor="includeNonSolicitation" className="text-sm font-medium text-zinc-300">
+                      Include Non-Solicitation Clause
+                    </label>
+                    <button type="button" onClick={() => openAdvisor('Non-Solicitation', 'non-solicitation clause')} className="text-axim-teal hover:text-teal-300 transition" title="AI Clause Advisor">
+                      <SafeIcon icon={FiHelpCircle} size={16} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex justify-between mt-6">
@@ -540,27 +606,6 @@ const NDAGeneratorForm = React.memo(({ formData, setFormData, currentStep = 1, s
 
                 <div className="flex flex-col gap-4">
                   {formData.strictness === 'robust' && <UpsellCard />}
-
-                  {isWeb3Enabled && !isEditing && (
-                    <div className="bg-black/30 border border-white/10 rounded-xl p-4 flex items-center justify-between mt-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                           <h4 className="font-bold text-zinc-100 text-sm">Notarize on AXiM Ledger</h4>
-                           <span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">Web3</span>
-                        </div>
-                        <p className="text-xs text-zinc-400 mt-1">Permanently verify this document's hash on-chain (+$2.00)</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          checked={formData.notarizeOnChain || false}
-                          onChange={(e) => setFormData(prev => ({ ...prev, notarizeOnChain: e.target.checked }))}
-                        />
-                        <div className="w-11 h-6 bg-zinc-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
-                      </label>
-                    </div>
-                  )}
 
 
 <div className="flex flex-col md:flex-row gap-4">

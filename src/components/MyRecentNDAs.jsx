@@ -7,6 +7,27 @@ const MyRecentNDAs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
+  const handleDownload = async (trace_id) => {
+    try {
+      const response = await fetch(`/api/v1/vault-download?trace_id=${trace_id}`, {
+        method: 'GET'
+      });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `NDA_${trace_id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Error downloading document: ' + err.message);
+    }
+  };
+
   useEffect(() => {
     const fetchHistory = async () => {
       try {
@@ -56,10 +77,7 @@ const MyRecentNDAs = () => {
               <p className="text-xs text-zinc-500 mt-1">{new Date(doc.created_at).toLocaleString()}</p>
             </div>
             <button
-              onClick={() => {
-                // Since this is a placeholder/mock of actual retrieval:
-                alert('Downloading from Vault: ' + doc.trace_id);
-              }}
+              onClick={() => handleDownload(doc.trace_id)}
               className="p-2 bg-zinc-800 text-axim-teal rounded-lg hover:bg-zinc-700 hover:text-teal-300 transition-colors"
               title="Download from Vault"
             >
