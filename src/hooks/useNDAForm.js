@@ -1,24 +1,25 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from "react";
 
 export const getDefaultFormData = () => {
   return {
-    disclosing: '',
-    receiving: '',
-    industry: 'general',
-    strictness: 'standard',
-    type: 'unilateral',
-    jurisdiction: 'Delaware',
-    term: '3',
+    disclosing: "",
+    receiving: "",
+    industry: "general",
+    strictness: "standard",
+    type: "unilateral",
+    jurisdiction: "Delaware",
+    term: "3",
     includeReturn: true,
     includeNonSolicitation: false,
-    effectiveDate: new Date().toISOString().split('T')[0],
-    notarizeOnChain: false
+    effectiveDate: new Date().toISOString().split("T")[0],
+    notarizeOnChain: false,
+    theme: "classic",
   };
 };
 
-import { encrypt, decrypt } from '../utils/crypto';
+import { encrypt, decrypt } from "../utils/crypto";
 
-const STORAGE_KEY = 'axim_nda_draft';
+const STORAGE_KEY = "axim_nda_draft";
 
 const useNDAForm = () => {
   const [formData, setFormDataInternal] = useState(() => {
@@ -52,9 +53,9 @@ const useNDAForm = () => {
 
   const [isResumed, setIsResumed] = useState(() => {
     try {
-        return localStorage.getItem(STORAGE_KEY) !== null;
+      return localStorage.getItem(STORAGE_KEY) !== null;
     } catch (err) {
-        return false;
+      return false;
     }
   });
 
@@ -64,7 +65,7 @@ const useNDAForm = () => {
 
   const setCurrentStep = useCallback((value) => {
     setCurrentStepInternal((prev) => {
-      const nextData = typeof value === 'function' ? value(prev) : value;
+      const nextData = typeof value === "function" ? value(prev) : value;
       currentStepRef.current = nextData;
       return nextData;
     });
@@ -72,7 +73,7 @@ const useNDAForm = () => {
 
   const setFormData = useCallback((value) => {
     setFormDataInternal((prev) => {
-      const nextData = typeof value === 'function' ? value(prev) : value;
+      const nextData = typeof value === "function" ? value(prev) : value;
       formDataRef.current = nextData;
       return nextData;
     });
@@ -82,8 +83,8 @@ const useNDAForm = () => {
     const timeoutId = setTimeout(() => {
       try {
         const dataToSave = JSON.stringify({
-            formData: formDataRef.current,
-            currentStep: currentStepRef.current
+          formData: formDataRef.current,
+          currentStep: currentStepRef.current,
         });
         localStorage.setItem(STORAGE_KEY, encrypt(dataToSave));
       } catch (err) {
@@ -107,7 +108,14 @@ const useNDAForm = () => {
     }
   }, []);
 
-  return { formData, setFormData, currentStep, setCurrentStep, resetForm, isResumed };
+  return {
+    formData,
+    setFormData,
+    currentStep,
+    setCurrentStep,
+    resetForm,
+    isResumed,
+  };
 };
 
 export default useNDAForm;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 /**
  * Custom hook for form validation.
@@ -7,14 +7,14 @@ import { useState, useEffect } from 'react';
  */
 const useFormValidation = (formData) => {
   const [isValid, setIsValid] = useState(false);
-  const [validationMessage, setValidationMessage] = useState('');
+  const [validationMessage, setValidationMessage] = useState("");
 
   useEffect(() => {
     const validate = () => {
       const sanitize = (str) => {
-        if (!str) return '';
+        if (!str) return "";
         // Strip HTML tags and replace layout-breaking characters
-        const stripped = str.replace(/<[^>]*>?/gm, '');
+        const stripped = str.replace(/<[^>]*>?/gm, "");
         return stripped;
       };
 
@@ -26,26 +26,48 @@ const useFormValidation = (formData) => {
       const sanitizedDisclosing = sanitize(formData.disclosing);
       const sanitizedReceiving = sanitize(formData.receiving);
 
-      if (!formData.disclosing || formData.disclosing.trim().length < 2 || formData.disclosing.length > 100) {
-        setValidationMessage('Please enter a valid Disclosing Party name (min 2 characters, max 100).');
+      if (
+        !formData.disclosing ||
+        formData.disclosing.trim().length < 2 ||
+        formData.disclosing.length > 100
+      ) {
+        setValidationMessage(
+          "Please enter a valid Disclosing Party name (min 2 characters, max 100).",
+        );
         setIsValid(false);
         return;
       }
 
-      if (!checkCharacters(sanitizedDisclosing) || formData.disclosing !== sanitizedDisclosing) {
-        setValidationMessage('Disclosing Party name contains invalid characters.');
+      if (
+        !checkCharacters(sanitizedDisclosing) ||
+        formData.disclosing !== sanitizedDisclosing
+      ) {
+        setValidationMessage(
+          "Disclosing Party name contains invalid characters.",
+        );
         setIsValid(false);
         return;
       }
 
-      if (!formData.receiving || formData.receiving.trim().length < 2 || formData.receiving.length > 100) {
-        setValidationMessage('Please enter a valid Receiving Party name (min 2 characters, max 100).');
+      if (
+        !formData.receiving ||
+        formData.receiving.trim().length < 2 ||
+        formData.receiving.length > 100
+      ) {
+        setValidationMessage(
+          "Please enter a valid Receiving Party name (min 2 characters, max 100).",
+        );
         setIsValid(false);
         return;
       }
 
-      if (!checkCharacters(sanitizedReceiving) || formData.receiving !== sanitizedReceiving) {
-        setValidationMessage('Receiving Party name contains invalid characters.');
+      if (
+        !checkCharacters(sanitizedReceiving) ||
+        formData.receiving !== sanitizedReceiving
+      ) {
+        setValidationMessage(
+          "Receiving Party name contains invalid characters.",
+        );
         setIsValid(false);
         return;
       }
@@ -53,28 +75,48 @@ const useFormValidation = (formData) => {
       // Validate Effective Date
       const date = new Date(formData.effectiveDate);
       if (!formData.effectiveDate || isNaN(date.getTime())) {
-        setValidationMessage('Please enter a valid effective date.');
+        setValidationMessage("Please enter a valid effective date.");
         setIsValid(false);
         return;
       }
 
-      if (!formData.jurisdiction || formData.jurisdiction.trim() === '') {
-        setValidationMessage('Please select a governing law jurisdiction.');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+      const dateToCompare = new Date(date);
+      dateToCompare.setHours(0, 0, 0, 0);
+
+      if (dateToCompare > today) {
+        setValidationMessage("Effective date cannot be in the future.");
         setIsValid(false);
         return;
       }
 
+      if (dateToCompare < thirtyDaysAgo) {
+        setValidationMessage(
+          "Effective date cannot be more than 30 days in the past.",
+        );
+        setIsValid(false);
+        return;
+      }
+
+      if (!formData.jurisdiction || formData.jurisdiction.trim() === "") {
+        setValidationMessage("Please select a governing law jurisdiction.");
+        setIsValid(false);
+        return;
+      }
 
       // Validate Email
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!formData.email || !emailRegex.test(formData.email)) {
-        setValidationMessage('Please enter a valid email address.');
+        setValidationMessage("Please enter a valid email address.");
         setIsValid(false);
         return;
       }
 
       // If all checks pass
-      setValidationMessage('');
+      setValidationMessage("");
       setIsValid(true);
     };
 

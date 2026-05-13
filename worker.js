@@ -1,17 +1,18 @@
-import { generateDocument, generatePlainText, generatePdfBytes } from './workerDocumentGenerator.js';
-
+import {
+  generateDocument,
+  generatePlainText,
+  generatePdfBytes,
+} from "./workerDocumentGenerator.js";
 
 async function hashFormData(formData) {
-    const dataToHash = { ...formData };
-    delete dataToHash.sessionId; // Don't include sessionId in hash
-    const message = JSON.stringify(dataToHash, Object.keys(dataToHash).sort());
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const dataToHash = { ...formData };
+  delete dataToHash.sessionId; // Don't include sessionId in hash
+  const message = JSON.stringify(dataToHash, Object.keys(dataToHash).sort());
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
-
-
 
 // In-memory rate limiter
 const rateLimitMap = new Map();
@@ -25,11 +26,21 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    if (url.pathname === '/api/health' && request.method === 'GET') {
-      return new Response(JSON.stringify({ status: "operational", service: "nda_generator", timestamp: Date.now() }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
-      });
+    if (url.pathname === "/api/health" && request.method === "GET") {
+      return new Response(
+        JSON.stringify({
+          status: "operational",
+          service: "nda_generator",
+          timestamp: Date.now(),
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "https://axim.us.com",
+          },
+        },
+      );
     }
 
     // Passive cleanup of rate limits every ~100 requests to avoid memory leaks in isolate
@@ -42,30 +53,35 @@ export default {
       }
     }
 
-    if (request.method === 'OPTIONS') {
+    if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
-          'Access-Control-Allow-Origin': 'https://axim.us.com',
-          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        }
+          "Access-Control-Allow-Origin": "https://axim.us.com",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
       });
     }
 
-
-    if (request.method === 'POST' && url.pathname === '/api/generate-preview') {
+    if (request.method === "POST" && url.pathname === "/api/generate-preview") {
       // Edge Rate Limiting
-      const clientIP = request.headers.get('CF-Connecting-IP');
+      const clientIP = request.headers.get("CF-Connecting-IP");
       if (clientIP) {
         const now = Date.now();
         const userLimit = rateLimitMap.get(clientIP);
 
         if (userLimit && now - userLimit.timestamp < RATE_LIMIT_WINDOW) {
           if (userLimit.count >= MAX_REQUESTS) {
-            return new Response(JSON.stringify({ error: "Rate limit exceeded. Please finalize your document to continue." }), {
-              status: 429,
-              headers: { 'Content-Type': 'application/json' }
-            });
+            return new Response(
+              JSON.stringify({
+                error:
+                  "Rate limit exceeded. Please finalize your document to continue.",
+              }),
+              {
+                status: 429,
+                headers: { "Content-Type": "application/json" },
+              },
+            );
           }
           userLimit.count += 1;
           rateLimitMap.set(clientIP, userLimit);
@@ -79,71 +95,92 @@ export default {
         // Skip payment validation for preview
         const docData = generateDocument({ ...formData, isPaid: true }); // We still pass isPaid: true so it generates
         if (!docData) {
-          return new Response(JSON.stringify({ error: 'Failed to generate document data' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+          return new Response(
+            JSON.stringify({ error: "Failed to generate document data" }),
+            { status: 400, headers: { "Content-Type": "application/json" } },
+          );
         }
 
         const plainText = generatePlainText(docData, formData);
 
-
         const { pdfBytes, docId } = await generatePdfBytes(plainText, formData);
-
 
         return new Response(pdfBytes, {
           headers: {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': 'inline; filename="Preview.pdf"',
-            'Access-Control-Allow-Origin': 'https://axim.us.com',
-          }
+            "Content-Type": "application/pdf",
+            "Content-Disposition": 'inline; filename="Preview.pdf"',
+            "Access-Control-Allow-Origin": "https://axim.us.com",
+          },
         });
       } catch (err) {
-        console.error('PDF Preview Generation Error:', err);
+        console.error("PDF Preview Generation Error:", err);
 
         ctx.waitUntil(
-          fetch(`${env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com'}/v1/telemetry/ingest`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+          fetch(
+            `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/ingest`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              },
+              body: JSON.stringify({
+                event: "pdf_generation_failed",
+                app_type: "nda",
+                severity: "CRITICAL",
+                error_message: err.message,
+              }),
             },
-            body: JSON.stringify({
-              event: 'pdf_generation_failed',
-              app_type: 'nda',
-              severity: 'CRITICAL',
-              error_message: err.message
-            })
-          })
+          ),
         );
 
-        return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        return new Response(
+          JSON.stringify({ error: "Internal Server Error" }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
       }
     }
 
-    if (request.method === 'POST' && url.pathname === '/api/generate-nda') {
+    if (request.method === "POST" && url.pathname === "/api/generate-nda") {
       try {
         const formData = await request.json();
         const sessionId = formData.sessionId;
 
         if (!sessionId) {
-          return new Response(JSON.stringify({ error: 'Unauthorized: Missing sessionId' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(
+            JSON.stringify({ error: "Unauthorized: Missing sessionId" }),
+            { status: 401, headers: { "Content-Type": "application/json" } },
+          );
         }
 
-        const backendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com';
-        const verifyRes = await fetch(`${backendUrl}/api/verify-session?session_id=${sessionId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
-          }
-        });
+        const backendUrl =
+          env.BACKEND_URL ||
+          env.VITE_PAYMENT_API_URL ||
+          "https://api.axim.us.com";
+        const verifyRes = await fetch(
+          `${backendUrl}/api/verify-session?session_id=${sessionId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+            },
+          },
+        );
 
         if (!verifyRes.ok) {
-          return new Response(JSON.stringify({ error: 'Unauthorized: Invalid session' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(
+            JSON.stringify({ error: "Unauthorized: Invalid session" }),
+            { status: 401, headers: { "Content-Type": "application/json" } },
+          );
         }
-
 
         const sessionData = await verifyRes.json();
         if (!sessionData.isPaid) {
-          return new Response(JSON.stringify({ error: 'Unauthorized: Session not paid' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+          return new Response(
+            JSON.stringify({ error: "Unauthorized: Session not paid" }),
+            { status: 401, headers: { "Content-Type": "application/json" } },
+          );
         }
 
         // Verify Cryptographic Binding
@@ -151,14 +188,21 @@ export default {
         const storedHash = sessionData.metadata?.formHash;
 
         if (!storedHash || incomingHash !== storedHash) {
-          return new Response(JSON.stringify({ error: 'Unauthorized: Data integrity verification failed' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+          return new Response(
+            JSON.stringify({
+              error: "Unauthorized: Data integrity verification failed",
+            }),
+            { status: 403, headers: { "Content-Type": "application/json" } },
+          );
         }
-
 
         // Ensure the formData has isPaid = true before generating
         const docData = generateDocument({ ...formData, isPaid: true });
         if (!docData) {
-          return new Response(JSON.stringify({ error: 'Failed to generate document data' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+          return new Response(
+            JSON.stringify({ error: "Failed to generate document data" }),
+            { status: 400, headers: { "Content-Type": "application/json" } },
+          );
         }
 
         const plainText = generatePlainText(docData, formData);
@@ -167,135 +211,195 @@ export default {
 
         // Phase 1: Secure Vault Upload
         const vaultFormData = new FormData();
-        vaultFormData.append('document', new Blob([pdfBytes], { type: 'application/pdf' }), 'document.pdf');
-        vaultFormData.append('document_type', 'nda');
-        vaultFormData.append('trace_id', docId);
+        vaultFormData.append(
+          "document",
+          new Blob([pdfBytes], { type: "application/pdf" }),
+          "document.pdf",
+        );
+        vaultFormData.append("document_type", "nda");
+        vaultFormData.append("trace_id", docId);
 
         ctx.waitUntil(
-          fetch(`${env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com'}/v1/vault-upload`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+          fetch(
+            `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/vault-upload`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              },
+              body: vaultFormData,
             },
-            body: vaultFormData
-          }).catch(err => console.error('Vault upload failed:', err))
+          ).catch((err) => console.error("Vault upload failed:", err)),
         );
 
         // --- NEW: Telemetry hook for B2B Lead Converted ---
         ctx.waitUntil(
-          fetch(`${env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com'}/v1/telemetry/ingest`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+          fetch(
+            `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/ingest`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              },
+              body: JSON.stringify({
+                event: "b2b_lead_converted",
+                app_type: "nda",
+                client_email: formData.email || "",
+                disclosing_party: formData.disclosing || "",
+              }),
             },
-            body: JSON.stringify({
-              event: 'b2b_lead_converted',
-              app_type: 'nda',
-              client_email: formData.email || '',
-              disclosing_party: formData.disclosing || ''
-            })
-          }).catch(err => console.error('Telemetry ingest failed:', err))
+          ).catch((err) => console.error("Telemetry ingest failed:", err)),
         );
         // ----------------------------------------------------
 
         return new Response(pdfBytes, {
           headers: {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': 'attachment; filename="NDA.pdf"',
-            'Access-Control-Allow-Origin': 'https://axim.us.com',
-          }
+            "Content-Type": "application/pdf",
+            "Content-Disposition": 'attachment; filename="NDA.pdf"',
+            "Access-Control-Allow-Origin": "https://axim.us.com",
+            "Access-Control-Expose-Headers": "X-Document-ID, X-Document-Hash",
+            "X-Document-ID": docId,
+            "X-Document-Hash": storedHash || incomingHash,
+          },
         });
       } catch (err) {
-        console.error('PDF Generation Error:', err);
+        console.error("PDF Generation Error:", err);
 
         ctx.waitUntil(
-          fetch(`${env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com'}/v1/telemetry/ingest`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+          fetch(
+            `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/ingest`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              },
+              body: JSON.stringify({
+                event: "pdf_generation_failed",
+                app_type: "nda",
+                severity: "CRITICAL",
+                error_message: err.message,
+              }),
             },
-            body: JSON.stringify({
-              event: 'pdf_generation_failed',
-              app_type: 'nda',
-              severity: 'CRITICAL',
-              error_message: err.message
-            })
-          })
+          ),
         );
 
-        return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        return new Response(
+          JSON.stringify({ error: "Internal Server Error" }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
       }
     }
 
     // Intercept API calls
-    if (url.pathname === '/api/send-email' && request.method === 'POST') {
+    if (url.pathname === "/api/send-email" && request.method === "POST") {
       try {
         const payload = await request.json();
 
-        const response = await fetch(`${env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com'}/v1/functions/document-orchestrator`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
+        const response = await fetch(
+          `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/functions/document-orchestrator`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+            },
+            body: JSON.stringify(payload),
           },
-          body: JSON.stringify(payload)
-        });
+        );
 
         if (!response.ok) {
-          return new Response(JSON.stringify({ error: 'Failed to send email' }), { status: response.status, headers: { 'Content-Type': 'application/json' } });
+          return new Response(
+            JSON.stringify({ error: "Failed to send email" }),
+            {
+              status: response.status,
+              headers: { "Content-Type": "application/json" },
+            },
+          );
         }
 
         const data = await response.json();
-        return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
       } catch (err) {
-        console.error('Email proxy error:', err);
-        return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        console.error("Email proxy error:", err);
+        return new Response(
+          JSON.stringify({ error: "Internal Server Error" }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
       }
     }
 
-
-    if (request.method === 'GET' && url.pathname === '/api/v1/vault-download') {
+    if (request.method === "GET" && url.pathname === "/api/v1/vault-download") {
       try {
-        const traceId = url.searchParams.get('trace_id');
+        const traceId = url.searchParams.get("trace_id");
         if (!traceId) {
-          return new Response(JSON.stringify({ error: 'Missing trace_id' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: "Missing trace_id" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
-        const backendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com';
-        const response = await fetch(`${backendUrl}/v1/vault-download?trace_id=${traceId}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${env.AXIM_SERVICE_KEY}`
-          }
-        });
+        const backendUrl =
+          env.BACKEND_URL ||
+          env.VITE_PAYMENT_API_URL ||
+          "https://api.axim.us.com";
+        const response = await fetch(
+          `${backendUrl}/v1/vault-download?trace_id=${traceId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+            },
+          },
+        );
 
         if (!response.ok) {
-          return new Response(JSON.stringify({ error: 'Failed to download from vault' }), { status: response.status, headers: { 'Content-Type': 'application/json' } });
+          return new Response(
+            JSON.stringify({ error: "Failed to download from vault" }),
+            {
+              status: response.status,
+              headers: { "Content-Type": "application/json" },
+            },
+          );
         }
 
         const newResponse = new Response(response.body, response);
-        newResponse.headers.set('Access-Control-Allow-Origin', 'https://axim.us.com');
+        newResponse.headers.set(
+          "Access-Control-Allow-Origin",
+          "https://axim.us.com",
+        );
         return newResponse;
       } catch (err) {
-        console.error('Vault Download Error:', err);
-        return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+        console.error("Vault Download Error:", err);
+        return new Response(
+          JSON.stringify({ error: "Internal Server Error" }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
       }
     }
 
-    if (url.pathname.startsWith('/api/')) {
+    if (url.pathname.startsWith("/api/")) {
       // Modify the URL to point to the actual payment backend
-      const targetBackendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || 'https://api.axim.us.com';
+      const targetBackendUrl =
+        env.BACKEND_URL ||
+        env.VITE_PAYMENT_API_URL ||
+        "https://api.axim.us.com";
       const backendUrl = new URL(url.pathname, targetBackendUrl);
 
       let body;
 
-      if (request.method === 'POST' && url.pathname === '/api/create-checkout-session') {
+      if (
+        request.method === "POST" &&
+        url.pathname === "/api/create-checkout-session"
+      ) {
         try {
           body = await request.json();
           // Inject the current origin for success and cancel URLs
-          const clientOrigin = request.headers.get('Origin') || url.origin;
+          const clientOrigin = request.headers.get("Origin") || url.origin;
           body.success_url = `${clientOrigin}/success?session_id={CHECKOUT_SESSION_ID}`;
           body.cancel_url = `${clientOrigin}/?canceled=true`;
           // Customer email is already in body.customer_email
@@ -309,52 +413,97 @@ export default {
           body = await request.text();
         }
       } else {
-        body = request.method === 'GET' || request.method === 'HEAD' ? null : await request.text();
+        body =
+          request.method === "GET" || request.method === "HEAD"
+            ? null
+            : await request.text();
       }
 
       const headers = new Headers(request.headers);
 
       // Prevent Stripe backend from rejecting the request due to Origin/Referer issues
-      headers.set('Origin', targetBackendUrl);
-      headers.set('Referer', targetBackendUrl);
+      headers.set("Origin", targetBackendUrl);
+      headers.set("Referer", targetBackendUrl);
 
-      const internalRoutes = ['/api/v1/telemetry/ingest', '/api/v1/telemetry/events', '/api/v1/telemetry/errors', '/api/v1/telemetry/feedback', '/api/v1/user/document-history', '/api/verify-session', '/api/v1/auth/session'];
+      const internalRoutes = [
+        "/api/v1/telemetry/ingest",
+        "/api/v1/telemetry/events",
+        "/api/v1/telemetry/errors",
+        "/api/v1/telemetry/feedback",
+        "/api/v1/user/document-history",
+        "/api/verify-session",
+        "/api/v1/auth/session",
+      ];
 
-      if (internalRoutes.some(route => url.pathname.startsWith(route))) {
-        if (!headers.has('Authorization') && env.AXIM_SERVICE_KEY) {
-          headers.set('Authorization', `Bearer ${env.AXIM_SERVICE_KEY}`);
+      if (internalRoutes.some((route) => url.pathname.startsWith(route))) {
+        if (!headers.has("Authorization") && env.AXIM_SERVICE_KEY) {
+          headers.set("Authorization", `Bearer ${env.AXIM_SERVICE_KEY}`);
         } else if (!env.AXIM_SERVICE_KEY) {
           console.warn("AXIM_SERVICE_KEY is missing from worker environment.");
         }
       }
 
-      if (request.method === 'OPTIONS') {
+      if (request.method === "OPTIONS") {
         return new Response(null, {
           headers: {
-            'Access-Control-Allow-Origin': 'https://axim.us.com',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-          }
+            "Access-Control-Allow-Origin": "https://axim.us.com",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+          },
         });
+      }
+
+      const cacheUrl = new URL(request.url);
+      const cacheKey = new Request(cacheUrl.toString(), request);
+      const cache = caches.default;
+      let isHistoryRequest =
+        request.method === "GET" &&
+        url.pathname.startsWith("/api/v1/user/document-history");
+
+      if (isHistoryRequest) {
+        let cachedResponse = await cache.match(cacheKey);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
       }
 
       const proxyRequest = new Request(backendUrl, {
         method: request.method,
         headers: headers,
         body: body,
-        redirect: 'manual' // Don't automatically follow redirects; let the client handle them
+        redirect: "manual", // Don't automatically follow redirects; let the client handle them
       });
 
       try {
         const response = await fetch(proxyRequest);
 
+        let newResponse;
+        if (isHistoryRequest && response.status === 200) {
+          let responseToCache = response.clone();
+          let cacheHeaders = new Headers(responseToCache.headers);
+          cacheHeaders.append("Cache-Control", "s-maxage=900"); // 15 mins caching for worker
+          let finalResponseToCache = new Response(responseToCache.body, {
+            ...responseToCache,
+            headers: cacheHeaders,
+          });
+          ctx.waitUntil(cache.put(cacheKey, finalResponseToCache));
+          newResponse = new Response(response.body, response);
+        } else {
+          newResponse = new Response(response.body, response);
+        }
+
         // Ensure CORS headers allow Authorization
-        const newResponse = new Response(response.body, response);
-        newResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        newResponse.headers.set(
+          "Access-Control-Allow-Headers",
+          "Content-Type, Authorization",
+        );
 
         return newResponse;
       } catch (err) {
-        return new Response(JSON.stringify({ error: 'Proxy error' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: "Proxy error" }), {
+          status: 502,
+          headers: { "Content-Type": "application/json" },
+        });
       }
     }
 
@@ -363,6 +512,6 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    return new Response('Not Found', { status: 404 });
-  }
+    return new Response("Not Found", { status: 404 });
+  },
 };
