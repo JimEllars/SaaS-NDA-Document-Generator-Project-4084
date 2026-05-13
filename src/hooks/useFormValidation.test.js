@@ -8,7 +8,7 @@ describe('useFormValidation', () => {
     const formData = {
       disclosing: 'A',
       receiving: 'B',
-      effectiveDate: '2023-10-27',
+      effectiveDate: new Date().toISOString().split('T')[0],
       jurisdiction: 'Delaware',
       email: 'test@example.com'
     };
@@ -21,7 +21,7 @@ describe('useFormValidation', () => {
     const formData = {
       disclosing: 'A'.repeat(101),
       receiving: 'B',
-      effectiveDate: '2023-10-27',
+      effectiveDate: new Date().toISOString().split('T')[0],
       jurisdiction: 'Delaware',
       email: 'test@example.com'
     };
@@ -32,7 +32,7 @@ describe('useFormValidation', () => {
     const formData2 = {
       disclosing: 'Alice',
       receiving: 'B'.repeat(101),
-      effectiveDate: '2023-10-27',
+      effectiveDate: new Date().toISOString().split('T')[0],
       jurisdiction: 'Delaware',
       email: 'test@example.com'
     };
@@ -45,7 +45,7 @@ describe('useFormValidation', () => {
     const formData = {
       disclosing: 'Alice <script>',
       receiving: 'Bob',
-      effectiveDate: '2023-10-27',
+      effectiveDate: new Date().toISOString().split('T')[0],
       jurisdiction: 'Delaware',
       email: 'test@example.com'
     };
@@ -71,7 +71,7 @@ describe('useFormValidation', () => {
     const formData = {
       disclosing: 'Alice',
       receiving: 'Bob',
-      effectiveDate: '2023-10-27',
+      effectiveDate: new Date().toISOString().split('T')[0],
       jurisdiction: 'Delaware',
       email: 'test@example.com'
     };
@@ -84,7 +84,7 @@ describe('useFormValidation', () => {
     const formData = {
       disclosing: 'Alice',
       receiving: 'Bob',
-      effectiveDate: '2023-10-27',
+      effectiveDate: new Date().toISOString().split('T')[0],
       jurisdiction: ''
     };
     const { result } = renderHook(() => useFormValidation(formData));

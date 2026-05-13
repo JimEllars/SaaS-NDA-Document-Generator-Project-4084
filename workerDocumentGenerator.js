@@ -1,10 +1,15 @@
-
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 export const generatePdfBytes = async (plainText, formData) => {
   const pdfDoc = await PDFDocument.create();
-  const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-  const timesRomanBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
+  const classicFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+  const classicBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
+  const modernFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const modernBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+  const isModern = formData.theme === "modern" || formData.theme === "minimal";
+  const baseFont = isModern ? modernFont : classicFont;
+  const boldFont = isModern ? modernBoldFont : classicBoldFont;
 
   let page = pdfDoc.addPage();
   const { width, height } = page.getSize();
@@ -13,7 +18,7 @@ export const generatePdfBytes = async (plainText, formData) => {
   const fontSize = 12;
   const lineHeight = fontSize * 1.5;
 
-  const lines = plainText.split('\n');
+  const lines = plainText.split("\n");
 
   for (const line of lines) {
     if (currentY < margin) {
@@ -21,136 +26,144 @@ export const generatePdfBytes = async (plainText, formData) => {
       currentY = height - margin;
     }
 
-    if (line.trim() !== '') {
-       const isHeader = (line === line.toUpperCase() && line.trim().length > 0) || line.startsWith('Article');
-       const currentFont = isHeader ? timesRomanBoldFont : timesRomanFont;
-       const currentFontSize = isHeader ? 14 : fontSize;
-       const currentLineHeight = currentFontSize * 1.5;
+    if (line.trim() !== "") {
+      const isHeader =
+        (line === line.toUpperCase() && line.trim().length > 0) ||
+        line.startsWith("Article");
+      const currentFont = isHeader ? boldFont : baseFont;
+      const currentFontSize = isHeader ? 14 : fontSize;
+      const currentLineHeight = currentFontSize * 1.5;
 
-       // Basic word wrap
-       const words = line.split(' ');
-       let currentLine = '';
+      // Basic word wrap
+      const words = line.split(" ");
+      let currentLine = "";
 
-       for (let i = 0; i < words.length; i++) {
-          const testLine = currentLine + words[i] + ' ';
-          const textWidth = currentFont.widthOfTextAtSize(testLine, currentFontSize);
+      for (let i = 0; i < words.length; i++) {
+        const testLine = currentLine + words[i] + " ";
+        const textWidth = currentFont.widthOfTextAtSize(
+          testLine,
+          currentFontSize,
+        );
 
-          if (textWidth > width - 2 * margin && i > 0) {
-             page.drawText(currentLine, {
-               x: margin,
-               y: currentY,
-               size: currentFontSize,
-               font: currentFont,
-               color: rgb(0, 0, 0),
-             });
-             currentLine = words[i] + ' ';
-             currentY -= currentLineHeight;
-             if (currentY < margin) {
-                page = pdfDoc.addPage();
-                currentY = height - margin;
-             }
-          } else {
-             currentLine = testLine;
+        if (textWidth > width - 2 * margin && i > 0) {
+          page.drawText(currentLine, {
+            x: margin,
+            y: currentY,
+            size: currentFontSize,
+            font: currentFont,
+            color: rgb(0, 0, 0),
+          });
+          currentLine = words[i] + " ";
+          currentY -= currentLineHeight;
+          if (currentY < margin) {
+            page = pdfDoc.addPage();
+            currentY = height - margin;
           }
-       }
-       if (currentLine.trim() !== '') {
-         page.drawText(currentLine, {
-           x: margin,
-           y: currentY,
-           size: currentFontSize,
-           font: currentFont,
-           color: rgb(0, 0, 0),
-         });
-         currentY -= currentLineHeight;
-       }
+        } else {
+          currentLine = testLine;
+        }
+      }
+      if (currentLine.trim() !== "") {
+        page.drawText(currentLine, {
+          x: margin,
+          y: currentY,
+          size: currentFontSize,
+          font: currentFont,
+          color: rgb(0, 0, 0),
+        });
+        currentY -= currentLineHeight;
+      }
     } else {
-       currentY -= lineHeight;
+      currentY -= lineHeight;
     }
   }
 
   // Phase 2: Render Signature
   if (formData.signatureImage) {
-      const signatureImageBytes = Uint8Array.from(atob(formData.signatureImage.split(',')[1]), c => c.charCodeAt(0));
-      const pngImage = await pdfDoc.embedPng(signatureImageBytes);
-      const pngDims = pngImage.scale(0.5);
+    const signatureImageBytes = Uint8Array.from(
+      atob(formData.signatureImage.split(",")[1]),
+      (c) => c.charCodeAt(0),
+    );
+    const pngImage = await pdfDoc.embedPng(signatureImageBytes);
+    const pngDims = pngImage.scale(0.5);
 
-      // Add new page if not enough space
-      if (currentY - pngDims.height - 100 < margin) {
-          page = pdfDoc.addPage();
-          currentY = page.getSize().height - margin;
-      }
+    // Add new page if not enough space
+    if (currentY - pngDims.height - 100 < margin) {
+      page = pdfDoc.addPage();
+      currentY = page.getSize().height - margin;
+    }
 
-      page.drawImage(pngImage, {
-          x: margin,
-          y: currentY - pngDims.height - 20,
-          width: pngDims.width,
-          height: pngDims.height,
-      });
+    page.drawImage(pngImage, {
+      x: margin,
+      y: currentY - pngDims.height - 20,
+      width: pngDims.width,
+      height: pngDims.height,
+    });
 
-      currentY -= pngDims.height + 40;
+    currentY -= pngDims.height + 40;
 
-      page.drawText(`${formData.disclosing}`, {
-          x: margin,
-          y: currentY,
-          size: 12,
-          font: timesRomanFont,
-          color: rgb(0, 0, 0),
-      });
+    page.drawText(`${formData.disclosing}`, {
+      x: margin,
+      y: currentY,
+      size: 12,
+      font: baseFont,
+      color: rgb(0, 0, 0),
+    });
 
-      page.drawLine({
-          start: { x: margin, y: currentY - 5 },
-          end: { x: margin + 200, y: currentY - 5 },
-          thickness: 1,
-          color: rgb(0, 0, 0),
-      });
+    page.drawLine({
+      start: { x: margin, y: currentY - 5 },
+      end: { x: margin + 200, y: currentY - 5 },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
 
-      currentY -= 20;
+    currentY -= 20;
 
-      page.drawText('Signature of Disclosing Party', {
-          x: margin,
-          y: currentY,
-          size: 10,
-          font: timesRomanFont,
-          color: rgb(0.5, 0.5, 0.5),
-      });
+    page.drawText("Signature of Disclosing Party", {
+      x: margin,
+      y: currentY,
+      size: 10,
+      font: baseFont,
+      color: rgb(0.5, 0.5, 0.5),
+    });
   }
 
   // Phase 3: Authenticity Markers
-  const docId = 'AXIM-NDA-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+  const docId =
+    "AXIM-NDA-" + Math.random().toString(36).substr(2, 9).toUpperCase();
   const timestamp = new Date().toUTCString();
 
   let authText = `Generated by AXiM Systems | Secure Trace: ${docId} | ${timestamp}`;
   if (formData.notarizeOnChain) {
-    authText += ` | Ledger Link: 0x${Math.random().toString(16).substr(2, 40).padEnd(40, '0')}`;
+    authText += ` | Ledger Link: 0x${Math.random().toString(16).substr(2, 40).padEnd(40, "0")}`;
   }
-
 
   const pages = pdfDoc.getPages();
 
   const pageCount = pages.length;
   for (let i = 0; i < pageCount; i++) {
-      const p = pages[i];
-      const { width, height } = p.getSize();
-      p.drawText(authText, {
-          x: margin,
-          y: 20,
-          size: 8,
-          color: rgb(0.5, 0.5, 0.5),
-      });
+    const p = pages[i];
+    const { width, height } = p.getSize();
+    p.drawText(authText, {
+      x: margin,
+      y: 20,
+      size: 8,
+      color: rgb(0.5, 0.5, 0.5),
+    });
 
-      p.drawText(`Page ${i + 1} of ${pageCount}`, {
-          x: width - margin - 50,
-          y: 20,
-          size: 8,
-          color: rgb(0.5, 0.5, 0.5),
-      });
+    p.drawText(`Page ${i + 1} of ${pageCount}`, {
+      x: width - margin - 50,
+      y: 20,
+      size: 8,
+      color: rgb(0.5, 0.5, 0.5),
+    });
   }
 
   return { pdfBytes: await pdfDoc.save(), docId };
 };
 
-import { CLAUSES } from './workerNdaData.js';
-import { formatEffectiveDate } from './workerDateUtils.js';
+import { CLAUSES } from "./workerNdaData.js";
+import { formatEffectiveDate } from "./workerDateUtils.js";
 
 /**
  * Processes an array of content items, formatting them into paragraphs or clauses.
@@ -159,16 +172,16 @@ import { formatEffectiveDate } from './workerDateUtils.js';
  */
 const processContent = (content) => {
   let clauseCounter = 0;
-  return content.map(item => {
-    if (typeof item === 'string') {
-      return { type: 'paragraph', text: item };
+  return content.map((item) => {
+    if (typeof item === "string") {
+      return { type: "paragraph", text: item };
     } else {
       clauseCounter++;
       return {
-        type: 'clause',
+        type: "clause",
         number: clauseCounter,
         title: item.title,
-        text: item.text
+        text: item.text,
       };
     }
   });
@@ -187,37 +200,52 @@ const buildSections = (formData, isRobust, industry) => {
       title: "Definition of Confidential Information",
       content: processContent([
         CLAUSES.general.definition,
-        ...(isRobust ? [CLAUSES.robust.definition] : [])
-      ])
+        ...(isRobust ? [CLAUSES.robust.definition] : []),
+      ]),
     },
-    ...(formData.industry !== 'general' ? [{
-      title: `${industry.label} Specific Provisions`,
-      content: processContent(industry.clauses)
-    }] : []),
+    ...(formData.industry !== "general"
+      ? [
+          {
+            title: `${industry.label} Specific Provisions`,
+            content: processContent(industry.clauses),
+          },
+        ]
+      : []),
     {
       title: "Permitted Use and Exclusions",
       content: processContent([
         CLAUSES.general.exclusions,
         CLAUSES.general.term(formData.term),
         ...(formData.includeReturn ? [CLAUSES.general.return] : []),
-        ...(formData.includeNonSolicitation ? [{ title: "Non-Solicitation", text: CLAUSES.general.nonSolicitation }] : [])
-      ])
+        ...(formData.includeNonSolicitation
+          ? [
+              {
+                title: "Non-Solicitation",
+                text: CLAUSES.general.nonSolicitation,
+              },
+            ]
+          : []),
+      ]),
     },
-    ...(isRobust ? [{
-      title: "Enforcement and Remedies",
-      content: processContent(CLAUSES.robust.enforcement)
-    }] : []),
+    ...(isRobust
+      ? [
+          {
+            title: "Enforcement and Remedies",
+            content: processContent(CLAUSES.robust.enforcement),
+          },
+        ]
+      : []),
     {
       title: "Governing Law and Jurisdiction",
       content: processContent([
-        `This Agreement shall be governed by and construed in accordance with the laws of the State of ${formData.jurisdiction}, without regard to conflict of law principles. Any disputes arising under this Agreement shall be subject to the exclusive jurisdiction of the courts of ${formData.jurisdiction}.`
-      ])
-    }
+        `This Agreement shall be governed by and construed in accordance with the laws of the State of ${formData.jurisdiction}, without regard to conflict of law principles. Any disputes arising under this Agreement shall be subject to the exclusive jurisdiction of the courts of ${formData.jurisdiction}.`,
+      ]),
+    },
   ];
 
   return rawSections.map((section, index) => ({
     ...section,
-    title: `Article ${index + 1}: ${section.title}`
+    title: `Article ${index + 1}: ${section.title}`,
   }));
 };
 
@@ -231,32 +259,39 @@ export const generateDocument = (formData) => {
   if (!formData.isPaid) return null;
 
   const industry = CLAUSES[formData.industry];
-  const isRobust = formData.strictness === 'robust';
+  const isRobust = formData.strictness === "robust";
   const effectiveDateFormatted = formatEffectiveDate(formData.effectiveDate);
 
   const sections = buildSections(formData, isRobust, industry);
 
   return {
-    title: `${formData.type === 'mutual' ? 'Mutual' : 'Unilateral'} Non-Disclosure Agreement`,
-    intro: CLAUSES.general.intro(formData.disclosing, formData.receiving, formData.type, effectiveDateFormatted),
+    title: `${formData.type === "mutual" ? "Mutual" : "Unilateral"} Non-Disclosure Agreement`,
+    intro: CLAUSES.general.intro(
+      formData.disclosing,
+      formData.receiving,
+      formData.type,
+      effectiveDateFormatted,
+    ),
     effectiveDate: effectiveDateFormatted,
-    sections
+    sections,
   };
 };
 
 const generateHeaderParts = (documentData, textParts) => {
   textParts.push(`${documentData.title}\n`);
   textParts.push(`Effective Date: ${documentData.effectiveDate}\n\n`);
-  textParts.push('RECITALS\n');
+  textParts.push("RECITALS\n");
   textParts.push(`${documentData.intro}\n\n`);
-  textParts.push('NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the parties agree as follows:\n\n');
+  textParts.push(
+    "NOW, THEREFORE, in consideration of the mutual covenants and agreements contained herein, and for other good and valuable consideration, the receipt and sufficiency of which are hereby acknowledged, the parties agree as follows:\n\n",
+  );
 };
 
 const generateSectionsParts = (documentData, textParts) => {
   for (const section of documentData.sections) {
     textParts.push(`${section.title.toUpperCase()}\n\n`);
     for (const item of section.content) {
-      if (item.type === 'paragraph') {
+      if (item.type === "paragraph") {
         textParts.push(`${item.text}\n\n`);
       } else {
         textParts.push(`${item.number}. ${item.title}\n`);
@@ -267,31 +302,35 @@ const generateSectionsParts = (documentData, textParts) => {
 };
 
 const generateExecutionParts = (formData, textParts) => {
-  textParts.push('EXECUTION\n\n');
-  textParts.push('IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.\n\n');
+  textParts.push("EXECUTION\n\n");
+  textParts.push(
+    "IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.\n\n",
+  );
 
   // Add formatted signature blocks
-  const party1Label = formData.type === 'mutual' ? 'PARTY 1' : 'DISCLOSING PARTY';
-  const party2Label = formData.type === 'mutual' ? 'PARTY 2' : 'RECEIVING PARTY';
+  const party1Label =
+    formData.type === "mutual" ? "PARTY 1" : "DISCLOSING PARTY";
+  const party2Label =
+    formData.type === "mutual" ? "PARTY 2" : "RECEIVING PARTY";
 
-  textParts.push(`${party1Label}: ${formData.disclosing || '[Party Name]'}\n`);
-  textParts.push('Print Name: _________________________\n');
-  textParts.push('Title: _______________________________\n');
-  textParts.push('Date: _______________________________\n\n');
+  textParts.push(`${party1Label}: ${formData.disclosing || "[Party Name]"}\n`);
+  textParts.push("Print Name: _________________________\n");
+  textParts.push("Title: _______________________________\n");
+  textParts.push("Date: _______________________________\n\n");
 
-  textParts.push(`${party2Label}: ${formData.receiving || '[Party Name]'}\n`);
-  textParts.push('Print Name: _________________________\n');
-  textParts.push('Title: _______________________________\n');
-  textParts.push('Date: _______________________________\n');
+  textParts.push(`${party2Label}: ${formData.receiving || "[Party Name]"}\n`);
+  textParts.push("Print Name: _________________________\n");
+  textParts.push("Title: _______________________________\n");
+  textParts.push("Date: _______________________________\n");
 };
 
 export const generatePlainText = (documentData, formData) => {
-  if (!documentData) return '';
+  if (!documentData) return "";
 
   const textParts = [];
   generateHeaderParts(documentData, textParts);
   generateSectionsParts(documentData, textParts);
   generateExecutionParts(formData, textParts);
 
-  return textParts.join('');
+  return textParts.join("");
 };
