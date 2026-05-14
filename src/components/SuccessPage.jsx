@@ -214,6 +214,17 @@ export default function SuccessPage() {
             setDocumentData(formData);
             setStatus("success");
 
+            // Background Auto-Distribution to recipient
+            if (formData.recipientEmail) {
+              deliverOrchestratedDocument({
+                templateId: "nda_v1",
+                email: formData.email, // Original sender email
+                recipientEmail: formData.recipientEmail,
+                formData: formData,
+                session_id: sessionId,
+              }).catch(err => console.error("Failed to auto-distribute to recipient", err));
+            }
+
             // Background telemetry
             fetch("/api/v1/telemetry/ingest", {
               method: "POST",
@@ -361,6 +372,15 @@ export default function SuccessPage() {
           </div>
         )}
 
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-4">
+          <button
+            onClick={() => navigate('/verify')}
+            className="bg-axim-teal text-black font-bold py-3 px-8 rounded-xl hover:bg-teal-400 hover:shadow-[0_0_20px_rgba(0,229,255,0.4)] transition-all flex items-center justify-center gap-2"
+          >
+            <SafeIcon icon={FiShield} />
+            Verify This Document
+          </button>
+        </div>
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
           <button
             onClick={handleDownload}

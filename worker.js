@@ -333,6 +333,56 @@ export default {
       }
     }
 
+
+    if (request.method === "GET" && url.pathname === "/api/verify-document") {
+      try {
+        const traceId = url.searchParams.get("trace_id");
+        if (!traceId) {
+          return new Response(JSON.stringify({ error: "Missing trace_id" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const backendUrl =
+          env.BACKEND_URL ||
+          env.VITE_PAYMENT_API_URL ||
+          "https://api.axim.us.com";
+
+        const response = await fetch(
+          `${backendUrl}/v1/vault-verify?trace_id=${traceId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          return new Response(
+            JSON.stringify({ error: "Verification failed or document not found" }),
+            {
+              status: response.status,
+              headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+            },
+          );
+        }
+
+        const data = await response.json();
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        });
+      } catch (err) {
+        console.error("Verification proxy error:", err);
+        return new Response(
+          JSON.stringify({ error: "Internal Server Error" }),
+          { status: 500, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } },
+        );
+      }
+    }
+
     if (request.method === "GET" && url.pathname === "/api/v1/vault-download") {
       try {
         const traceId = url.searchParams.get("trace_id");
@@ -426,6 +476,8 @@ export default {
       headers.set("Referer", targetBackendUrl);
 
       const internalRoutes = [
+        "/api/v1/telemetry/match_ai_interactions",
+        "/api/v1/telemetry/fleet-status",
         "/api/v1/telemetry/ingest",
         "/api/v1/telemetry/events",
         "/api/v1/telemetry/errors",
