@@ -52,7 +52,7 @@ export default function VerificationPortal() {
           </div>
 
           <form onSubmit={handleVerify} className="mb-8">
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <input
                 type="text"
                 value={traceId}
@@ -85,28 +85,46 @@ export default function VerificationPortal() {
           )}
 
           {status === 'success' && documentData && (
-            <div className="bg-zinc-900 border border-axim-teal/30 p-6 rounded-xl animate-fade-in">
-              <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
-                <SafeIcon icon={FiCheckCircle} size={28} className="text-axim-teal" />
-                <h3 className="text-xl font-bold text-axim-teal">Verified Document</h3>
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <div className="bg-zinc-900 border border-axim-teal/30 p-6 rounded-xl">
+                <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+                  <SafeIcon icon={FiCheckCircle} size={28} className="text-axim-teal" />
+                  <h3 className="text-xl font-bold text-axim-teal">Verified Document</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm text-zinc-500 mb-1">Disclosing Party</p>
+                    <p className="font-bold">{documentData.metadata?.disclosing || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500 mb-1">Receiving Party</p>
+                    <p className="font-bold">{documentData.metadata?.receiving || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500 mb-1">Effective Date</p>
+                    <p className="font-bold">{documentData.metadata?.effectiveDate || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500 mb-1">Document Hash</p>
+                    <p className="font-mono text-sm break-all text-zinc-300">{documentData.hash || 'Unknown'}</p>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-sm text-zinc-500 mb-1">Disclosing Party</p>
-                  <p className="font-bold">{documentData.metadata?.disclosing || 'Unknown'}</p>
+
+              {/* Social Preview Card */}
+              <div className="bg-black/80 border border-white/20 p-8 rounded-2xl flex flex-col items-center justify-center text-center shadow-[0_0_30px_rgba(0,229,255,0.15)] relative overflow-hidden">
+                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-axim-teal rounded-full opacity-10 blur-3xl pointer-events-none"></div>
+                <SafeIcon icon={FiShield} size={48} className="text-axim-teal mb-4 relative z-10" />
+                <h4 className="text-2xl font-bold text-white mb-2 relative z-10">AXiM Verified Agreement</h4>
+                <p className="text-zinc-400 mb-6 max-w-md relative z-10">
+                  This Non-Disclosure Agreement between <strong>{documentData.metadata?.disclosing || 'Unknown'}</strong> and <strong>{documentData.metadata?.receiving || 'Unknown'}</strong> has been cryptographically verified by AXiM Systems.
+                </p>
+                <div className="flex items-center gap-2 text-green-400 font-bold bg-green-400/10 px-4 py-2 rounded-full border border-green-400/20 relative z-10">
+                  <SafeIcon icon={FiCheckCircle} size={18} /> Verified Active
                 </div>
-                <div>
-                  <p className="text-sm text-zinc-500 mb-1">Receiving Party</p>
-                  <p className="font-bold">{documentData.metadata?.receiving || 'Unknown'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-zinc-500 mb-1">Effective Date</p>
-                  <p className="font-bold">{documentData.metadata?.effectiveDate || 'Unknown'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-zinc-500 mb-1">Document Hash</p>
-                  <p className="font-mono text-sm break-all text-zinc-300">{documentData.hash || 'Unknown'}</p>
-                </div>
+                <p className="text-xs text-zinc-600 mt-6 relative z-10">
+                  Date: {documentData.metadata?.effectiveDate || 'Unknown'}
+                </p>
               </div>
             </div>
           )}

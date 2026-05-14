@@ -78,7 +78,7 @@ export const generatePdfBytes = async (plainText, formData) => {
     }
   }
 
-  // Phase 2: Render Signature
+    // Phase 2: Render Signature
   if (formData.signatureImage) {
     const signatureImageBytes = Uint8Array.from(
       atob(formData.signatureImage.split(",")[1]),
@@ -126,6 +126,41 @@ export const generatePdfBytes = async (plainText, formData) => {
       font: baseFont,
       color: rgb(0.5, 0.5, 0.5),
     });
+
+    // Add counterparty signature block if recipientEmail exists
+    if (formData.recipientEmail) {
+      currentY -= 60;
+
+      if (currentY - 100 < margin) {
+        page = pdfDoc.addPage();
+        currentY = page.getSize().height - margin;
+      }
+
+      page.drawText(`${formData.receiving}`, {
+        x: margin,
+        y: currentY,
+        size: 12,
+        font: baseFont,
+        color: rgb(0, 0, 0),
+      });
+
+      page.drawLine({
+        start: { x: margin, y: currentY - 5 },
+        end: { x: margin + 200, y: currentY - 5 },
+        thickness: 1,
+        color: rgb(0, 0, 0),
+      });
+
+      currentY -= 20;
+
+      page.drawText(`Signature of Receiving Party (Pending via AXiM Sign)`, {
+        x: margin,
+        y: currentY,
+        size: 10,
+        font: baseFont,
+        color: rgb(0.5, 0.5, 0.5),
+      });
+    }
   }
 
   // Phase 3: Authenticity Markers
@@ -319,9 +354,16 @@ const generateExecutionParts = (formData, textParts) => {
   textParts.push("Date: _______________________________\n\n");
 
   textParts.push(`${party2Label}: ${formData.receiving || "[Party Name]"}\n`);
-  textParts.push("Print Name: _________________________\n");
-  textParts.push("Title: _______________________________\n");
-  textParts.push("Date: _______________________________\n");
+  if (formData.recipientEmail) {
+      textParts.push("Print Name: _________________________\n");
+      textParts.push("Title: _______________________________\n");
+      textParts.push("Date: _______________________________\n");
+      textParts.push("(Pending via AXiM Sign)\n");
+  } else {
+      textParts.push("Print Name: _________________________\n");
+      textParts.push("Title: _______________________________\n");
+      textParts.push("Date: _______________________________\n");
+  }
 };
 
 export const generatePlainText = (documentData, formData) => {

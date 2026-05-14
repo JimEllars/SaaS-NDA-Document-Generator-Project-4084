@@ -293,6 +293,47 @@ export default {
     }
 
     // Intercept API calls
+    // Handle Execution Webhook
+    if (request.method === "POST" && url.pathname === "/api/webhook/execute") {
+      try {
+        const payload = await request.json();
+        const traceId = payload.traceId;
+        const recipient = payload.recipient || "Unknown Party";
+
+        // Notify AXiM Core Notification Hub
+        ctx.waitUntil(
+          fetch(
+            `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/events`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              },
+              body: JSON.stringify({
+                event: "document_executed",
+                type: "nda",
+                trace_id: traceId,
+                message: `NDA with ${recipient} is now fully executed.`,
+                timestamp: new Date().toISOString(),
+              }),
+            },
+          ),
+        );
+
+        return new Response(JSON.stringify({ status: "EXECUTED", message: "Webhook processed" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        });
+      } catch (err) {
+        console.error("Webhook processing error:", err);
+        return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        });
+      }
+    }
+
     if (url.pathname === "/api/send-email" && request.method === "POST") {
       try {
         const payload = await request.json();

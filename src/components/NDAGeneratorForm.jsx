@@ -5,6 +5,7 @@ import useVectorSearch from "../hooks/useVectorSearch";
 import {
   FiBriefcase,
   FiFileText,
+  FiCpu,
   FiCheck,
   FiLock,
   FiRefreshCw,
@@ -48,6 +49,9 @@ const NDAGeneratorForm = React.memo(
     onPartnerCheckout,
   }) => {
     const { addToast } = useToast();
+
+
+
     const trackingSessionId = React.useRef(
       `sess_${Math.random().toString(36).substring(2, 9)}`,
     );
@@ -98,7 +102,7 @@ const NDAGeneratorForm = React.memo(
 
     // AI Advisor
     const {
-      search: searchIntelligence,
+      search: searchIntelligenceAI,
       results: aiResults,
       isSearching: isAiSearching,
     } = useVectorSearch();
@@ -106,6 +110,40 @@ const NDAGeneratorForm = React.memo(
     const [advisorTopic, setAdvisorTopic] = useState("");
 
     const [advisorRisk, setAdvisorRisk] = useState(null);
+
+  // Generate AI Summary for Step 2
+  const [aiSummary, setAiSummary] = useState([]);
+
+  useEffect(() => {
+    if (currentStep === 2) {
+      const generateSummary = async () => {
+        const query = `Summarize NDA clauses: ${formData.strictness} strictness, ${formData.term} year term, ${formData.includeReturn ? 'includes' : 'no'} return, ${formData.includeNonSolicitation ? 'includes' : 'no'} non-solicit.`;
+        await searchIntelligenceAI(query);
+      };
+
+      const timeoutId = setTimeout(generateSummary, 1000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [currentStep, formData.strictness, formData.term, formData.includeReturn, formData.includeNonSolicitation, searchIntelligenceAI]);
+
+  useEffect(() => {
+    if (aiResults && aiResults.length > 0) {
+       // Mock the bullets based on results or form data
+       setAiSummary([
+         `You are protected for ${formData.term === "Indefinitely" ? "an indefinite period" : formData.term + " years"}.`,
+         formData.includeNonSolicitation ? "The counterparty cannot hire your staff." : "No non-solicitation restrictions applied.",
+         formData.strictness === "robust" ? "Enhanced protection with enforcement penalties." : "Standard mutual protection rules apply."
+       ]);
+    } else {
+       // Fallback mock
+       setAiSummary([
+         `You are protected for ${formData.term === "Indefinitely" ? "an indefinite period" : formData.term + " years"}.`,
+         formData.includeNonSolicitation ? "The counterparty cannot hire your staff." : "No non-solicitation restrictions applied.",
+         formData.strictness === "robust" ? "Enhanced protection with enforcement penalties." : "Standard mutual protection rules apply."
+       ]);
+    }
+  }, [aiResults, formData]);
+
 
     const openAdvisor = async (topic, clause) => {
       setAdvisorTopic(topic);
@@ -131,7 +169,7 @@ const NDAGeneratorForm = React.memo(
       setAdvisorRisk(riskLevel);
 
       const query = `Risk Assessment (${riskLevel}): Why is ${clause} critical for the ${formData.industry || "general"} industry?`;
-      await searchIntelligence(query);
+      await searchIntelligenceAI(query);
     };
 
     const clearSignature = () => {
@@ -711,6 +749,31 @@ const NDAGeneratorForm = React.memo(
                     </select>
                   </div>
 
+
+                  {/* Proactive AI Clarity Layer */}
+                  <div className="mt-8 bg-black/40 border border-axim-teal/30 rounded-xl p-5 relative overflow-hidden">
+                     <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none">
+                       <SafeIcon icon={FiCpu} size={64} />
+                     </div>
+                     <h3 className="text-sm font-bold text-axim-teal flex items-center gap-2 mb-3">
+                       <SafeIcon icon={FiCpu} size={16} /> AI Review Summary
+                     </h3>
+                     {isAiSearching ? (
+                        <div className="flex items-center gap-2 text-zinc-400 text-sm animate-pulse">
+                           <div className="w-4 h-4 border-2 border-axim-teal border-t-transparent rounded-full animate-spin"></div>
+                           Generating Plain English Summary...
+                        </div>
+                     ) : (
+                        <ul className="space-y-2">
+                           {aiSummary.map((bullet, idx) => (
+                             <li key={idx} className="flex items-start gap-2 text-sm text-zinc-300">
+                               <span className="text-axim-teal mt-0.5">•</span> {bullet}
+                             </li>
+                           ))}
+                        </ul>
+                     )}
+                  </div>
+
                   <div className="flex justify-between mt-6">
                     <button
                       onClick={prevStep}
@@ -849,6 +912,9 @@ const NDAGeneratorForm = React.memo(
                       penColor="black"
                       canvasProps={{
                         className: "w-full h-32 cursor-crosshair",
+                        width: 500, // Explicit width for scaling calculation
+                        height: 200,
+                        style: { width: '100%', height: '100%', touchAction: 'none' } // CSS dimensions
                       }}
                       onEnd={() => {
                         setIsSigEmpty(false);
