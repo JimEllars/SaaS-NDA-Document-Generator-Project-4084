@@ -7,6 +7,7 @@ import NDAGeneratorForm from './components/NDAGeneratorForm';
 import MyRecentNDAs from './components/MyRecentNDAs';
 import SuccessPage from './components/SuccessPage';
 import AdminDashboard from './components/AdminDashboard';
+import VerificationPortal from './components/VerificationPortal';
 import ConfirmModal from './components/ConfirmModal';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider, useToast } from './context/ToastContext';
@@ -162,6 +163,7 @@ function AppContent() {
           } />
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/verify" element={<VerificationPortal />} />
         </Routes>
       </div>
 

@@ -93,6 +93,8 @@ const NDAGeneratorForm = React.memo(
     }, []);
 
     const [isSigEmpty, setIsSigEmpty] = useState(true);
+    const [signatureMode, setSignatureMode] = useState('draw'); // 'draw' or 'type'
+    const [typedSignature, setTypedSignature] = useState('');
 
     // AI Advisor
     const {
@@ -133,11 +135,30 @@ const NDAGeneratorForm = React.memo(
     };
 
     const clearSignature = () => {
+      setTypedSignature('');
       if (sigCanvas.current) sigCanvas.current.clear();
       setIsSigEmpty(true);
       setFormData((prev) => ({ ...prev, signatureImage: null }));
     };
     const saveSignature = () => {
+      if (signatureMode === 'type') {
+        if (typedSignature.trim()) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 400;
+          canvas.height = 100;
+          const ctx = canvas.getContext('2d');
+          ctx.font = 'italic 36px "Cedarville Cursive", serif';
+          ctx.fillStyle = 'black';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(typedSignature, 10, 50);
+          setFormData((prev) => ({
+            ...prev,
+            signatureImage: canvas.toDataURL("image/png"),
+          }));
+          setIsSigEmpty(false);
+        }
+        return;
+      }
       if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
         setFormData((prev) => ({
           ...prev,
@@ -445,6 +466,19 @@ const NDAGeneratorForm = React.memo(
                             </div>
                           )}
                       </div>
+                    </div>
+                    <div className="mt-4">
+                      <label className={LABEL_CLASSES}>
+                        Recipient Email Address (Optional - Send copy to counterparty)
+                      </label>
+                      <input
+                        type="email"
+                        name="recipientEmail"
+                        value={formData.recipientEmail || ""}
+                        onChange={handleInputChange}
+                        className={INPUT_CLASSES}
+                        placeholder="Enter counterparty email (optional)"
+                      />
                     </div>
                   </div>
 
@@ -780,12 +814,32 @@ const NDAGeneratorForm = React.memo(
                 </div>
                 {/* Signature Block */}
                 <div className="mt-8 border-t border-zinc-300 pt-8">
-                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                    <SafeIcon icon={FiPenTool} size={20} /> E-Signature
-                  </h3>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold flex items-center gap-2">
+                      <SafeIcon icon={FiPenTool} size={20} /> E-Signature
+                    </h3>
+                    <div className="flex bg-zinc-800 rounded-lg p-1">
+                      <button
+                        type="button"
+                        onClick={() => setSignatureMode('draw')}
+                        className={`px-3 py-1 rounded-md text-sm transition-colors ${signatureMode === 'draw' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
+                      >
+                        Draw
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSignatureMode('type')}
+                        className={`px-3 py-1 rounded-md text-sm transition-colors ${signatureMode === 'type' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
+                      >
+                        Type
+                      </button>
+                    </div>
+                  </div>
+
                   <p className="text-sm text-zinc-600 mb-4">
                     Please sign below to certify this document.
                   </p>
+                  {signatureMode === 'draw' ? (
                   <div
                     className="border border-zinc-400 bg-zinc-50 rounded-lg p-2 max-w-md w-full"
                     style={{ touchAction: "none" }}
@@ -802,6 +856,27 @@ const NDAGeneratorForm = React.memo(
                       }}
                     />
                   </div>
+                  ) : (
+                    <div className="max-w-md w-full">
+                      <input
+                        type="text"
+                        placeholder="Type your full name"
+                        value={typedSignature}
+                        onChange={(e) => {
+                          setTypedSignature(e.target.value);
+                          if (e.target.value.trim() === '') {
+                            setIsSigEmpty(true);
+                            setFormData((prev) => ({ ...prev, signatureImage: null }));
+                          } else {
+                            setIsSigEmpty(false);
+                          }
+                        }}
+                        onBlur={saveSignature}
+                        className="w-full p-4 bg-zinc-50 border border-zinc-400 rounded-lg text-black font-serif italic text-2xl outline-none focus:ring-2 focus:ring-axim-teal"
+                        style={{ fontFamily: '"Cedarville Cursive", serif' }}
+                      />
+                    </div>
+                  )}
                   <div className="flex gap-4 mt-4">
                     <button
                       onClick={clearSignature}

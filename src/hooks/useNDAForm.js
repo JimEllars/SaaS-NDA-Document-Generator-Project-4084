@@ -7,6 +7,8 @@ export const getDefaultFormData = () => {
     industry: "general",
     strictness: "standard",
     type: "unilateral",
+    email: "",
+    recipientEmail: "",
     jurisdiction: "Delaware",
     term: "3",
     includeReturn: true,
