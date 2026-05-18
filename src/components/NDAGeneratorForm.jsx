@@ -295,13 +295,16 @@ const NDAGeneratorForm = React.memo(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
         });
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded. Please try again later.");
+        }
         if (!response.ok) throw new Error("Preview failed");
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
         window.open(url, "_blank");
       } catch (err) {
         console.error(err);
-        addToast("Failed to generate preview", "error");
+        addToast(err.message || "Failed to generate preview", "error");
       }
     };
 
@@ -907,7 +910,7 @@ const NDAGeneratorForm = React.memo(
                   </p>
                   {signatureMode === 'draw' ? (
                   <div
-                    className="border border-zinc-400 bg-zinc-50 rounded-lg p-2 max-w-md w-full"
+                    className="border border-zinc-400 bg-zinc-50 rounded-lg p-2 max-w-md w-full signature-canvas-wrapper"
                     style={{ touchAction: "none" }}
                   >
                     <SignatureCanvas
