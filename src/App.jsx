@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { hashFormData } from './utils/crypto';
 import { Routes, Route } from 'react-router-dom';
 import './App.css';
@@ -15,8 +15,93 @@ import ToastContainer from './components/Toast';
 import useNDAForm from './hooks/useNDAForm';
 import { processPayment } from './api/paymentService';
 import SafeIcon from './common/SafeIcon';
-import { FiLifeBuoy } from 'react-icons/fi';
+import { FiLifeBuoy, FiShield, FiPenTool, FiCpu, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
+
+function FAQItem({ question, answer }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="border-b border-white/10 py-4">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex justify-between items-center text-left focus:outline-none"
+      >
+        <span className="font-bold text-zinc-200">{question}</span>
+        <SafeIcon icon={isOpen ? FiChevronUp : FiChevronDown} className="text-axim-teal" />
+      </button>
+      {isOpen && <p className="mt-2 text-zinc-400 text-sm">{answer}</p>}
+    </div>
+  );
+}
+
+function LandingLayout({ children, userSession }) {
+  return (
+    <div className="flex flex-col lg:flex-row gap-8 w-full max-w-7xl mx-auto">
+      {/* Left side: Value Proposition & FAQ */}
+      <div className="w-full lg:w-1/2 flex flex-col gap-8">
+        <div className="bg-black/40 border border-white/5 rounded-3xl p-8 backdrop-blur-md">
+          <h1 className="text-4xl font-bold text-white mb-4">
+            Zero-Trust <span className="text-axim-teal">NDA Generator</span>
+          </h1>
+          <p className="text-xl text-zinc-300 mb-6">
+            Generate a legally binding, dual-party NDA in 3 minutes for $4.00.
+          </p>
+
+          <div className="space-y-4 mb-8">
+            <div className="flex items-start gap-4">
+              <div className="bg-axim-teal/20 p-3 rounded-xl border border-axim-teal/30 text-axim-teal">
+                <SafeIcon icon={FiShield} size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-zinc-100">Vault Storage</h3>
+                <p className="text-sm text-zinc-400">Cryptographically secure, tamper-proof document storage and verification.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="bg-axim-teal/20 p-3 rounded-xl border border-axim-teal/30 text-axim-teal">
+                <SafeIcon icon={FiPenTool} size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-zinc-100">E-Signatures</h3>
+                <p className="text-sm text-zinc-400">Seamless dual-party digital execution flow integrated directly into the portal.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="bg-axim-teal/20 p-3 rounded-xl border border-axim-teal/30 text-axim-teal">
+                <SafeIcon icon={FiCpu} size={24} />
+              </div>
+              <div>
+                <h3 className="font-bold text-zinc-100">AI Clause Advisor</h3>
+                <p className="text-sm text-zinc-400">Intelligent selection of strictness, jurisdiction, and industry-specific clauses.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-black/40 border border-white/5 rounded-3xl p-8 backdrop-blur-md">
+          <h2 className="text-2xl font-bold text-white mb-4 border-b border-white/10 pb-2">Frequently Asked Questions</h2>
+          <FAQItem
+            question="Is this legally binding?"
+            answer="Yes. Our NDAs are drafted using standard legal clauses and the digital signatures comply with the ESIGN Act and UETA."
+          />
+          <FAQItem
+            question="How does the counterparty sign?"
+            answer="Once generated, the receiving party will be emailed a secure link to the AXiM Verification Portal where they can execute the document."
+          />
+          <FAQItem
+            question="Can I revoke an agreement?"
+            answer="Yes. If the counterparty has not yet signed the agreement, you can revoke it directly from your dashboard."
+          />
+        </div>
+      </div>
+
+      {/* Right side: Form Widget */}
+      <div className="w-full lg:w-1/2">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 function AppContent() {
     const { formData, setFormData, currentStep, setCurrentStep, resetForm, isResumed } = useNDAForm();
@@ -146,20 +231,22 @@ function AppContent() {
         onStartOver={handleStartOverRequest}
       />
 
-      <div className="max-w-3xl w-full no-print relative z-10">
+      <div className="w-full no-print relative z-10 flex-1">
         <Routes>
           <Route path="/" element={
-            <NDAGeneratorForm
-              formData={formData}
-              setFormData={setFormData}
-              currentStep={currentStep}
-              setCurrentStep={setCurrentStep}
-              onPurchase={handlePurchase}
-              isEditing={false}
-              onUpdate={() => {}}
-              userSession={userSession}
-              onPartnerCheckout={handlePartnerCheckout}
-            />
+            <LandingLayout userSession={userSession}>
+              <NDAGeneratorForm
+                formData={formData}
+                setFormData={setFormData}
+                currentStep={currentStep}
+                setCurrentStep={setCurrentStep}
+                onPurchase={handlePurchase}
+                isEditing={false}
+                onUpdate={() => {}}
+                userSession={userSession}
+                onPartnerCheckout={handlePartnerCheckout}
+              />
+            </LandingLayout>
           } />
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/admin" element={<AdminDashboard />} />

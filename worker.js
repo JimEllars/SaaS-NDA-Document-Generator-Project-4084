@@ -469,10 +469,44 @@ export default {
         // Add the new signature
         const executedPdfBytes = await executePdfBytes(pdfArrayBuffer, signatureImage);
 
-        // Upload the executed document back to orchestrator or vault API
-        // For standard pattern here, we assume there's a way to POST it, or we use a multipart form
-        // To be safe and compatible with standard microservice logic we simulate success telemetry here
+        // Fetch document metadata to get emails
+        const verifyResponse = await fetch(
+          `${backendUrl}/v1/vault-verify?trace_id=${trace_id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+            },
+          }
+        );
+        let metadata = {};
+        if (verifyResponse.ok) {
+           const verifyData = await verifyResponse.json();
+           metadata = verifyData.metadata || {};
+        }
 
+        // Upload the executed document back to orchestrator or vault API
+        ctx.waitUntil(
+          fetch(
+            `${backendUrl}/v1/functions/document-orchestrator`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              },
+              body: JSON.stringify({
+                templateId: "nda_v1_executed",
+                trace_id: trace_id,
+                email: metadata.email,
+                recipientEmail: metadata.recipientEmail,
+                status: "EXECUTED"
+              }),
+            }
+          )
+        );
+
+        // To be safe and compatible with standard microservice logic we simulate success telemetry here
         ctx.waitUntil(
           fetch(
             `${backendUrl}/v1/telemetry/events`,
@@ -503,6 +537,61 @@ export default {
         return new Response(
           JSON.stringify({ error: "Internal Server Error" }),
           { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+
+    if (request.method === "POST" && url.pathname === "/api/vault-revoke") {
+      try {
+        const payload = await request.json();
+        const { trace_id } = payload;
+
+        if (!trace_id) {
+          return new Response(JSON.stringify({ error: "Missing trace_id" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const backendUrl =
+          env.BACKEND_URL ||
+          env.VITE_PAYMENT_API_URL ||
+          "https://api.axim.us.com";
+
+        const response = await fetch(
+          `${backendUrl}/v1/vault-revoke`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+            },
+            body: JSON.stringify({ trace_id }),
+          }
+        );
+
+        if (!response.ok) {
+          return new Response(
+            JSON.stringify({ error: "Failed to revoke document" }),
+            {
+              status: response.status,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
+
+        const data = await response.json();
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        });
+
+      } catch (err) {
+        console.error("Vault Revoke Error:", err);
+        return new Response(
+          JSON.stringify({ error: "Internal Server Error" }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
         );
       }
     }

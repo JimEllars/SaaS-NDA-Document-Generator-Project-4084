@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiFileText, FiDownload } from 'react-icons/fi';
+import { FiFileText, FiDownload, FiXCircle } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
 const MyRecentNDAs = () => {
@@ -7,6 +7,29 @@ const MyRecentNDAs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
+  const handleRevoke = async (trace_id) => {
+    try {
+      const response = await fetch('/api/vault-revoke', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ trace_id })
+      });
+      if (!response.ok) throw new Error('Revocation failed');
+
+      // Update local state
+      setDocuments(prevDocs =>
+        prevDocs.map(doc =>
+          doc.trace_id === trace_id ? { ...doc, status: 'REVOKED' } : doc
+        )
+      );
+      alert('Document revoked successfully');
+    } catch (err) {
+      alert('Error revoking document: ' + err.message);
+    }
+  };
 
   const handleDownload = async (trace_id) => {
     try {
@@ -76,13 +99,27 @@ const MyRecentNDAs = () => {
               <p className="text-xs text-zinc-500 font-mono mt-1">Trace ID: {doc.trace_id}</p>
               <p className="text-xs text-zinc-500 mt-1">{new Date(doc.created_at).toLocaleString()}</p>
             </div>
-            <button
-              onClick={() => handleDownload(doc.trace_id)}
-              className="p-2 bg-zinc-800 text-axim-teal rounded-lg hover:bg-zinc-700 hover:text-teal-300 transition-colors"
-              title="Download from Vault"
-            >
-              <SafeIcon icon={FiDownload} />
-            </button>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-bold px-2 py-1 rounded-full ${doc.status === 'REVOKED' ? 'bg-red-900/30 text-red-400 border border-red-500/30' : doc.status === 'PENDING' ? 'bg-amber-900/30 text-amber-400 border border-amber-500/30' : doc.status === 'EXECUTED' ? 'bg-green-900/30 text-green-400 border border-green-500/30' : 'bg-zinc-800 text-zinc-400'}`}>
+                {doc.status || 'ACTIVE'}
+              </span>
+              {(doc.status === 'PENDING' || doc.status === 'ACTIVE' || !doc.status) && (
+                <button
+                  onClick={() => handleRevoke(doc.trace_id)}
+                  className="p-2 bg-zinc-800 text-red-400 rounded-lg hover:bg-zinc-700 hover:text-red-300 transition-colors"
+                  title="Revoke Document"
+                >
+                  <SafeIcon icon={FiXCircle} />
+                </button>
+              )}
+              <button
+                onClick={() => handleDownload(doc.trace_id)}
+                className="p-2 bg-zinc-800 text-axim-teal rounded-lg hover:bg-zinc-700 hover:text-teal-300 transition-colors"
+                title="Download from Vault"
+              >
+                <SafeIcon icon={FiDownload} />
+              </button>
+            </div>
           </div>
         ))}
       </div>

@@ -21,6 +21,19 @@ export default function VerificationPortal() {
   const [signatureImage, setSignatureImage] = useState(null);
   const [isSigning, setIsSigning] = useState(false);
 
+  // Scroll lock mechanism to prevent scrolling while drawing signature
+  useEffect(() => {
+    const handleTouchMove = (e) => {
+      if (e.target.closest('.signature-canvas-wrapper')) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
   useEffect(() => {
     if (traceId && isSignMode && status === 'idle') {
       handleVerify(new Event('submit'));
@@ -43,11 +56,17 @@ export default function VerificationPortal() {
         }
       });
 
+      if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      }
       if (!response.ok) {
         throw new Error('Document not found or invalid trace ID');
       }
 
       const data = await response.json();
+      if (data.status === 'REVOKED') {
+        throw new Error('This agreement has been revoked by the creator.');
+      }
       setDocumentData(data);
       setStatus('success');
     } catch (err) {
@@ -230,7 +249,7 @@ export default function VerificationPortal() {
                   </p>
                   {signatureMode === 'draw' ? (
                   <div
-                    className="border border-zinc-400 bg-zinc-50 rounded-lg p-2 max-w-md w-full"
+                    className="border border-zinc-400 bg-zinc-50 rounded-lg p-2 max-w-md w-full signature-canvas-wrapper"
                     style={{ touchAction: "none" }}
                   >
                     <SignatureCanvas
