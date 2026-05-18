@@ -115,6 +115,12 @@ const useFormValidation = (formData) => {
         return;
       }
 
+      if (formData.recipientEmail && !emailRegex.test(formData.recipientEmail)) {
+        setValidationMessage("Please enter a valid counterparty email address.");
+        setIsValid(false);
+        return;
+      }
+
       // If all checks pass
       setValidationMessage("");
       setIsValid(true);

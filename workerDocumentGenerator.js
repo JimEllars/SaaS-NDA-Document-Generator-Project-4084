@@ -376,3 +376,38 @@ export const generatePlainText = (documentData, formData) => {
 
   return textParts.join("");
 };
+
+export const executePdfBytes = async (pdfBytes, signatureImage) => {
+  const pdfDoc = await PDFDocument.load(pdfBytes);
+  let pages = pdfDoc.getPages();
+  let page = pages[pages.length - 1];
+  const { width, height } = page.getSize();
+  const margin = 50;
+
+  // Simplified placement: try to find space, else add page
+  let currentY = 150; // default offset from bottom
+
+  if (signatureImage) {
+    const signatureImageBytes = Uint8Array.from(
+      atob(signatureImage.split(",")[1]),
+      (c) => c.charCodeAt(0),
+    );
+    const pngImage = await pdfDoc.embedPng(signatureImageBytes);
+    const pngDims = pngImage.scale(0.5);
+
+    if (currentY - pngDims.height < margin) {
+      page = pdfDoc.addPage();
+      currentY = page.getSize().height - margin - pngDims.height;
+    }
+
+    page.drawImage(pngImage, {
+      x: width - margin - pngDims.width, // align right for counterparty
+      y: currentY,
+      width: pngDims.width,
+      height: pngDims.height,
+    });
+  }
+
+  const executedPdfBytes = await pdfDoc.save();
+  return executedPdfBytes;
+};

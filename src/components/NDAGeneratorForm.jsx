@@ -178,14 +178,17 @@ const NDAGeneratorForm = React.memo(
       setIsSigEmpty(true);
       setFormData((prev) => ({ ...prev, signatureImage: null }));
     };
-    const saveSignature = () => {
+    const saveSignature = async () => {
       if (signatureMode === 'type') {
         if (typedSignature.trim()) {
           const canvas = document.createElement('canvas');
-          canvas.width = 400;
-          canvas.height = 100;
           const ctx = canvas.getContext('2d');
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = 400 * dpr;
+          canvas.height = 100 * dpr;
+          ctx.scale(dpr, dpr);
           ctx.font = 'italic 36px "Cedarville Cursive", serif';
+          await document.fonts.load('italic 36px "Cedarville Cursive"');
           ctx.fillStyle = 'black';
           ctx.textBaseline = 'middle';
           ctx.fillText(typedSignature, 10, 50);
@@ -912,8 +915,8 @@ const NDAGeneratorForm = React.memo(
                       penColor="black"
                       canvasProps={{
                         className: "w-full h-32 cursor-crosshair",
-                        width: 500, // Explicit width for scaling calculation
-                        height: 200,
+                        width: 500 * (window.devicePixelRatio || 1),
+                        height: 200 * (window.devicePixelRatio || 1),
                         style: { width: '100%', height: '100%', touchAction: 'none' } // CSS dimensions
                       }}
                       onEnd={() => {
