@@ -18,6 +18,41 @@ export default function VerificationPortal() {
   const [typedSignature, setTypedSignature] = useState('');
   const [isSigEmpty, setIsSigEmpty] = useState(true);
   const sigCanvas = useRef(null);
+
+  // Handle window resize for SignatureCanvas
+  useEffect(() => {
+    const handleResize = () => {
+      if (sigCanvas.current) {
+        // Save current drawn data
+        const data = sigCanvas.current.toData();
+        sigCanvas.current.clear();
+        setTimeout(() => {
+          if (sigCanvas.current) {
+            if (data && data.length > 0) {
+              sigCanvas.current.fromData(data);
+              setIsSigEmpty(false);
+            } else {
+              setIsSigEmpty(true);
+            }
+          }
+        }, 50);
+      }
+    };
+
+    let resizeTimer;
+    const debouncedHandleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        handleResize();
+      }, 100);
+    };
+
+    window.addEventListener("resize", debouncedHandleResize);
+    return () => {
+      clearTimeout(resizeTimer);
+      window.removeEventListener("resize", debouncedHandleResize);
+    }
+  }, []);
   const [signatureImage, setSignatureImage] = useState(null);
   const [isSigning, setIsSigning] = useState(false);
 
@@ -65,7 +100,9 @@ export default function VerificationPortal() {
 
       const data = await response.json();
       if (data.status === 'REVOKED') {
-        throw new Error('This agreement has been revoked by the creator.');
+        setDocumentData(data);
+        setStatus('revoked');
+        return;
       }
       setDocumentData(data);
       setStatus('success');
@@ -111,6 +148,7 @@ export default function VerificationPortal() {
   };
 
   const submitSignature = async () => {
+    if (isSigning) return;
     if (!signatureImage) return;
     setIsSigning(true);
     setErrorMsg('');
@@ -190,6 +228,41 @@ export default function VerificationPortal() {
             <div className="bg-red-900/20 border border-red-500/30 text-red-400 p-4 rounded-xl flex items-center gap-3 mb-6">
               <SafeIcon icon={FiAlertCircle} size={24} />
               <p>{errorMsg}</p>
+            </div>
+          )}
+
+
+          {status === 'revoked' && documentData && (
+            <div className="flex flex-col gap-6 animate-fade-in relative">
+              <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+                <div className="transform -rotate-12 border-4 border-red-500/50 text-red-500/50 font-black text-6xl md:text-8xl p-4 rounded-xl shadow-lg uppercase tracking-widest backdrop-blur-sm bg-black/20 mix-blend-overlay">
+                  REVOKED
+                </div>
+              </div>
+              <div className="bg-zinc-900 border border-red-500/30 p-6 rounded-xl opacity-80 filter grayscale">
+                <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+                  <SafeIcon icon={FiAlertCircle} size={28} className="text-red-500" />
+                  <h3 className="text-xl font-bold text-red-500">Revoked Document</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-sm text-zinc-500 mb-1">Disclosing Party</p>
+                    <p className="font-bold">{documentData.metadata?.disclosing || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500 mb-1">Receiving Party</p>
+                    <p className="font-bold">{documentData.metadata?.receiving || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500 mb-1">Effective Date</p>
+                    <p className="font-bold">{documentData.metadata?.effectiveDate || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-zinc-500 mb-1">Document Hash</p>
+                    <p className="font-mono text-sm break-all text-zinc-400">{documentData.hash || 'Unknown'}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
