@@ -113,6 +113,7 @@ export default function SuccessPage() {
   }, [navigate, resetForm]);
 
   const handleSendEmail = useCallback(async () => {
+    if (isSendingEmail) return;
     if (!email || !email.includes("@")) {
       addToast("Please enter a valid email address.", "error");
       return;
@@ -428,7 +429,7 @@ export default function SuccessPage() {
                   : ""
               }`}
             >
-              <SafeIcon icon={FiSend} size={14} />
+              {isSendingEmail ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-zinc-300 border-t-transparent" /> : <SafeIcon icon={FiSend} size={14} />}
               {isSendingEmail ? "Sending..." : "Send"}
             </button>
           </div>

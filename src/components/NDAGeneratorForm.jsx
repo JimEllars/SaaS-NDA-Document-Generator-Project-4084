@@ -85,17 +85,37 @@ const NDAGeneratorForm = React.memo(
           // Force re-render of canvas by clearing, but we actually just need to re-apply data after resize
           sigCanvas.current.clear();
           setTimeout(() => {
-            if (sigCanvas.current && data) {
-              sigCanvas.current.fromData(data);
+            if (sigCanvas.current) {
+              if (data && data.length > 0) {
+                  sigCanvas.current.fromData(data);
+                  setIsSigEmpty(false);
+              } else {
+                  setIsSigEmpty(true);
+                  // Trigger a warning if they were drawing and lost it (though empty means nothing lost)
+              }
             }
           }, 50);
         }
       };
 
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
+      let resizeTimer;
+      const debouncedHandleResize = () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+             handleResize();
+             // Since mobile resize can be jarring, ensure we show a toast if data existed but got corrupted (unlikely with this approach, but good UX to warn)
+             // For now just relying on the fromData restoration which should be robust.
+          }, 100);
+      };
+
+      window.addEventListener("resize", debouncedHandleResize);
+      return () => {
+         clearTimeout(resizeTimer);
+         window.removeEventListener("resize", debouncedHandleResize);
+      }
     }, []);
 
+    const [isPreviewLoading, setIsPreviewLoading] = useState(false);
     const [isSigEmpty, setIsSigEmpty] = useState(true);
     const [signatureMode, setSignatureMode] = useState('draw'); // 'draw' or 'type'
     const [typedSignature, setTypedSignature] = useState('');
@@ -288,7 +308,9 @@ const NDAGeneratorForm = React.memo(
     };
 
     const handlePreview = async () => {
+      if (isPreviewLoading) return;
       try {
+        setIsPreviewLoading(true);
         addToast("Generating preview...", "info");
         const response = await fetch("/api/generate-preview", {
           method: "POST",
@@ -305,6 +327,8 @@ const NDAGeneratorForm = React.memo(
       } catch (err) {
         console.error(err);
         addToast(err.message || "Failed to generate preview", "error");
+      } finally {
+        setIsPreviewLoading(false);
       }
     };
 
@@ -446,6 +470,7 @@ const NDAGeneratorForm = React.memo(
                           value={formData.disclosing}
                           onChange={handleInputChange}
                           placeholder="Company or Individual Name"
+                          autoComplete="organization"
                           className={INPUT_CLASSES}
                           required
                           maxLength="255"
@@ -475,6 +500,7 @@ const NDAGeneratorForm = React.memo(
                         value={formData.receiving}
                         onChange={handleInputChange}
                         placeholder="Counterparty Name"
+                        autoComplete="organization"
                         className={INPUT_CLASSES}
                         required
                         maxLength="255"
@@ -498,6 +524,7 @@ const NDAGeneratorForm = React.memo(
                           onChange={handleInputChange}
                           className={INPUT_CLASSES}
                           placeholder="Enter your email address"
+                          autoComplete="email"
                           required
                         />
                         {userSession?.email &&
@@ -522,6 +549,7 @@ const NDAGeneratorForm = React.memo(
                         onChange={handleInputChange}
                         className={INPUT_CLASSES}
                         placeholder="Enter counterparty email (optional)"
+                        autoComplete="email"
                       />
                     </div>
                   </div>
@@ -812,9 +840,15 @@ const NDAGeneratorForm = React.memo(
               <div className="flex justify-end mb-4">
                 <button
                   onClick={handlePreview}
-                  className="bg-zinc-800 text-zinc-100 font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-700 transition shadow"
+                  disabled={isPreviewLoading}
+                  className={`bg-zinc-800 text-zinc-100 font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow ${isPreviewLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-zinc-700'}`}
                 >
-                  <SafeIcon icon={FiFileText} size={16} /> View Watermarked PDF
+                  {isPreviewLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-zinc-100 border-t-transparent" />
+                  ) : (
+                    <SafeIcon icon={FiFileText} size={16} />
+                  )}
+                  {isPreviewLoading ? "Generating Preview..." : "View Watermarked PDF"}
                 </button>
               </div>
               {/* Live Draft Preview Pane */}
@@ -825,6 +859,20 @@ const NDAGeneratorForm = React.memo(
                   backgroundRepeat: "repeat",
                 }}
               >
+                {isPreviewLoading && (
+                  <div className="absolute inset-0 z-30 bg-zinc-200/90 backdrop-blur-sm animate-pulse flex flex-col items-center justify-center pointer-events-none">
+                     <div className="flex items-center gap-3 text-zinc-600 font-bold text-lg mb-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-600 border-t-transparent" />
+                        Generating PDF Preview...
+                     </div>
+                     <div className="w-3/4 h-8 bg-zinc-300 rounded mb-6"></div>
+                     <div className="w-5/6 h-4 bg-zinc-300 rounded mb-3"></div>
+                     <div className="w-4/5 h-4 bg-zinc-300 rounded mb-3"></div>
+                     <div className="w-full h-4 bg-zinc-300 rounded mb-8"></div>
+                     <div className="w-2/3 h-4 bg-zinc-300 rounded mb-3"></div>
+                     <div className="w-3/4 h-4 bg-zinc-300 rounded mb-3"></div>
+                  </div>
+                )}
                 <h2 className="text-2xl font-serif font-bold mb-6 text-center border-b pb-4 border-zinc-300">
                   Non-Disclosure Agreement
                 </h2>
@@ -933,6 +981,7 @@ const NDAGeneratorForm = React.memo(
                       <input
                         type="text"
                         placeholder="Type your full name"
+                        autoComplete="name"
                         value={typedSignature}
                         onChange={(e) => {
                           setTypedSignature(e.target.value);

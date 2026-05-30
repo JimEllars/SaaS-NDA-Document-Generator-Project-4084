@@ -6,9 +6,12 @@ const MyRecentNDAs = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [processingId, setProcessingId] = useState(null);
 
 
   const handleRevoke = async (trace_id) => {
+    if (processingId) return;
+    setProcessingId(trace_id);
     try {
       const response = await fetch('/api/vault-revoke', {
         method: 'POST',
@@ -28,10 +31,14 @@ const MyRecentNDAs = () => {
       alert('Document revoked successfully');
     } catch (err) {
       alert('Error revoking document: ' + err.message);
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const handleDownload = async (trace_id) => {
+    if (processingId) return;
+    setProcessingId(trace_id);
     try {
       const response = await fetch(`/api/v1/vault-download?trace_id=${trace_id}`, {
         method: 'GET'
@@ -48,6 +55,8 @@ const MyRecentNDAs = () => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       alert('Error downloading document: ' + err.message);
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -106,18 +115,20 @@ const MyRecentNDAs = () => {
               {(doc.status === 'PENDING' || doc.status === 'ACTIVE' || !doc.status) && (
                 <button
                   onClick={() => handleRevoke(doc.trace_id)}
-                  className="p-2 bg-zinc-800 text-red-400 rounded-lg hover:bg-zinc-700 hover:text-red-300 transition-colors"
+                  disabled={processingId === doc.trace_id}
+                  className={`p-2 rounded-lg transition-colors flex items-center justify-center ${processingId === doc.trace_id ? 'bg-zinc-800/50 text-red-400/50 cursor-not-allowed' : 'bg-zinc-800 text-red-400 hover:bg-zinc-700 hover:text-red-300'}`}
                   title="Revoke Document"
                 >
-                  <SafeIcon icon={FiXCircle} />
+                  {processingId === doc.trace_id ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-400 border-t-transparent" /> : <SafeIcon icon={FiXCircle} />}
                 </button>
               )}
               <button
                 onClick={() => handleDownload(doc.trace_id)}
-                className="p-2 bg-zinc-800 text-axim-teal rounded-lg hover:bg-zinc-700 hover:text-teal-300 transition-colors"
+                disabled={processingId === doc.trace_id}
+                className={`p-2 rounded-lg transition-colors flex items-center justify-center ${processingId === doc.trace_id ? 'bg-zinc-800/50 text-axim-teal/50 cursor-not-allowed' : 'bg-zinc-800 text-axim-teal hover:bg-zinc-700 hover:text-teal-300'}`}
                 title="Download from Vault"
               >
-                <SafeIcon icon={FiDownload} />
+                {processingId === doc.trace_id ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-axim-teal border-t-transparent" /> : <SafeIcon icon={FiDownload} />}
               </button>
             </div>
           </div>
