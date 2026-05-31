@@ -84,7 +84,10 @@ export default function VerificationPortal() {
     setDocumentData(null);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const response = await fetch(`/api/verify-document?trace_id=${encodeURIComponent(traceId)}`, {
+        signal: controller.signal,
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -98,6 +101,7 @@ export default function VerificationPortal() {
         throw new Error('Document not found or invalid trace ID');
       }
 
+      clearTimeout(timeoutId);
       const data = await response.json();
       if (data.status === 'REVOKED') {
         setDocumentData(data);
@@ -154,7 +158,10 @@ export default function VerificationPortal() {
     setErrorMsg('');
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const response = await fetch('/api/vault-execute', {
+        signal: controller.signal,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

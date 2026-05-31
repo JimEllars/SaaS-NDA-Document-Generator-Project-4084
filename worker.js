@@ -64,6 +64,45 @@ export default {
       });
     }
 
+
+    function sanitizeFormData(formData, ctx, env) {
+      const sanitized = { ...formData };
+      const fieldsToSanitize = ['disclosing', 'receiving', 'organization', 'email', 'recipientEmail'];
+      let modified = false;
+
+      for (const field of fieldsToSanitize) {
+        if (typeof sanitized[field] === 'string') {
+          const original = sanitized[field];
+          sanitized[field] = original.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\u017F]/g, '');
+          if (original !== sanitized[field]) {
+            modified = true;
+          }
+        }
+      }
+
+      if (modified && ctx && env) {
+        ctx.waitUntil(
+          fetch(
+            `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/ingest`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              },
+              body: JSON.stringify({
+                event: "pdf_sanitization_triggered",
+                app_type: "nda",
+                severity: "WARNING",
+              }),
+            }
+          ).catch((e) => console.error("Telemetry failed for sanitization:", e))
+        );
+      }
+
+      return sanitized;
+    }
+
     if (request.method === "POST" && url.pathname === "/api/generate-preview") {
       // Edge Rate Limiting
       const clientIP = request.headers.get("CF-Connecting-IP");
@@ -91,7 +130,8 @@ export default {
         }
       }
       try {
-        const formData = await request.json();
+        let formData = await request.json();
+        formData = sanitizeFormData(formData, ctx, env);
 
         // Skip payment validation for preview
         const docData = generateDocument({ ...formData, isPaid: true }); // We still pass isPaid: true so it generates
@@ -144,7 +184,8 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/generate-nda") {
       try {
-        const formData = await request.json();
+        let formData = await request.json();
+        formData = sanitizeFormData(formData, ctx, env);
         const sessionId = formData.sessionId;
 
         if (!sessionId) {

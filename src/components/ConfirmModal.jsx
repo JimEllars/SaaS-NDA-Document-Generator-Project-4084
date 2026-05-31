@@ -3,6 +3,19 @@ import { FiAlertCircle, FiX } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
 const ConfirmModal = React.memo(({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", isDestructive = false }) => {
+
+  React.useEffect(() => {
+    if (isOpen) {
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          onCancel();
+        }
+      };
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, onCancel]);
+
   if (!isOpen) return null;
 
   return (
@@ -13,6 +26,10 @@ const ConfirmModal = React.memo(({ isOpen, title, message, onConfirm, onCancel, 
       <div
         className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => { if (e.key === "Tab") { const focusableElements = e.currentTarget.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])"); const firstElement = focusableElements[0]; const lastElement = focusableElements[focusableElements.length - 1]; if (e.shiftKey) { if (document.activeElement === firstElement) { lastElement.focus(); e.preventDefault(); } } else { if (document.activeElement === lastElement) { firstElement.focus(); e.preventDefault(); } } } }} tabIndex="-1"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-modal-title"
       >
         <div className="flex justify-between items-start mb-4">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDestructive ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
@@ -23,7 +40,7 @@ const ConfirmModal = React.memo(({ isOpen, title, message, onConfirm, onCancel, 
             </button>
         </div>
 
-        <h3 className="text-lg font-bold text-slate-900 mb-2">{title}</h3>
+        <h3 id="confirm-modal-title" className="text-lg font-bold text-slate-900 mb-2">{title}</h3>
         <p className="text-sm text-slate-600 mb-6 leading-relaxed">{message}</p>
 
         <div className="flex gap-3">
