@@ -395,9 +395,20 @@ const NDAGeneratorForm = React.memo(
               >
                 <SafeIcon icon={FiX} size={20} />
               </button>
-              <h3 id="advisor-title" className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-                <SafeIcon icon={FiHelpCircle} className="text-axim-teal" /> AI
-                Advisor: {advisorTopic}
+
+              <h3 id="advisor-title" className="text-lg font-bold text-white mb-2 flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <SafeIcon icon={FiHelpCircle} className="text-axim-teal" /> AI Advisor: {advisorTopic}
+                </div>
+                {advisorRisk && (
+                  <div className={`flex items-center gap-1 text-sm font-medium ${
+                    advisorRisk === "High" ? "text-red-400" :
+                    advisorRisk === "Medium" ? "text-amber-400" :
+                    "text-teal-400"
+                  }`}>
+                    <SafeIcon icon={FiShield} size={14} /> Risk Level: {advisorRisk}
+                  </div>
+                )}
               </h3>
               {isAiSearching ? (
                 <div className="animate-pulse flex space-x-4 mt-4">

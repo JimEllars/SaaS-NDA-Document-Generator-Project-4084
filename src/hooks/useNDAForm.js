@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { encrypt, decrypt } from "../utils/crypto";
 
 export const getDefaultFormData = () => {
   return {
@@ -19,8 +20,6 @@ export const getDefaultFormData = () => {
   };
 };
 
-import { encrypt, decrypt } from "../utils/crypto";
-
 const STORAGE_KEY = "axim_nda_draft";
 
 const useNDAForm = () => {
@@ -34,7 +33,7 @@ const useNDAForm = () => {
         return parsed;
       }
     } catch (err) {
-      console.warn("Failed to read from localStorage:", err);
+      console.warn("Failed to read from localStorage, falling back to memory:", err);
     }
     return getDefaultFormData();
   });
@@ -48,7 +47,7 @@ const useNDAForm = () => {
         if (parsed.currentStep !== undefined) return parsed.currentStep;
       }
     } catch (err) {
-      console.warn("Failed to read from localStorage:", err);
+      console.warn("Failed to read from localStorage, falling back to memory:", err);
     }
     return 1;
   });
@@ -57,12 +56,12 @@ const useNDAForm = () => {
     try {
       return localStorage.getItem(STORAGE_KEY) !== null;
     } catch (err) {
+      console.warn("Failed to access localStorage, running in memory-only mode:", err);
       return false;
     }
   });
 
   const currentStepRef = useRef(currentStep);
-
   const formDataRef = useRef(formData);
 
   const setCurrentStep = useCallback((value) => {
@@ -90,7 +89,8 @@ const useNDAForm = () => {
         });
         localStorage.setItem(STORAGE_KEY, encrypt(dataToSave));
       } catch (err) {
-        console.warn("Failed to save to localStorage:", err);
+        // Handle QuotaExceededError or disabled local storage by logging and falling back gracefully to memory
+        console.warn("Failed to save to localStorage (quota exceeded or disabled), maintaining state in memory:", err);
       }
     }, 500);
 

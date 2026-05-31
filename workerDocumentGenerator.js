@@ -108,6 +108,7 @@ export const generatePdfBytes = async (plainText, formData) => {
       size: 12,
       font: baseFont,
       color: rgb(0, 0, 0),
+      maxWidth: 200,
     });
 
     page.drawLine({
@@ -142,6 +143,7 @@ export const generatePdfBytes = async (plainText, formData) => {
         size: 12,
         font: baseFont,
         color: rgb(0, 0, 0),
+        maxWidth: 200,
       });
 
       page.drawLine({
@@ -180,6 +182,7 @@ export const generatePdfBytes = async (plainText, formData) => {
     const p = pages[i];
     const { width, height } = p.getSize();
     p.drawText(authText, {
+      maxWidth: width - 2 * margin,
       x: margin,
       y: 20,
       size: 8,
