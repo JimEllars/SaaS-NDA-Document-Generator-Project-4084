@@ -1,5 +1,5 @@
 import SignatureCanvas from "react-signature-canvas";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import useVectorSearch from "../hooks/useVectorSearch";
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
 import {
@@ -134,6 +134,19 @@ const NDAGeneratorForm = React.memo(
   // Generate AI Summary for Step 2
   const [aiSummary, setAiSummary] = useState([]);
 
+
+  useEffect(() => {
+    if (advisorModalOpen) {
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          setAdvisorModalOpen(false);
+        }
+      };
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [advisorModalOpen]);
+
   useEffect(() => {
     if (currentStep === 2) {
       const generateSummary = async () => {
@@ -231,16 +244,48 @@ const NDAGeneratorForm = React.memo(
       }
     };
 
+
+    const telemetryQueue = useRef([]);
+    const flushTelemetry = useCallback(() => {
+      if (telemetryQueue.current.length === 0) return;
+
+      const events = [...telemetryQueue.current];
+      telemetryQueue.current = [];
+
+      try {
+        fetch("/api/v1/telemetry/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ batch: events }),
+        });
+      } catch (e) {
+        // Silently fail telemetry in production
+      }
+    }, []);
+
+    useEffect(() => {
+      const intervalId = setInterval(flushTelemetry, 10000);
+      const handleBeforeUnload = () => flushTelemetry();
+
+      window.addEventListener("beforeunload", handleBeforeUnload);
+
+      return () => {
+        clearInterval(intervalId);
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+        flushTelemetry();
+      };
+    }, [flushTelemetry]);
+
+    const queueTelemetry = useCallback((eventName) => {
+      telemetryQueue.current.push({
+        event: eventName,
+        sessionId: trackingSessionId.current,
+        timestamp: new Date().toISOString(),
+      });
+    }, []);
+
     const nextStep = () => {
-      fetch("/api/v1/telemetry/events", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event: `nda_step_${currentStep}_completed`,
-          sessionId: trackingSessionId.current,
-          timestamp: new Date().toISOString(),
-        }),
-      }).catch((err) => console.error("Telemetry error:", err));
+      queueTelemetry(`nda_step_${currentStep}_completed`);
       setCurrentStep((prev) => Math.min(prev + 1, 3));
     };
     const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
@@ -290,20 +335,11 @@ const NDAGeneratorForm = React.memo(
       exit: { opacity: 0, x: -20 },
     };
 
-    const fireTelemetry = async (eventName) => {
-      try {
-        fetch("/api/v1/telemetry/events", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event: eventName }),
-        });
-      } catch (e) {
-        /* fire and forget */
-      }
-    };
+
 
     const handlePurchaseClick = () => {
-      fireTelemetry("nda_checkout_initiated");
+      queueTelemetry("nda_checkout_initiated");
+      flushTelemetry(); // Flush immediately before redirect
       onPurchase();
     };
 
@@ -351,15 +387,15 @@ const NDAGeneratorForm = React.memo(
         {renderProgressBar()}
 
         {advisorModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-zinc-900 border border-zinc-700 rounded-xl max-w-sm w-full p-6 relative shadow-2xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="advisor-title">
+            <div className="bg-zinc-900 border border-zinc-700 rounded-xl max-w-sm w-full p-6 relative shadow-2xl" onKeyDown={(e) => { if (e.key === "Tab") { const focusableElements = e.currentTarget.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])"); const firstElement = focusableElements[0]; const lastElement = focusableElements[focusableElements.length - 1]; if (e.shiftKey) { if (document.activeElement === firstElement) { lastElement.focus(); e.preventDefault(); } } else { if (document.activeElement === lastElement) { firstElement.focus(); e.preventDefault(); } } } }} tabIndex="-1">
               <button
                 onClick={() => setAdvisorModalOpen(false)}
                 className="absolute top-4 right-4 text-zinc-400 hover:text-white"
               >
                 <SafeIcon icon={FiX} size={20} />
               </button>
-              <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+              <h3 id="advisor-title" className="text-lg font-bold text-white mb-2 flex items-center gap-2">
                 <SafeIcon icon={FiHelpCircle} className="text-axim-teal" /> AI
                 Advisor: {advisorTopic}
               </h3>
@@ -466,6 +502,7 @@ const NDAGeneratorForm = React.memo(
                       <div className="relative">
                         <input
                           id="disclosing"
+                          aria-invalid={!isFormValid && validationMessage.includes("disclosing") ? "true" : "false"}
                           name="disclosing"
                           value={formData.disclosing}
                           onChange={handleInputChange}
@@ -496,6 +533,7 @@ const NDAGeneratorForm = React.memo(
                       </label>
                       <input
                         id="receiving"
+                        aria-invalid={!isFormValid && validationMessage.includes("receiving") ? "true" : "false"}
                         name="receiving"
                         value={formData.receiving}
                         onChange={handleInputChange}
@@ -513,12 +551,14 @@ const NDAGeneratorForm = React.memo(
                       <SafeIcon icon={FiMail} size={20} /> Contact Details
                     </h3>
                     <div>
-                      <label className={LABEL_CLASSES}>
+                      <label htmlFor="email" className={LABEL_CLASSES}>
                         Email Address (for document delivery)
                       </label>
                       <div className="relative">
                         <input
                           type="email"
+                          id="email"
+                          aria-invalid={!isFormValid && validationMessage.includes("email") ? "true" : "false"}
                           name="email"
                           value={formData.email || ""}
                           onChange={handleInputChange}
@@ -539,11 +579,12 @@ const NDAGeneratorForm = React.memo(
                       </div>
                     </div>
                     <div className="mt-4">
-                      <label className={LABEL_CLASSES}>
+                      <label htmlFor="recipientEmail" className={LABEL_CLASSES}>
                         Recipient Email Address (Optional - Send copy to counterparty)
                       </label>
                       <input
                         type="email"
+                        id="recipientEmail"
                         name="recipientEmail"
                         value={formData.recipientEmail || ""}
                         onChange={handleInputChange}
@@ -939,6 +980,7 @@ const NDAGeneratorForm = React.memo(
                       <button
                         type="button"
                         onClick={() => setSignatureMode('draw')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSignatureMode('draw'); } }}
                         className={`px-3 py-1 rounded-md text-sm transition-colors ${signatureMode === 'draw' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
                       >
                         Draw
@@ -946,6 +988,7 @@ const NDAGeneratorForm = React.memo(
                       <button
                         type="button"
                         onClick={() => setSignatureMode('type')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSignatureMode('type'); } }}
                         className={`px-3 py-1 rounded-md text-sm transition-colors ${signatureMode === 'type' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
                       >
                         Type

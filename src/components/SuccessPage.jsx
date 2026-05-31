@@ -195,7 +195,11 @@ export default function SuccessPage() {
 
           try {
             // Replace local generation with Edge API call
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
             const response = await fetch("/api/generate-nda", {
+              signal: controller.signal,
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -203,7 +207,13 @@ export default function SuccessPage() {
               body: JSON.stringify({ ...formData, sessionId }),
             });
 
-            if (!response.ok) throw new Error("Edge generation failed");
+            clearTimeout(timeoutId);
+            if (!response.ok) {
+                if (response.status === 502 || response.status === 503) {
+                    throw new Error("Our servers are experiencing high traffic. Your document draft is saved locally. Please try generating again in a moment.");
+                }
+                throw new Error("Edge generation failed");
+            }
 
             const docId = response.headers.get("X-Document-ID");
             const docHash = response.headers.get("X-Document-Hash");
@@ -246,6 +256,13 @@ export default function SuccessPage() {
             }
           } catch (genErr) {
             console.error("Generation failed:", genErr);
+            if (genErr.name === 'AbortError') {
+              console.error("Our servers are experiencing high traffic. Your document draft is saved locally. Please try generating again in a moment.", "error");
+            } else if (genErr.message.includes('high traffic')) {
+              console.error(genErr.message, "error");
+            } else {
+              console.error("Document generation failed. Please try again.", "error");
+            }
             setStatus("error");
           }
         } else {
