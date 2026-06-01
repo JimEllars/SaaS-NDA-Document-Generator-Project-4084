@@ -106,8 +106,8 @@ export default function SuccessPage() {
 
   const handleStartOver = useCallback(() => {
     resetForm();
-    localStorage.clear();
-    localStorage.removeItem("axim_delivery_email");
+    try { localStorage.clear(); } catch(e) { console.warn("localStorage.clear failed", e); }
+    try { localStorage.removeItem("axim_delivery_email"); } catch(e) { console.warn("localStorage.removeItem failed", e); }
     setEmail("");
     navigate("/");
   }, [navigate, resetForm]);
@@ -176,7 +176,12 @@ export default function SuccessPage() {
         if (!isMounted) return;
 
         // Rehydrate form data from localStorage
-        const savedData = localStorage.getItem("axim_nda_draft");
+        let savedData = null;
+        try {
+          savedData = typeof localStorage !== "undefined" ? localStorage.getItem("axim_nda_draft") : null;
+        } catch (e) {
+          console.warn("Failed to access localStorage", e);
+        }
         let formData = null;
         if (savedData) {
           try {

@@ -112,8 +112,13 @@ export default function VerificationPortal() {
       setStatus('success');
     } catch (err) {
       console.error('Verification error:', err);
-      setErrorMsg(err.message || 'Verification failed');
-      setStatus('error');
+      if (err.name === 'AbortError') {
+        setStatus('timeout');
+        setErrorMsg('Network timeout verified. Connection secure but unreachable.');
+      } else {
+        setErrorMsg(err.message || 'Verification failed');
+        setStatus('error');
+      }
     }
   };
 
@@ -135,8 +140,12 @@ export default function VerificationPortal() {
         canvas.width = 400 * dpr;
         canvas.height = 100 * dpr;
         ctx.scale(dpr, dpr);
+        try {
+          await document.fonts.load('italic 36px "Cedarville Cursive"');
+        } catch (e) {
+          console.warn("Font loading not fully supported or failed", e);
+        }
         ctx.font = 'italic 36px "Cedarville Cursive", serif';
-        await document.fonts.load('italic 36px "Cedarville Cursive"');
         ctx.fillStyle = 'black';
         ctx.textBaseline = 'middle';
         ctx.fillText(typedSignature, 10, 50);
@@ -235,6 +244,23 @@ export default function VerificationPortal() {
             <div className="bg-red-900/20 border border-red-500/30 text-red-400 p-4 rounded-xl flex items-center gap-3 mb-6">
               <SafeIcon icon={FiAlertCircle} size={24} />
               <p>{errorMsg}</p>
+            </div>
+          )}
+
+          {status === 'timeout' && (
+            <div className="bg-amber-900/20 border border-amber-500/30 text-amber-400 p-6 rounded-xl flex flex-col gap-4 mb-6 animate-fade-in">
+              <div className="flex items-center gap-3">
+                <SafeIcon icon={FiAlertCircle} size={24} />
+                <h3 className="text-xl font-bold">Verification Request Timeout</h3>
+              </div>
+              <p className="text-sm">The secure verification query has timed out. The trace ID connection was interrupted. Please retry your verification.</p>
+              <button
+                onClick={handleVerify}
+                className="self-start px-6 py-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-xl transition flex items-center gap-2 border border-amber-500/50"
+              >
+                <SafeIcon icon={FiRefreshCw} size={18} />
+                Retry Verification
+              </button>
             </div>
           )}
 

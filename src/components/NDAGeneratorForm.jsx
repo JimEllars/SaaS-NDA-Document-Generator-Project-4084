@@ -220,8 +220,12 @@ const NDAGeneratorForm = React.memo(
           canvas.width = 400 * dpr;
           canvas.height = 100 * dpr;
           ctx.scale(dpr, dpr);
+          try {
+            await document.fonts.load('italic 36px "Cedarville Cursive"');
+          } catch (e) {
+            console.warn("Font loading not fully supported or failed", e);
+          }
           ctx.font = 'italic 36px "Cedarville Cursive", serif';
-          await document.fonts.load('italic 36px "Cedarville Cursive"');
           ctx.fillStyle = 'black';
           ctx.textBaseline = 'middle';
           ctx.fillText(typedSignature, 10, 50);
