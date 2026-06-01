@@ -25,7 +25,7 @@ const STORAGE_KEY = "axim_nda_draft";
 const useNDAForm = () => {
   const [formData, setFormDataInternal] = useState(() => {
     try {
-      const savedData = localStorage.getItem(STORAGE_KEY);
+      const savedData = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
       if (savedData) {
         const decrypted = decrypt(savedData);
         const parsed = JSON.parse(decrypted);
@@ -40,7 +40,7 @@ const useNDAForm = () => {
 
   const [currentStep, setCurrentStepInternal] = useState(() => {
     try {
-      const savedData = localStorage.getItem(STORAGE_KEY);
+      const savedData = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
       if (savedData) {
         const decrypted = decrypt(savedData);
         const parsed = JSON.parse(decrypted);
@@ -54,7 +54,7 @@ const useNDAForm = () => {
 
   const [isResumed, setIsResumed] = useState(() => {
     try {
-      return localStorage.getItem(STORAGE_KEY) !== null;
+      return typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) !== null : false;
     } catch (err) {
       console.warn("Failed to access localStorage, running in memory-only mode:", err);
       return false;
@@ -87,7 +87,7 @@ const useNDAForm = () => {
           formData: formDataRef.current,
           currentStep: currentStepRef.current,
         });
-        localStorage.setItem(STORAGE_KEY, encrypt(dataToSave));
+        if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, encrypt(dataToSave));
       } catch (err) {
         // Handle QuotaExceededError or disabled local storage by logging and falling back gracefully to memory
         console.warn("Failed to save to localStorage (quota exceeded or disabled), maintaining state in memory:", err);
@@ -104,7 +104,7 @@ const useNDAForm = () => {
     formDataRef.current = defaultData;
     currentStepRef.current = 1;
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      if (typeof localStorage !== "undefined") localStorage.removeItem(STORAGE_KEY);
     } catch (err) {
       console.warn("Failed to remove from localStorage:", err);
     }

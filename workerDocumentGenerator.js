@@ -102,14 +102,40 @@ export const generatePdfBytes = async (plainText, formData) => {
 
     currentY -= pngDims.height + 40;
 
-    page.drawText(`${formData.disclosing}`, {
-      x: margin,
-      y: currentY,
-      size: 12,
-      font: baseFont,
-      color: rgb(0, 0, 0),
-      maxWidth: 200,
-    });
+
+    const drawWrappedText = (text, startY) => {
+        let y = startY;
+        const maxLen = 60;
+        const words = (text || "").split(" ");
+        let currentLine = "";
+        const lines = [];
+        for (const word of words) {
+            if ((currentLine + word).length > maxLen && currentLine.length > 0) {
+                lines.push(currentLine.trim());
+                currentLine = word + " ";
+            } else {
+                currentLine += word + " ";
+            }
+        }
+        if (currentLine.trim()) lines.push(currentLine.trim());
+
+        for (const line of lines) {
+            page.drawText(line, {
+                x: margin,
+                y: y,
+                size: 12,
+                font: baseFont,
+                color: rgb(0, 0, 0),
+                maxWidth: 400,
+            });
+            y -= 15;
+        }
+        return startY - (lines.length * 15);
+    };
+
+    const afterDisclosingY = drawWrappedText(`${formData.disclosing}`, currentY);
+    currentY = afterDisclosingY + 15; // adjust for the loop logic
+
 
     page.drawLine({
       start: { x: margin, y: currentY - 5 },
@@ -137,14 +163,10 @@ export const generatePdfBytes = async (plainText, formData) => {
         currentY = page.getSize().height - margin;
       }
 
-      page.drawText(`${formData.receiving}`, {
-        x: margin,
-        y: currentY,
-        size: 12,
-        font: baseFont,
-        color: rgb(0, 0, 0),
-        maxWidth: 200,
-      });
+
+      const afterReceivingY = drawWrappedText(`${formData.receiving}`, currentY);
+      currentY = afterReceivingY + 15;
+
 
       page.drawLine({
         start: { x: margin, y: currentY - 5 },
