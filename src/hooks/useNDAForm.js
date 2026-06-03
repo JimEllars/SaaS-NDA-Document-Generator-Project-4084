@@ -52,6 +52,22 @@ const useNDAForm = () => {
     return 1;
   });
 
+
+  const [isOffline, setIsOffline] = useState(typeof navigator !== "undefined" ? !navigator.onLine : false);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const [isResumed, setIsResumed] = useState(() => {
     try {
       return typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) !== null : false;
@@ -81,6 +97,7 @@ const useNDAForm = () => {
   }, []);
 
   useEffect(() => {
+    if (isOffline) return;
     const timeoutId = setTimeout(() => {
       try {
         const dataToSave = JSON.stringify({
