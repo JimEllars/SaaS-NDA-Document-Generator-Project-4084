@@ -104,7 +104,7 @@ function LandingLayout({ children, userSession }) {
 }
 
 function AppContent() {
-    const { formData, setFormData, currentStep, setCurrentStep, resetForm, isResumed } = useNDAForm();
+    const { formData, setFormData, currentStep, setCurrentStep, resetForm, isResumed, isOffline } = useNDAForm();
   const { addToast } = useToast();
   const toastRef = useRef(false);
 
@@ -235,7 +235,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={
             <LandingLayout userSession={userSession}>
-              <NDAGeneratorForm
+              <NDAGeneratorForm isOffline={isOffline}
                 formData={formData}
                 setFormData={setFormData}
                 currentStep={currentStep}

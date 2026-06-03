@@ -365,13 +365,13 @@ export default {
 
         return new Response(JSON.stringify({ status: "EXECUTED", message: "Webhook processed" }), {
           status: 200,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" },
         });
       } catch (err) {
         console.error("Webhook processing error:", err);
         return new Response(JSON.stringify({ error: "Internal Server Error" }), {
           status: 500,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" },
         });
       }
     }
@@ -447,7 +447,7 @@ export default {
             JSON.stringify({ error: "Verification failed or document not found" }),
             {
               status: response.status,
-              headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+              headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" },
             },
           );
         }
@@ -455,13 +455,13 @@ export default {
         const data = await response.json();
         return new Response(JSON.stringify(data), {
           status: 200,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" },
         });
       } catch (err) {
         console.error("Verification proxy error:", err);
         return new Response(
           JSON.stringify({ error: "Internal Server Error" }),
-          { status: 500, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } },
+          { status: 500, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" } },
         );
       }
     }
@@ -570,7 +570,7 @@ export default {
 
         return new Response(JSON.stringify({ status: "EXECUTED", message: "Document executed successfully" }), {
           status: 200,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" },
         });
 
       } catch (err) {
@@ -625,7 +625,7 @@ export default {
         const data = await response.json();
         return new Response(JSON.stringify(data), {
           status: 200,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" },
         });
 
       } catch (err) {

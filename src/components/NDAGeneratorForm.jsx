@@ -47,6 +47,7 @@ const NDAGeneratorForm = React.memo(
     onUpdate,
     userSession,
     onPartnerCheckout,
+    isOffline,
   }) => {
     const { addToast } = useToast();
 
@@ -71,6 +72,17 @@ const NDAGeneratorForm = React.memo(
       },
       [setFormData],
     );
+
+
+    const wasOffline = useRef(isOffline);
+    useEffect(() => {
+      if (isOffline && !wasOffline.current) {
+        addToast("Connection Lost: Your progress is securely saved locally. Retrying connection...", "warning", 0);
+      } else if (!isOffline && wasOffline.current) {
+        addToast("Connection Restored: Sync complete.", "success");
+      }
+      wasOffline.current = isOffline;
+    }, [isOffline, addToast]);
 
     const { isValid: isFormValid, validationMessage } =
       useFormValidation(formData);
@@ -253,14 +265,20 @@ const NDAGeneratorForm = React.memo(
     const flushTelemetry = useCallback(() => {
       if (telemetryQueue.current.length === 0) return;
 
-      const events = [...telemetryQueue.current];
+      // Compress Telemetry Payload Array
+      const compressedEvents = [...telemetryQueue.current].map((current) => {
+           // Flatten JSON objects by omitting empty keys to trim footprint
+           return Object.fromEntries(
+             Object.entries(current).filter(([_, v]) => v != null && v !== '')
+           );
+      });
       telemetryQueue.current = [];
 
       try {
         fetch("/api/v1/telemetry/events", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ batch: events }),
+          body: JSON.stringify({ batch: compressedEvents }),
         });
       } catch (e) {
         // Silently fail telemetry in production
@@ -289,10 +307,14 @@ const NDAGeneratorForm = React.memo(
     }, []);
 
     const nextStep = () => {
+      if (isOffline) return;
       queueTelemetry(`nda_step_${currentStep}_completed`);
       setCurrentStep((prev) => Math.min(prev + 1, 3));
     };
-    const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+    const prevStep = () => {
+      if (isOffline) return;
+      setCurrentStep((prev) => Math.max(prev - 1, 1));
+    };
 
     const progressSteps = [
       { id: 1, label: "1. Details" },
@@ -342,6 +364,7 @@ const NDAGeneratorForm = React.memo(
 
 
     const handlePurchaseClick = () => {
+      if (isOffline) return;
       queueTelemetry("nda_checkout_initiated");
       flushTelemetry(); // Flush immediately before redirect
       onPurchase();
