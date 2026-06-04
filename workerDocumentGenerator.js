@@ -12,7 +12,7 @@ export const generatePdfBytes = async (plainText, formData) => {
   const boldFont = isModern ? modernBoldFont : classicBoldFont;
 
   let page = pdfDoc.addPage();
-  const { width, height } = page.getSize();
+  let { width, height } = page.getSize();
   const margin = 50;
   let currentY = height - margin;
   const fontSize = 12;
@@ -84,7 +84,7 @@ export const generatePdfBytes = async (plainText, formData) => {
       atob(formData.signatureImage.split(",")[1]),
       (c) => c.charCodeAt(0),
     );
-    const pngImage = await pdfDoc.embedPng(signatureImageBytes);
+    let pngImage = await pdfDoc.embedPng(signatureImageBytes);
     const pngDims = pngImage.scale(0.5);
 
     // Add new page if not enough space
@@ -99,6 +99,7 @@ export const generatePdfBytes = async (plainText, formData) => {
       width: pngDims.width,
       height: pngDims.height,
     });
+    pngImage = null; // Garbage Collection
 
     currentY -= pngDims.height + 40;
 
@@ -197,7 +198,7 @@ export const generatePdfBytes = async (plainText, formData) => {
     authText += ` | Ledger Link: 0x${Math.random().toString(16).substr(2, 40).padEnd(40, "0")}`;
   }
 
-  const pages = pdfDoc.getPages();
+  let pages = pdfDoc.getPages();
 
   const pageCount = pages.length;
   for (let i = 0; i < pageCount; i++) {
@@ -222,7 +223,15 @@ export const generatePdfBytes = async (plainText, formData) => {
 
 
   const pdfBytes = await pdfDoc.save();
+
+  // Explicitly nullify variables
   pdfDoc = null;
+  page = null;
+  pages = null;
+  if (formData && formData.signatureImage) {
+      formData.signatureImage = null; // Free signature byte stream
+  }
+
   return { pdfBytes, docId };
 };
 
@@ -403,14 +412,17 @@ export const generatePlainText = (documentData, formData) => {
   generateSectionsParts(documentData, textParts);
   generateExecutionParts(formData, textParts);
 
-  return textParts.join("");
+  const result = textParts.join("");
+  // Explicitly clear intermediate parameter mapping string array
+  textParts.length = 0;
+  return result;
 };
 
 export const executePdfBytes = async (pdfBytes, signatureImage) => {
   let pdfDoc = await PDFDocument.load(pdfBytes);
   let pages = pdfDoc.getPages();
   let page = pages[pages.length - 1];
-  const { width, height } = page.getSize();
+  let { width, height } = page.getSize();
   const margin = 50;
 
   // Simplified placement: try to find space, else add page
@@ -441,14 +453,17 @@ export const executePdfBytes = async (pdfBytes, signatureImage) => {
       width: pngDims.width,
       height: pngDims.height,
     });
+    imageEmbed = null;
   }
 
   const executedPdfBytes = await pdfDoc.save();
 
-  // Explicitly nullify variables
+  // Explicitly nullify variables for garbage collection in Cloudflare Workers isolate
   pdfDoc = null;
   pages = null;
   page = null;
+  pdfBytes = null;
+  signatureImage = null;
 
   return executedPdfBytes;
 };

@@ -49,7 +49,7 @@ const NDAGeneratorForm = React.memo(
     onPartnerCheckout,
     isOffline,
   }) => {
-    const { addToast } = useToast();
+    const { addToast, removeToast } = useToast();
 
 
 
@@ -75,14 +75,19 @@ const NDAGeneratorForm = React.memo(
 
 
     const wasOffline = useRef(isOffline);
+    const offlineToastId = useRef(null);
     useEffect(() => {
       if (isOffline && !wasOffline.current) {
-        addToast("Connection Lost: Your progress is securely saved locally. Retrying connection...", "warning", 0);
+        offlineToastId.current = addToast("Connection Lost: Your progress is securely saved locally. Retrying connection...", "warning", 0);
       } else if (!isOffline && wasOffline.current) {
+        if (offlineToastId.current) {
+          removeToast(offlineToastId.current);
+          offlineToastId.current = null;
+        }
         addToast("Connection Restored: Sync complete.", "success");
       }
       wasOffline.current = isOffline;
-    }, [isOffline, addToast]);
+    }, [isOffline, addToast, removeToast]);
 
     const { isValid: isFormValid, validationMessage } =
       useFormValidation(formData);
@@ -249,7 +254,7 @@ const NDAGeneratorForm = React.memo(
           try {
             await Promise.race([
               document.fonts.load('italic 36px "Cedarville Cursive"'),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('Font load timeout')), 3000))
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Font load timeout')), 2500))
             ]);
             ctx.font = 'italic 36px "Cedarville Cursive", serif';
           } catch (e) {
@@ -450,6 +455,7 @@ const NDAGeneratorForm = React.memo(
             <div className="bg-zinc-900 border border-zinc-700 rounded-xl max-w-sm w-full p-6 relative shadow-2xl" onKeyDown={(e) => { if (e.key === "Tab") { const focusableElements = e.currentTarget.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])"); const firstElement = focusableElements[0]; const lastElement = focusableElements[focusableElements.length - 1]; if (e.shiftKey) { if (document.activeElement === firstElement) { lastElement.focus(); e.preventDefault(); } } else { if (document.activeElement === lastElement) { firstElement.focus(); e.preventDefault(); } } } }} tabIndex="-1">
               <button
                 onClick={() => setAdvisorModalOpen(false)}
+                disabled={isOffline}
                 className="absolute top-4 right-4 text-zinc-400 hover:text-white"
               >
                 <SafeIcon icon={FiX} size={20} />
@@ -523,6 +529,7 @@ const NDAGeneratorForm = React.memo(
                     >
                       <button
                         type="button"
+                        disabled={isOffline}
                         role="radio"
                         aria-checked={formData.type === "unilateral"}
                         onClick={() =>
@@ -538,6 +545,7 @@ const NDAGeneratorForm = React.memo(
                       </button>
                       <button
                         type="button"
+                        disabled={isOffline}
                         role="radio"
                         aria-checked={formData.type === "mutual"}
                         onClick={() =>
@@ -668,7 +676,7 @@ const NDAGeneratorForm = React.memo(
                   <div className="flex justify-end mt-6">
                     <button
                       onClick={nextStep}
-                      disabled={!formData.disclosing || !formData.receiving}
+                      disabled={!formData.disclosing || !formData.receiving || isOffline}
                       className={`bg-axim-teal text-black font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 transition transform active:scale-95 ${!formData.disclosing || !formData.receiving ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                       Next Step <SafeIcon icon={FiChevronRight} size={18} />
@@ -778,6 +786,7 @@ const NDAGeneratorForm = React.memo(
                         </label>
                         <button
                           type="button"
+                          disabled={isOffline}
                           onClick={() =>
                             openAdvisor(
                               "Protection Level",
@@ -861,9 +870,10 @@ const NDAGeneratorForm = React.memo(
                         Include Non-Solicitation Clause
                       </label>
                       <button
-                        type="button"
-                        onClick={() =>
-                          openAdvisor(
+                          type="button"
+                          disabled={isOffline}
+                          onClick={() =>
+                            openAdvisor(
                             "Non-Solicitation",
                             "non-solicitation clause",
                           )
@@ -922,13 +932,14 @@ const NDAGeneratorForm = React.memo(
                   <div className="flex justify-between mt-6">
                     <button
                       onClick={prevStep}
+                      disabled={isOffline}
                       className="bg-transparent border border-white/20 text-zinc-200 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-white/10 transition"
                     >
                       <SafeIcon icon={FiChevronLeft} size={18} /> Back
                     </button>
                     <button
                       onClick={nextStep}
-                      disabled={!formData.effectiveDate}
+                      disabled={!formData.effectiveDate || isOffline}
                       className={`bg-axim-teal text-black font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 transition transform active:scale-95 ${!formData.effectiveDate ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                       Review <SafeIcon icon={FiChevronRight} size={18} />
@@ -951,7 +962,7 @@ const NDAGeneratorForm = React.memo(
               <div className="flex justify-end mb-4">
                 <button
                   onClick={handlePreview}
-                  disabled={isPreviewLoading}
+                  disabled={isPreviewLoading || isOffline}
                   className={`bg-zinc-800 text-zinc-100 font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow ${isPreviewLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-zinc-700'}`}
                 >
                   {isPreviewLoading ? (
@@ -1049,6 +1060,7 @@ const NDAGeneratorForm = React.memo(
                     <div className="flex bg-zinc-800 rounded-lg p-1">
                       <button
                         type="button"
+                        disabled={isOffline}
                         onClick={() => handleSignatureModeChange('draw')}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSignatureModeChange('draw'); } }}
                         className={`px-3 py-1 rounded-md text-sm transition-colors ${signatureMode === 'draw' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
@@ -1057,6 +1069,7 @@ const NDAGeneratorForm = React.memo(
                       </button>
                       <button
                         type="button"
+                        disabled={isOffline}
                         onClick={() => handleSignatureModeChange('type')}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSignatureModeChange('type'); } }}
                         className={`px-3 py-1 rounded-md text-sm transition-colors ${signatureMode === 'type' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
@@ -1114,6 +1127,7 @@ const NDAGeneratorForm = React.memo(
                   <div className="flex gap-4 mt-4">
                     <button
                       onClick={clearSignature}
+                      disabled={isOffline}
                       className="px-4 py-2 bg-zinc-800 text-zinc-300 border border-zinc-600 hover:bg-zinc-700 hover:text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2 shadow-sm"
                     >
                       <SafeIcon icon={FiRefreshCw} size={14} /> Clear Signature
@@ -1168,7 +1182,8 @@ const NDAGeneratorForm = React.memo(
 
                     <div className="flex flex-col md:flex-row gap-4">
                       <button
-                        onClick={prevStep}
+                      onClick={prevStep}
+                      disabled={isOffline}
                         className="bg-transparent border border-white/20 text-zinc-200 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-white/10 transition"
                       >
                         <SafeIcon icon={FiChevronLeft} size={18} /> Back
@@ -1176,7 +1191,7 @@ const NDAGeneratorForm = React.memo(
                       {userSession?.is_partner && !isEditing ? (
                         <button
                           onClick={onPartnerCheckout}
-                          disabled={!isFormValid}
+                          disabled={!isFormValid || isOffline}
                           className={`flex-1 bg-amber-500 text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? "opacity-50 cursor-not-allowed hover:shadow-none" : ""}`}
                         >
                           <SafeIcon icon={FiUnlock} size={20} />
@@ -1185,7 +1200,7 @@ const NDAGeneratorForm = React.memo(
                       ) : (
                         <button
                           onClick={isEditing ? onUpdate : handlePurchaseClick}
-                          disabled={!isFormValid}
+                          disabled={!isFormValid || isOffline}
                           className={`flex-1 bg-axim-teal text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 hover:shadow-[0_0_15px_rgba(0,229,255,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? "opacity-50 cursor-not-allowed hover:shadow-none" : ""}`}
                         >
                           <SafeIcon
