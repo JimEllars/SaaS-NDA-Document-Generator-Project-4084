@@ -217,12 +217,21 @@ const NDAGeneratorForm = React.memo(
       await searchIntelligenceAI(query);
     };
 
+
     const clearSignature = () => {
       setTypedSignature('');
-      if (sigCanvas.current) sigCanvas.current.clear();
+      if (sigCanvas.current) {
+        sigCanvas.current.clear();
+      }
       setIsSigEmpty(true);
       setFormData((prev) => ({ ...prev, signatureImage: null }));
     };
+
+    const handleSignatureModeChange = (mode) => {
+      setSignatureMode(mode);
+      clearSignature();
+    };
+
     const saveSignature = async () => {
       if (signatureMode === 'type') {
         if (typedSignature.trim()) {
@@ -232,31 +241,54 @@ const NDAGeneratorForm = React.memo(
           canvas.width = 400 * dpr;
           canvas.height = 100 * dpr;
           ctx.scale(dpr, dpr);
+
+          // Fill white background for JPEG
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, 400, 100);
+
           try {
-            await document.fonts.load('italic 36px "Cedarville Cursive"');
+            await Promise.race([
+              document.fonts.load('italic 36px "Cedarville Cursive"'),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Font load timeout')), 3000))
+            ]);
+            ctx.font = 'italic 36px "Cedarville Cursive", serif';
           } catch (e) {
             console.warn("Font loading not fully supported or failed", e);
+            ctx.font = 'italic 36px serif';
           }
-          ctx.font = 'italic 36px "Cedarville Cursive", serif';
+
           ctx.fillStyle = 'black';
           ctx.textBaseline = 'middle';
           ctx.fillText(typedSignature, 10, 50);
+
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.75);
           setFormData((prev) => ({
             ...prev,
-            signatureImage: canvas.toDataURL("image/png"),
+            signatureImage: dataUrl,
           }));
           setIsSigEmpty(false);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
         return;
       }
       if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
+        const trimmedCanvas = sigCanvas.current.getTrimmedCanvas();
+        // Create a new canvas to put the trimmed signature onto a white background
+        const jpegCanvas = document.createElement('canvas');
+        jpegCanvas.width = trimmedCanvas.width;
+        jpegCanvas.height = trimmedCanvas.height;
+        const ctx = jpegCanvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, jpegCanvas.width, jpegCanvas.height);
+        ctx.drawImage(trimmedCanvas, 0, 0);
+
+        const dataUrl = jpegCanvas.toDataURL("image/jpeg", 0.75);
         setFormData((prev) => ({
           ...prev,
-          signatureImage: sigCanvas.current
-            .getTrimmedCanvas()
-            .toDataURL("image/png"),
+          signatureImage: dataUrl,
         }));
         setIsSigEmpty(false);
+        ctx.clearRect(0, 0, jpegCanvas.width, jpegCanvas.height);
       }
     };
 
@@ -1017,16 +1049,16 @@ const NDAGeneratorForm = React.memo(
                     <div className="flex bg-zinc-800 rounded-lg p-1">
                       <button
                         type="button"
-                        onClick={() => setSignatureMode('draw')}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSignatureMode('draw'); } }}
+                        onClick={() => handleSignatureModeChange('draw')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSignatureModeChange('draw'); } }}
                         className={`px-3 py-1 rounded-md text-sm transition-colors ${signatureMode === 'draw' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
                       >
                         Draw
                       </button>
                       <button
                         type="button"
-                        onClick={() => setSignatureMode('type')}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSignatureMode('type'); } }}
+                        onClick={() => handleSignatureModeChange('type')}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSignatureModeChange('type'); } }}
                         className={`px-3 py-1 rounded-md text-sm transition-colors ${signatureMode === 'type' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
                       >
                         Type

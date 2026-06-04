@@ -1,7 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 export const generatePdfBytes = async (plainText, formData) => {
-  const pdfDoc = await PDFDocument.create();
+  let pdfDoc = await PDFDocument.create();
   const classicFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const classicBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
   const modernFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -219,7 +219,11 @@ export const generatePdfBytes = async (plainText, formData) => {
     });
   }
 
-  return { pdfBytes: await pdfDoc.save(), docId };
+
+
+  const pdfBytes = await pdfDoc.save();
+  pdfDoc = null;
+  return { pdfBytes, docId };
 };
 
 import { CLAUSES } from "./workerNdaData.js";
@@ -403,7 +407,7 @@ export const generatePlainText = (documentData, formData) => {
 };
 
 export const executePdfBytes = async (pdfBytes, signatureImage) => {
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+  let pdfDoc = await PDFDocument.load(pdfBytes);
   let pages = pdfDoc.getPages();
   let page = pages[pages.length - 1];
   const { width, height } = page.getSize();
@@ -413,19 +417,25 @@ export const executePdfBytes = async (pdfBytes, signatureImage) => {
   let currentY = 150; // default offset from bottom
 
   if (signatureImage) {
+    const isJpeg = signatureImage.includes('image/jpeg');
     const signatureImageBytes = Uint8Array.from(
       atob(signatureImage.split(",")[1]),
       (c) => c.charCodeAt(0),
     );
-    const pngImage = await pdfDoc.embedPng(signatureImageBytes);
-    const pngDims = pngImage.scale(0.5);
+    let imageEmbed;
+    if (isJpeg) {
+        imageEmbed = await pdfDoc.embedJpg(signatureImageBytes);
+    } else {
+        imageEmbed = await pdfDoc.embedPng(signatureImageBytes);
+    }
+    const pngDims = imageEmbed.scale(0.5);
 
     if (currentY - pngDims.height < margin) {
       page = pdfDoc.addPage();
       currentY = page.getSize().height - margin - pngDims.height;
     }
 
-    page.drawImage(pngImage, {
+    page.drawImage(imageEmbed, {
       x: width - margin - pngDims.width, // align right for counterparty
       y: currentY,
       width: pngDims.width,
@@ -434,5 +444,11 @@ export const executePdfBytes = async (pdfBytes, signatureImage) => {
   }
 
   const executedPdfBytes = await pdfDoc.save();
+
+  // Explicitly nullify variables
+  pdfDoc = null;
+  pages = null;
+  page = null;
+
   return executedPdfBytes;
 };
