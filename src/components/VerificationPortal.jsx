@@ -122,6 +122,7 @@ export default function VerificationPortal() {
     }
   };
 
+
   const clearSignature = () => {
     if (sigCanvas.current) {
       sigCanvas.current.clear();
@@ -129,6 +130,11 @@ export default function VerificationPortal() {
     setTypedSignature('');
     setIsSigEmpty(true);
     setSignatureImage(null);
+  };
+
+  const handleSignatureModeChange = (mode) => {
+    setSignatureMode(mode);
+    clearSignature();
   };
 
   const saveSignature = async () => {
@@ -140,23 +146,44 @@ export default function VerificationPortal() {
         canvas.width = 400 * dpr;
         canvas.height = 100 * dpr;
         ctx.scale(dpr, dpr);
+
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, 400, 100);
+
         try {
-          await document.fonts.load('italic 36px "Cedarville Cursive"');
+          await Promise.race([
+            document.fonts.load('italic 36px "Cedarville Cursive"'),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Font load timeout')), 3000))
+          ]);
+          ctx.font = 'italic 36px "Cedarville Cursive", serif';
         } catch (e) {
           console.warn("Font loading not fully supported or failed", e);
+          ctx.font = 'italic 36px serif';
         }
-        ctx.font = 'italic 36px "Cedarville Cursive", serif';
+
         ctx.fillStyle = 'black';
         ctx.textBaseline = 'middle';
         ctx.fillText(typedSignature, 10, 50);
-        setSignatureImage(canvas.toDataURL("image/png"));
+
+        setSignatureImage(canvas.toDataURL("image/jpeg", 0.75));
         setIsSigEmpty(false);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
       return;
     }
     if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
-      setSignatureImage(sigCanvas.current.getTrimmedCanvas().toDataURL("image/png"));
+      const trimmedCanvas = sigCanvas.current.getTrimmedCanvas();
+      const jpegCanvas = document.createElement('canvas');
+      jpegCanvas.width = trimmedCanvas.width;
+      jpegCanvas.height = trimmedCanvas.height;
+      const ctx = jpegCanvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, jpegCanvas.width, jpegCanvas.height);
+      ctx.drawImage(trimmedCanvas, 0, 0);
+
+      setSignatureImage(jpegCanvas.toDataURL("image/jpeg", 0.75));
       setIsSigEmpty(false);
+      ctx.clearRect(0, 0, jpegCanvas.width, jpegCanvas.height);
     }
   };
 
@@ -335,14 +362,14 @@ export default function VerificationPortal() {
                     <div className="flex bg-zinc-800 rounded-lg p-1">
                       <button
                         type="button"
-                        onClick={() => setSignatureMode('draw')}
+                        onClick={() => handleSignatureModeChange('draw')}
                         className={`px-3 py-1 rounded-md text-sm transition-colors ${signatureMode === 'draw' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
                       >
                         Draw
                       </button>
                       <button
                         type="button"
-                        onClick={() => setSignatureMode('type')}
+                        onClick={() => handleSignatureModeChange('type')}
                         className={`px-3 py-1 rounded-md text-sm transition-colors ${signatureMode === 'type' ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:text-zinc-200'}`}
                       >
                         Type
