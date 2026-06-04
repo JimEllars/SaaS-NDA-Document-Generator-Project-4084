@@ -28,6 +28,7 @@ export const ToastProvider = ({ children }) => {
         removeToast(uniqueId);
       }, duration);
     }
+    return uniqueId;
   }, [removeToast]);
 
   return (

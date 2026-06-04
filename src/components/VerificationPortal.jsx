@@ -153,7 +153,7 @@ export default function VerificationPortal() {
         try {
           await Promise.race([
             document.fonts.load('italic 36px "Cedarville Cursive"'),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Font load timeout')), 3000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Font load timeout')), 2500))
           ]);
           ctx.font = 'italic 36px "Cedarville Cursive", serif';
         } catch (e) {
