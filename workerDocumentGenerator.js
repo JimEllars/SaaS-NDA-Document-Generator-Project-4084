@@ -222,7 +222,7 @@ export const generatePdfBytes = async (plainText, formData) => {
 
 
 
-  const pdfBytes = await pdfDoc.save();
+  const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
 
   // Explicitly nullify variables
   pdfDoc = null;
@@ -456,7 +456,7 @@ export const executePdfBytes = async (pdfBytes, signatureImage) => {
     imageEmbed = null;
   }
 
-  const executedPdfBytes = await pdfDoc.save();
+  const executedPdfBytes = await pdfDoc.save({ useObjectStreams: true });
 
   // Explicitly nullify variables for garbage collection in Cloudflare Workers isolate
   pdfDoc = null;
