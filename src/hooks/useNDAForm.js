@@ -29,6 +29,10 @@ const useNDAForm = () => {
       if (savedData) {
         const decrypted = decrypt(savedData);
         const parsed = JSON.parse(decrypted);
+        if (parsed.timestamp && Date.now() - parsed.timestamp > 24 * 60 * 60 * 1000) {
+          localStorage.removeItem(STORAGE_KEY);
+          return getDefaultFormData();
+        }
         if (parsed.formData) return parsed.formData;
         return parsed;
       }
@@ -44,6 +48,10 @@ const useNDAForm = () => {
       if (savedData) {
         const decrypted = decrypt(savedData);
         const parsed = JSON.parse(decrypted);
+        if (parsed.timestamp && Date.now() - parsed.timestamp > 24 * 60 * 60 * 1000) {
+          localStorage.removeItem(STORAGE_KEY);
+          return 1;
+        }
         if (parsed.currentStep !== undefined) return parsed.currentStep;
       }
     } catch (err) {
@@ -103,6 +111,7 @@ const useNDAForm = () => {
         const dataToSave = JSON.stringify({
           formData: formDataRef.current,
           currentStep: currentStepRef.current,
+          timestamp: Date.now(),
         });
         if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, encrypt(dataToSave));
       } catch (err) {
