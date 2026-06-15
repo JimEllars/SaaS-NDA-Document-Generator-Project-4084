@@ -24,7 +24,11 @@ const MAX_REQUESTS = 5;
 // But we can clean up passively.
 
 export default {
-  async fetch(request, env, ctx) {
+    async fetch(request, env, ctx) {
+    const handleRequest = async () => {
+
+
+
     const url = new URL(request.url);
 
     if (url.pathname === "/api/health" && request.method === "GET") {
@@ -335,6 +339,66 @@ export default {
     }
 
     // Intercept API calls
+
+    // Handle Stripe Webhook Idempotency
+    if (request.method === "POST" && url.pathname === "/api/webhook/stripe") {
+      try {
+        const signature = request.headers.get("stripe-signature");
+        let payload;
+        try {
+          payload = await request.json();
+        } catch (err) {
+          payload = await request.text();
+          payload = JSON.parse(payload);
+        }
+
+        const eventId = payload.id;
+        if (!eventId) {
+          return new Response(JSON.stringify({ error: "Missing event ID" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        // Use cache API for idempotency check (60 second TTL)
+        const cache = caches.default;
+        const cacheKey = new Request(`https://internal.webhook.cache/${eventId}`, { method: 'GET' });
+
+        const cachedEvent = await cache.match(cacheKey);
+        if (cachedEvent) {
+          return new Response(JSON.stringify({ received: true, duplicate: true }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        // Cache the event immediately to prevent race conditions
+        const idempotencyResponse = new Response("processed", {
+            status: 200,
+            headers: { "Cache-Control": "s-maxage=60" }
+        });
+        ctx.waitUntil(cache.put(cacheKey, idempotencyResponse));
+
+        // Proxy the webhook to the actual backend
+        const backendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || "https://api.axim.us.com";
+        const proxyRequest = new Request(`${backendUrl}/v1/webhook/stripe`, {
+          method: request.method,
+          headers: request.headers,
+          body: JSON.stringify(payload)
+        });
+
+        const response = await fetch(proxyRequest);
+
+        return new Response(response.body, response);
+      } catch (err) {
+        console.error("Stripe Webhook Error:", err);
+        return new Response(
+          JSON.stringify({ error: "Internal Server Error" }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     // Handle Execution Webhook
     if (request.method === "POST" && url.pathname === "/api/webhook/execute") {
       try {
@@ -819,5 +883,31 @@ export default {
     }
 
     return new Response("Not Found", { status: 404 });
+    };
+
+    try {
+      const response = await handleRequest();
+
+      // If it's a valid response object, we add headers
+      if (response instanceof Response) {
+        const newHeaders = new Headers(response.headers);
+        newHeaders.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        newHeaders.set('X-Content-Type-Options', 'nosniff');
+        // Do not overwrite if it already exists, but for DENY it's probably fine
+        if (!newHeaders.has('X-Frame-Options')) {
+          newHeaders.set('X-Frame-Options', 'DENY');
+        }
+
+        return new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: newHeaders
+        });
+      }
+      return response;
+    } catch (err) {
+      console.error("Unhandled worker error:", err);
+      return new Response("Internal Server Error", { status: 500 });
+    }
   },
 };

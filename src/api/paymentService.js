@@ -1,4 +1,4 @@
-export const processPayment = async (productId, formHash, customerEmail) => {
+export const processPayment = async (productId, formHash, customerEmail, utmData = {}) => {
   // Use relative path for proxying through Cloudflare worker
   // Only use simulation in local dev without the env var
   if (!import.meta.env.VITE_PAYMENT_API_URL && !import.meta.env.PROD) {
@@ -15,7 +15,7 @@ export const processPayment = async (productId, formHash, customerEmail) => {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ productId, formHash, customer_email: customerEmail })
+    body: JSON.stringify({ productId, formHash, customer_email: customerEmail, metadata: utmData })
   });
 
   if (!response.ok) {

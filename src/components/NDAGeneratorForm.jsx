@@ -238,6 +238,25 @@ const NDAGeneratorForm = React.memo(
     };
 
     const saveSignature = async () => {
+      // Helper function to downscale if > 1MB
+      const compressSignature = async (dataUrl) => {
+        const sizeInBytes = Math.ceil((dataUrl.length * 3) / 4);
+        if (sizeInBytes <= 1000000) return dataUrl;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.src = dataUrl;
+        return new Promise(resolve => {
+          img.onload = () => {
+            canvas.width = img.width / 2;
+            canvas.height = img.height / 2;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.5));
+          };
+        });
+      };
+
       if (signatureMode === 'type') {
         if (typedSignature.trim()) {
           const canvas = document.createElement('canvas');
@@ -267,10 +286,12 @@ const NDAGeneratorForm = React.memo(
           ctx.fillText(typedSignature, 10, 50);
 
           const dataUrl = canvas.toDataURL("image/jpeg", 0.75);
-          setFormData((prev) => ({
-            ...prev,
-            signatureImage: dataUrl,
-          }));
+          compressSignature(dataUrl).then((compressedDataUrl) => {
+            setFormData((prev) => ({
+              ...prev,
+              signatureImage: compressedDataUrl,
+            }));
+          });
           setIsSigEmpty(false);
           ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
@@ -288,10 +309,12 @@ const NDAGeneratorForm = React.memo(
         ctx.drawImage(trimmedCanvas, 0, 0);
 
         const dataUrl = jpegCanvas.toDataURL("image/jpeg", 0.75);
-        setFormData((prev) => ({
-          ...prev,
-          signatureImage: dataUrl,
-        }));
+        compressSignature(dataUrl).then((compressedDataUrl) => {
+          setFormData((prev) => ({
+            ...prev,
+            signatureImage: compressedDataUrl,
+          }));
+        });
         setIsSigEmpty(false);
         ctx.clearRect(0, 0, jpegCanvas.width, jpegCanvas.height);
       }
