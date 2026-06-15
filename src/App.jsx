@@ -119,6 +119,23 @@ function AppContent() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [userSession, setUserSession] = useState(null);
 
+  // Marketing Attribution (UTM Preservation)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const utmSource = urlParams.get('utm_source');
+    const utmMedium = urlParams.get('utm_medium');
+    const utmCampaign = urlParams.get('utm_campaign');
+
+    if (utmSource || utmMedium || utmCampaign) {
+      const utmData = {
+        utm_source: utmSource || null,
+        utm_medium: utmMedium || null,
+        utm_campaign: utmCampaign || null,
+      };
+      sessionStorage.setItem('axim_utm_data', JSON.stringify(utmData));
+    }
+  }, []);
+
   // Dynamic SEO based on industry
   useEffect(() => {
       const industry = formData.industry !== 'general' ? formData.industry : 'Custom';
@@ -189,12 +206,23 @@ function AppContent() {
     }, 1000);
   }, [addToast]);
 
-  const handlePurchase = useCallback(async () => {
+    const handlePurchase = useCallback(async () => {
     try {
       setIsProcessingPayment(true);
       addToast('Redirecting to Stripe Checkout...', 'info');
       const formHash = await hashFormData(formData);
-      const response = await processPayment('nda_document', formHash, formData.email);
+
+      let utmData = {};
+      try {
+        const storedUtm = sessionStorage.getItem('axim_utm_data');
+        if (storedUtm) {
+          utmData = JSON.parse(storedUtm);
+        }
+      } catch (e) {
+        // ignore JSON parse error
+      }
+
+      const response = await processPayment('nda_document', formHash, formData.email, utmData);
 
       if (response && response.url) {
         window.dataLayer = window.dataLayer || [];
@@ -208,7 +236,7 @@ function AppContent() {
       addToast('Failed to initiate payment.', 'error');
       setIsProcessingPayment(false);
     }
-  }, [addToast]);
+  }, [addToast, formData]);
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex flex-col items-center p-4 md:p-8 font-sans relative overflow-hidden">

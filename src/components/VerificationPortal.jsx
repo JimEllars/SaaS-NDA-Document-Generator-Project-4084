@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FiSearch, FiShield, FiCheckCircle, FiAlertCircle, FiPenTool, FiRefreshCw, FiCheck } from 'react-icons/fi';
+import { FiSearch, FiShield, FiCheckCircle, FiAlertCircle, FiPenTool, FiRefreshCw, FiCheck, FiDownload } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import SignatureCanvas from 'react-signature-canvas';
 
@@ -187,6 +187,28 @@ export default function VerificationPortal() {
     }
   };
 
+
+  const downloadExecutedDocument = async () => {
+    try {
+      const response = await fetch(`/api/v1/vault-download?trace_id=${traceId}`);
+      if (!response.ok) throw new Error("Download failed");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `executed_nda_${traceId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      if (document.body.contains(a)) {
+          document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error("Failed to download executed document:", error);
+      setErrorMsg("Failed to download document. It will be emailed to you.");
+    }
+  };
+
   const submitSignature = async () => {
     if (isSigning) return;
     if (!signatureImage) return;
@@ -194,6 +216,25 @@ export default function VerificationPortal() {
     setErrorMsg('');
 
     try {
+      // Base64 Payload Trimming (Memory Protection)
+      let finalSignatureImage = signatureImage;
+      const sizeInBytes = Math.ceil((finalSignatureImage.length * 3) / 4);
+      if (sizeInBytes > 1000000) { // > 1MB
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.src = finalSignatureImage;
+        await new Promise(resolve => {
+          img.onload = () => {
+            canvas.width = img.width / 2;
+            canvas.height = img.height / 2;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            finalSignatureImage = canvas.toDataURL('image/jpeg', 0.5); // Downscale & compress
+            resolve();
+          };
+        });
+      }
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
       const response = await fetch('/api/vault-execute', {
@@ -204,7 +245,7 @@ export default function VerificationPortal() {
         },
         body: JSON.stringify({
           trace_id: traceId,
-          signatureImage: signatureImage
+          signatureImage: finalSignatureImage
         })
       });
 
@@ -470,8 +511,15 @@ export default function VerificationPortal() {
                 <SafeIcon icon={FiCheckCircle} size={64} className="text-green-400 mb-4 relative z-10" />
                 <h4 className="text-3xl font-bold text-white mb-2 relative z-10">Document Executed</h4>
                 <p className="text-zinc-300 mb-6 max-w-md relative z-10">
-                  Your signature has been successfully appended to the agreement. A copy of the fully executed document will be available shortly.
+                  Your signature has been successfully appended to the agreement. A copy of the fully executed document has been saved.
                 </p>
+                <button
+                  onClick={downloadExecutedDocument}
+                  className="relative z-10 px-6 py-3 bg-axim-teal text-black font-bold rounded-xl flex items-center gap-2 hover:bg-axim-teal/90 transition shadow-[0_0_20px_rgba(0,229,255,0.4)]"
+                >
+                  <SafeIcon icon={FiDownload} size={20} />
+                  Download Fully Executed Document
+                </button>
             </div>
           )}
         </div>
