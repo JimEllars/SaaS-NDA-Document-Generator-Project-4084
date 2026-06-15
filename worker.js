@@ -16,6 +16,21 @@ async function hashFormData(formData) {
 }
 
 // In-memory rate limiter
+// DevOps: Transition to Cloudflare Native Rate Limiting API for production
+// Instructions for wrangler.toml/jsonc:
+// Add a [[unsafe.bindings]] or standard rate limiting configuration
+// Map /api/generate-preview to limit to 10 requests per minute per IP globally
+// Example configuration block for wrangler:
+// "rules": [
+//   {
+//     "match": { "request": { "url": "*api/generate-preview*" } },
+//     "action": { "mode": "simulate", "response": { "status": 429, "content_type": "text/plain", "body": "Too many requests" } },
+//     "characteristics": [ "cf.colo.id", "ip.src" ],
+//     "period": 60,
+//     "requests_per_period": 10,
+//     "mitigation_timeout": 600
+//   }
+// ]
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS = 5;
@@ -538,6 +553,14 @@ export default {
 
         if (!trace_id || !signatureImage) {
           return new Response(JSON.stringify({ error: "Missing trace_id or signature" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const base64Regex = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/;
+        if (!base64Regex.test(signatureImage)) {
+          return new Response(JSON.stringify({ error: "Invalid signatureImage format" }), {
             status: 400,
             headers: { "Content-Type": "application/json" },
           });

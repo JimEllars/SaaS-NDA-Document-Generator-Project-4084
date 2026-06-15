@@ -17,16 +17,16 @@ class ErrorBoundary extends React.Component {
 
     try {
 
-      fetch('/api/v1/telemetry/ingest', {
+      fetch('/api/v1/telemetry/errors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          event: "frontend_crash",
-          app_type: "nda",
-          severity: "CRITICAL",
-          error_message: error.message
+          app_id: "nda-generator",
+          error_message: error.message,
+          error_stack: errorInfo.componentStack,
+          user_agent: navigator.userAgent
         })
       }).catch(err => {
 

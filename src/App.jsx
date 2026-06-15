@@ -119,6 +119,11 @@ function AppContent() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [userSession, setUserSession] = useState(null);
 
+  // Isolate Pre-Warming (Cold-Start Optimization)
+  useEffect(() => {
+    fetch('/api/health').catch(() => {});
+  }, []);
+
   // Marketing Attribution (UTM Preservation)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
