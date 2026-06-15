@@ -251,6 +251,8 @@ const NDAGeneratorForm = React.memo(
           img.onload = () => {
             canvas.width = img.width / 2;
             canvas.height = img.height / 2;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             resolve(canvas.toDataURL('image/jpeg', 0.5));
           };

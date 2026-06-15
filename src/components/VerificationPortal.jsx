@@ -244,6 +244,8 @@ export default function VerificationPortal() {
           img.onload = () => {
             canvas.width = img.width / 2;
             canvas.height = img.height / 2;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             finalSignatureImage = canvas.toDataURL('image/jpeg', 0.5); // Downscale & compress
             resolve();
