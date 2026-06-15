@@ -108,6 +108,22 @@ export default function VerificationPortal() {
         setStatus('revoked');
         return;
       }
+
+      if (isSignMode) {
+        const dateString = data.metadata?.effectiveDate || data.created_at;
+        if (dateString) {
+          const documentDate = new Date(dateString);
+          const now = new Date();
+          const diffTime = Math.abs(now - documentDate);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          if (diffDays > 14) {
+            setDocumentData(data);
+            setStatus('expired');
+            return;
+          }
+        }
+      }
+
       setDocumentData(data);
       setStatus('success');
     } catch (err) {
@@ -364,6 +380,17 @@ export default function VerificationPortal() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {status === 'expired' && (
+            <div className="bg-black/80 border border-red-500/50 p-8 rounded-2xl flex flex-col items-center justify-center text-center shadow-[0_0_30px_rgba(239,68,68,0.15)] animate-fade-in relative overflow-hidden mt-8">
+                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-red-500 rounded-full opacity-10 blur-3xl pointer-events-none"></div>
+                <SafeIcon icon={FiAlertCircle} size={64} className="text-red-500 mb-4 relative z-10" />
+                <h4 className="text-3xl font-bold text-white mb-2 relative z-10">Link Expired</h4>
+                <p className="text-zinc-300 mb-6 max-w-md relative z-10">
+                  This agreement link has expired. Please contact the disclosing party to generate a new agreement.
+                </p>
             </div>
           )}
 
