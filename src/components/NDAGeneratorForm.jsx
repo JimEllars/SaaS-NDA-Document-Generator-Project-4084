@@ -9,6 +9,7 @@ import {
   FiCheck,
   FiLock,
   FiRefreshCw,
+  FiRotateCcw,
   FiCalendar,
   FiAlertCircle,
   FiUnlock,
@@ -232,6 +233,21 @@ const NDAGeneratorForm = React.memo(
       setFormData((prev) => ({ ...prev, signatureImage: null }));
     };
 
+    const undoSignature = () => {
+      if (sigCanvas.current) {
+        const data = sigCanvas.current.toData();
+        if (data && data.length > 0) {
+          data.pop(); // remove the last stroke
+          sigCanvas.current.clear();
+          sigCanvas.current.fromData(data);
+
+          if (data.length === 0) {
+             setIsSigEmpty(true);
+          }
+        }
+      }
+    };
+
     const handleSignatureModeChange = (mode) => {
       setSignatureMode(mode);
       clearSignature();
@@ -324,15 +340,33 @@ const NDAGeneratorForm = React.memo(
 
 
     const telemetryQueue = useRef([]);
+
+    // Helper function to mask email PII
+    const maskEmail = (email) => {
+      if (!email || typeof email !== 'string' || !email.includes('@')) return email;
+      const [localPart, domain] = email.split('@');
+      return `${localPart[0]}***@${domain}`;
+    };
+
     const flushTelemetry = useCallback(() => {
       if (telemetryQueue.current.length === 0) return;
 
       // Compress Telemetry Payload Array
       const compressedEvents = [...telemetryQueue.current].map((current) => {
            // Flatten JSON objects by omitting empty keys to trim footprint
-           return Object.fromEntries(
+           const flattened = Object.fromEntries(
              Object.entries(current).filter(([_, v]) => v != null && v !== '')
            );
+
+           // Scrub PII from payload
+           if (flattened.payload) {
+             const newPayload = { ...flattened.payload };
+             if (newPayload.email) newPayload.email = maskEmail(newPayload.email);
+             if (newPayload.recipientEmail) newPayload.recipientEmail = maskEmail(newPayload.recipientEmail);
+             flattened.payload = newPayload;
+           }
+
+           return flattened;
       });
       telemetryQueue.current = [];
 
@@ -1150,6 +1184,13 @@ const NDAGeneratorForm = React.memo(
                     </div>
                   )}
                   <div className="flex gap-4 mt-4">
+                    <button
+                      onClick={undoSignature}
+                      disabled={isOffline || isSigEmpty}
+                      className="px-4 py-2 bg-zinc-800 text-zinc-300 border border-zinc-600 hover:bg-zinc-700 hover:text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <SafeIcon icon={FiRotateCcw} size={14} /> Undo Last Stroke
+                    </button>
                     <button
                       onClick={clearSignature}
                       disabled={isOffline}

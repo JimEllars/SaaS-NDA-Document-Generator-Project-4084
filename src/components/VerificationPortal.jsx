@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FiSearch, FiShield, FiCheckCircle, FiAlertCircle, FiPenTool, FiRefreshCw, FiCheck, FiDownload } from 'react-icons/fi';
+import { FiSearch, FiShield, FiCheckCircle,
+  FiRotateCcw, FiAlertCircle, FiPenTool, FiRefreshCw,
+  FiCheck, FiDownload } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import SignatureCanvas from 'react-signature-canvas';
 
@@ -492,6 +494,13 @@ export default function VerificationPortal() {
                     </div>
                   )}
                   <div className="flex gap-4 mt-4">
+                    <button
+                      onClick={undoSignature}
+                      disabled={isSigEmpty}
+                      className="px-4 py-2 bg-zinc-800 text-zinc-300 border border-zinc-600 hover:bg-zinc-700 hover:text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <SafeIcon icon={FiRotateCcw} size={14} /> Undo Last Stroke
+                    </button>
                     <button
                       onClick={clearSignature}
                       className="px-4 py-2 bg-zinc-800 text-zinc-300 border border-zinc-600 hover:bg-zinc-700 hover:text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2 shadow-sm"
