@@ -93,3 +93,16 @@ describe('useFormValidation', () => {
   });
 
 });
+
+  it('should return false if input exceeds extreme length limits', () => {
+    const formData = {
+      disclosing: 'A'.repeat(501),
+      receiving: 'Bob',
+      effectiveDate: new Date().toISOString().split('T')[0],
+      jurisdiction: 'Delaware',
+      email: 'test@example.com'
+    };
+    const { result } = renderHook(() => useFormValidation(formData));
+    expect(result.current.isValid).toBe(false);
+    expect(result.current.validationMessage).toMatch(/max 100/);
+  });
