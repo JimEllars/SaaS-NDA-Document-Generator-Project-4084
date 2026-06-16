@@ -38,13 +38,40 @@ const MAX_REQUESTS = 5;
 // Note: Cloudflare Workers are stateless per isolate and can't use setInterval like Node.
 // But we can clean up passively.
 
+
+// Rate limiting state
+const ipRequests = new Map();
+const RATE_LIMIT_WINDOW_MS = 60000;
+const MAX_REQUESTS_PER_MINUTE = 10;
+
+function checkRateLimit(ip) {
+  if (!ip) return true; // If no IP, allow
+  const now = Date.now();
+  let requests = ipRequests.get(ip) || [];
+  requests = requests.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW_MS);
+  if (requests.length >= MAX_REQUESTS_PER_MINUTE) {
+    ipRequests.set(ip, requests);
+    return false;
+  }
+  requests.push(now);
+  ipRequests.set(ip, requests);
+  return true;
+}
 export default {
     async fetch(request, env, ctx) {
     const handleRequest = async () => {
-
-
-
     const url = new URL(request.url);
+      const targetPaths = ["/api/generate-nda", "/api/v1/ai/onyx-bridge"];
+      if (targetPaths.some(p => url.pathname.startsWith(p))) {
+        const clientIp = request.headers.get("CF-Connecting-IP");
+        if (!checkRateLimit(clientIp)) {
+          return new Response(JSON.stringify({ error: "Too Many Requests. Please slow down." }), {
+            status: 429,
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
+          });
+        }
+      }
+
 
     if (url.pathname === "/api/health" && request.method === "GET") {
       return new Response(
@@ -473,6 +500,17 @@ export default {
 
         // Proxy the webhook to the actual backend
         const backendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || "https://api.axim.us.com";
+
+        if (payload.type === 'checkout.session.completed') {
+          const session = payload.data.object;
+          if (session.metadata) {
+             payload.utm_source = session.metadata.utm_source;
+             payload.utm_medium = session.metadata.utm_medium;
+             payload.utm_campaign = session.metadata.utm_campaign;
+             payload.gclid = session.metadata.gclid;
+          }
+        }
+
         const proxyRequest = new Request(`${backendUrl}/v1/webhook/stripe`, {
           method: request.method,
           headers: request.headers,
@@ -874,6 +912,13 @@ export default {
           if (body.formHash) {
             body.metadata = body.metadata || {};
             body.metadata.formHash = body.formHash;
+          }
+          if (body.formData) {
+            body.metadata = body.metadata || {};
+            if (body.formData.utm_source) body.metadata.utm_source = body.formData.utm_source;
+            if (body.formData.utm_medium) body.metadata.utm_medium = body.formData.utm_medium;
+            if (body.formData.utm_campaign) body.metadata.utm_campaign = body.formData.utm_campaign;
+            if (body.formData.gclid) body.metadata.gclid = body.formData.gclid;
           }
           body = JSON.stringify(body);
         } catch (err) {

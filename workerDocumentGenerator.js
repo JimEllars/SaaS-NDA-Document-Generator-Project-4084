@@ -104,7 +104,16 @@ export const generatePdfBytes = async (plainText, formData) => {
     currentY -= pngDims.height + 40;
 
 
+
+    const truncateString = (str, maxLength) => {
+        if (!str) return "";
+        if (str.length <= maxLength) return str;
+        return str.substring(0, maxLength - 3) + "...";
+    };
+
     const drawWrappedText = (text, startY) => {
+        text = truncateString(text, 150); // limit geometry
+
         let y = startY;
         const maxLen = 60;
         const words = (text || "").split(" ");
