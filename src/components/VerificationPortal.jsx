@@ -141,6 +141,7 @@ export default function VerificationPortal() {
   };
 
 
+
   const clearSignature = () => {
     if (sigCanvas.current) {
       sigCanvas.current.clear();
@@ -149,6 +150,21 @@ export default function VerificationPortal() {
     setIsSigEmpty(true);
     setSignatureImage(null);
   };
+
+  const undoSignature = () => {
+    if (sigCanvas.current) {
+      const data = sigCanvas.current.toData();
+      if (data && data.length > 0) {
+        data.pop(); // remove the last stroke
+        sigCanvas.current.clear();
+        sigCanvas.current.fromData(data);
+        if (data.length === 0) {
+           setIsSigEmpty(true);
+        }
+      }
+    }
+  };
+
 
   const handleSignatureModeChange = (mode) => {
     setSignatureMode(mode);
