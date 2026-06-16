@@ -411,16 +411,11 @@ export default {
           return new Response(JSON.stringify({ error: "Missing signature or secret" }), { status: 401, headers: { "Content-Type": "application/json" } });
         }
 
-        const sigParts = signature.split(',').reduce((acc, part) => {
-          const [key, value] = part.split('=');
-          acc[key] = value;
-          return acc;
-        }, {});
+        const sigPairs = signature.split(',').map(part => part.split('='));
+        const t = sigPairs.find(([key]) => key === 't')?.[1];
+        const v1s = sigPairs.filter(([key]) => key === 'v1').map(([, value]) => value);
 
-        const t = sigParts.t;
-        const v1 = sigParts.v1;
-
-        if (!t || !v1) {
+        if (!t || v1s.length === 0) {
            return new Response(JSON.stringify({ error: "Invalid signature format" }), { status: 401, headers: { "Content-Type": "application/json" } });
         }
 
@@ -444,7 +439,7 @@ export default {
           .map(b => b.toString(16).padStart(2, '0'))
           .join('');
 
-        if (expectedSigHex !== v1) {
+        if (!v1s.includes(expectedSigHex)) {
           return new Response(JSON.stringify({ error: "Invalid Stripe Signature" }), { status: 401, headers: { "Content-Type": "application/json" } });
         }
 

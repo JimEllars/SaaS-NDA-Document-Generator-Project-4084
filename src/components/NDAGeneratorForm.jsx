@@ -345,7 +345,7 @@ const NDAGeneratorForm = React.memo(
     const maskEmail = (email) => {
       if (!email || typeof email !== 'string' || !email.includes('@')) return email;
       const [localPart, domain] = email.split('@');
-      return `${localPart[0]}***@${domain}`;
+      return `${localPart.substring(0, 2)}***@${domain}`;
     };
 
     const flushTelemetry = useCallback(() => {

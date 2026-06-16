@@ -222,6 +222,12 @@ export const generatePdfBytes = async (plainText, formData) => {
 
 
 
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(plainText));
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const calculatedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  pdfDoc.setKeywords([calculatedHash]);
+
   const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
 
   // Explicitly nullify variables
