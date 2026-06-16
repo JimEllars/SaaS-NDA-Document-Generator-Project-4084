@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from "../utils/fetchWithTimeout";
 import SignatureCanvas from "react-signature-canvas";
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import useVectorSearch from "../hooks/useVectorSearch";
@@ -371,7 +372,7 @@ const NDAGeneratorForm = React.memo(
       telemetryQueue.current = [];
 
       try {
-        fetch("/api/v1/telemetry/events", {
+        fetchWithTimeout("/api/v1/telemetry/events", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ batch: compressedEvents }),
@@ -471,7 +472,7 @@ const NDAGeneratorForm = React.memo(
       try {
         setIsPreviewLoading(true);
         addToast("Generating preview...", "info");
-        const response = await fetch("/api/generate-preview", {
+        const response = await fetchWithTimeout("/api/generate-preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),

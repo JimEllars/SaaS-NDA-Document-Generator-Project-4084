@@ -42,10 +42,10 @@ describe('paymentService', () => {
       });
 
       await expect(verifySession('real-session-id')).rejects.toThrow('Failed to verify session');
-      expect(global.fetch).toHaveBeenCalledWith('/api/verify-session?session_id=real-session-id', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/verify-session?session_id=real-session-id', expect.objectContaining({
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
-      });
+      }));
     });
 
 

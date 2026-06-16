@@ -483,20 +483,24 @@ export default {
 
         const cacheKey = new Request(`https://internal.webhook.cache/${eventId}`, { method: 'GET' });
 
-        const cachedEvent = await cache.match(cacheKey);
-        if (cachedEvent) {
-          return new Response(JSON.stringify({ received: true, duplicate: true }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" }
-          });
-        }
+        try {
+          const cachedEvent = await cache.match(cacheKey);
+          if (cachedEvent) {
+            return new Response(JSON.stringify({ received: true, duplicate: true }), {
+              status: 200,
+              headers: { "Content-Type": "application/json" }
+            });
+          }
 
-        // Cache the event immediately to prevent race conditions
-        const idempotencyResponse = new Response("processed", {
-            status: 200,
-            headers: { "Cache-Control": "s-maxage=60" }
-        });
-        ctx.waitUntil(cache.put(cacheKey, idempotencyResponse));
+          // Cache the event immediately to prevent race conditions
+          const idempotencyResponse = new Response("processed", {
+              status: 200,
+              headers: { "Cache-Control": "max-age=60" }
+          });
+          ctx.waitUntil(cache.put(cacheKey, idempotencyResponse));
+        } catch (cacheErr) {
+          console.warn("Cache idempotency check failed:", cacheErr);
+        }
 
         // Proxy the webhook to the actual backend
         const backendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || "https://api.axim.us.com";
