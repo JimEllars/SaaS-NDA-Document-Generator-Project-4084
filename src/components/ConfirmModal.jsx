@@ -20,11 +20,11 @@ const ConfirmModal = React.memo(({ isOpen, title, message, onConfirm, onCancel, 
 
   return (
     <div
-      className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
       onClick={onCancel}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200"
+        className="bg-white/5 border border-white/10 rounded-3xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => { if (e.key === "Tab") { const focusableElements = e.currentTarget.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])"); const firstElement = focusableElements[0]; const lastElement = focusableElements[focusableElements.length - 1]; if (e.shiftKey) { if (document.activeElement === firstElement) { lastElement.focus(); e.preventDefault(); } } else { if (document.activeElement === lastElement) { firstElement.focus(); e.preventDefault(); } } } }} tabIndex="-1"
         role="dialog"

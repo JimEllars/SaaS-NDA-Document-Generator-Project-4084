@@ -7,14 +7,14 @@ const ToastItem = React.memo(({ toast, onClose }) => {
   const { type, message } = toast;
 
   let icon = FiInfo;
-  let color = 'bg-blue-50 text-blue-800 border-blue-200';
+  let color = 'bg-black/80 backdrop-blur-md text-blue-400 border-blue-500/50';
 
   if (type === 'success') {
     icon = FiCheckCircle;
-    color = 'bg-green-50 text-green-800 border-green-200';
+    color = 'bg-black/80 backdrop-blur-md text-axim-teal border-axim-teal/50 shadow-[0_0_15px_rgba(0,229,255,0.2)]';
   } else if (type === 'error') {
     icon = FiAlertTriangle;
-    color = 'bg-red-50 text-red-800 border-red-200';
+    color = 'bg-black/80 backdrop-blur-md text-red-400 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]';
   }
 
   return (

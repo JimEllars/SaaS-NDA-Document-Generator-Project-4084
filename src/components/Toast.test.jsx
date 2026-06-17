@@ -65,13 +65,13 @@ describe('ToastContainer', () => {
     render(<ToastContainer />);
 
     const infoToast = screen.getByText('Info message').closest('div').parentElement;
-    expect(infoToast).toHaveClass('bg-blue-50', 'text-blue-800', 'border-blue-200');
+    expect(infoToast).toHaveClass('bg-black/80', 'text-blue-400', 'border-blue-500/50');
 
     const successToast = screen.getByText('Success message').closest('div').parentElement;
-    expect(successToast).toHaveClass('bg-green-50', 'text-green-800', 'border-green-200');
+    expect(successToast).toHaveClass('bg-black/80', 'text-axim-teal', 'border-axim-teal/50');
 
     const errorToast = screen.getByText('Error message').closest('div').parentElement;
-    expect(errorToast).toHaveClass('bg-red-50', 'text-red-800', 'border-red-200');
+    expect(errorToast).toHaveClass('bg-black/80', 'text-red-400', 'border-red-500/50');
   });
 
   it('calls removeToast when close button is clicked', async () => {

@@ -442,7 +442,7 @@ const VerificationPortal = React.memo(function VerificationPortal() {
               </div>
 
               {isSignMode && (
-                <div className="bg-zinc-900 border border-white/20 p-8 rounded-2xl mt-4">
+                <div className="bg-white/5 backdrop-blur-md border border-white/10 p-8 rounded-2xl mt-4 relative overflow-hidden">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold flex items-center gap-2">
                       <SafeIcon icon={FiPenTool} size={20} /> Counterparty Signature

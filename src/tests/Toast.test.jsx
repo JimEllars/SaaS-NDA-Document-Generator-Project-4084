@@ -44,7 +44,7 @@ describe('ToastContainer', () => {
     expect(screen.getByText('Info message')).toBeInTheDocument();
 
     const toastElement = screen.getByText('Info message').parentElement;
-    expect(toastElement).toHaveClass('bg-blue-50');
+    expect(toastElement).toHaveClass('bg-black/80');
   });
 
   it('renders success toast correctly', () => {
@@ -56,7 +56,7 @@ describe('ToastContainer', () => {
     expect(screen.getByText('Success message')).toBeInTheDocument();
 
     const toastElement = screen.getByText('Success message').parentElement;
-    expect(toastElement).toHaveClass('bg-green-50');
+    expect(toastElement).toHaveClass('bg-black/80');
   });
 
   it('renders error toast correctly', () => {
@@ -68,7 +68,7 @@ describe('ToastContainer', () => {
     expect(screen.getByText('Error message')).toBeInTheDocument();
 
     const toastElement = screen.getByText('Error message').parentElement;
-    expect(toastElement).toHaveClass('bg-red-50');
+    expect(toastElement).toHaveClass('bg-black/80');
   });
 
   it('calls removeToast when close button is clicked', () => {
