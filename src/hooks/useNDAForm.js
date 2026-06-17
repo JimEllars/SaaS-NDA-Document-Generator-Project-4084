@@ -36,37 +36,37 @@ const STORAGE_KEY = "axim_nda_draft";
 const useNDAForm = () => {
   const [formData, setFormDataInternal] = useState(() => {
     try {
-      const savedData = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+      const savedData = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null;
       if (savedData) {
         const decrypted = decrypt(savedData);
         const parsed = JSON.parse(decrypted);
         if (parsed.timestamp && Date.now() - parsed.timestamp > 24 * 60 * 60 * 1000) {
-          localStorage.removeItem(STORAGE_KEY);
+          sessionStorage.removeItem(STORAGE_KEY);
           return getDefaultFormData();
         }
         if (parsed.formData) return parsed.formData;
         return parsed;
       }
     } catch (err) {
-      console.warn("Failed to read from localStorage, falling back to memory:", err);
+      console.warn("Failed to read from sessionStorage, falling back to memory:", err);
     }
     return getDefaultFormData();
   });
 
   const [currentStep, setCurrentStepInternal] = useState(() => {
     try {
-      const savedData = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+      const savedData = typeof sessionStorage !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null;
       if (savedData) {
         const decrypted = decrypt(savedData);
         const parsed = JSON.parse(decrypted);
         if (parsed.timestamp && Date.now() - parsed.timestamp > 24 * 60 * 60 * 1000) {
-          localStorage.removeItem(STORAGE_KEY);
+          sessionStorage.removeItem(STORAGE_KEY);
           return 1;
         }
         if (parsed.currentStep !== undefined) return parsed.currentStep;
       }
     } catch (err) {
-      console.warn("Failed to read from localStorage, falling back to memory:", err);
+      console.warn("Failed to read from sessionStorage, falling back to memory:", err);
     }
     return 1;
   });
@@ -89,9 +89,9 @@ const useNDAForm = () => {
 
   const [isResumed, setIsResumed] = useState(() => {
     try {
-      return typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) !== null : false;
+      return typeof sessionStorage !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) !== null : false;
     } catch (err) {
-      console.warn("Failed to access localStorage, running in memory-only mode:", err);
+      console.warn("Failed to access sessionStorage, running in memory-only mode:", err);
       return false;
     }
   });
@@ -124,10 +124,10 @@ const useNDAForm = () => {
           currentStep: currentStepRef.current,
           timestamp: Date.now(),
         });
-        if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, encrypt(dataToSave));
+        if (typeof sessionStorage !== "undefined") sessionStorage.setItem(STORAGE_KEY, encrypt(dataToSave));
       } catch (err) {
         // Handle QuotaExceededError or disabled local storage by logging and falling back gracefully to memory
-        console.warn("Failed to save to localStorage (quota exceeded or disabled), maintaining state in memory:", err);
+        console.warn("Failed to save to sessionStorage (quota exceeded or disabled), maintaining state in memory:", err);
       }
     }, 500);
 
@@ -141,9 +141,9 @@ const useNDAForm = () => {
     formDataRef.current = defaultData;
     currentStepRef.current = 1;
     try {
-      if (typeof localStorage !== "undefined") localStorage.removeItem(STORAGE_KEY);
+      if (typeof sessionStorage !== "undefined") sessionStorage.removeItem(STORAGE_KEY);
     } catch (err) {
-      console.warn("Failed to remove from localStorage:", err);
+      console.warn("Failed to remove from sessionStorage:", err);
     }
   }, []);
 

@@ -92,8 +92,6 @@ describe('useFormValidation', () => {
     expect(result.current.validationMessage).toMatch(/governing law jurisdiction/);
   });
 
-});
-
   it('should return false if input exceeds extreme length limits', () => {
     const formData = {
       disclosing: 'A'.repeat(501),
@@ -106,3 +104,4 @@ describe('useFormValidation', () => {
     expect(result.current.isValid).toBe(false);
     expect(result.current.validationMessage).toMatch(/max 100/);
   });
+});

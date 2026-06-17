@@ -112,35 +112,29 @@ export const generatePdfBytes = async (plainText, formData) => {
     };
 
     const drawWrappedText = (text, startY) => {
-        text = truncateString(text, 150); // limit geometry
+        const maxWidth = width - 2 * margin;
 
-        let y = startY;
-        const maxLen = 60;
-        const words = (text || "").split(" ");
-        let currentLine = "";
-        const lines = [];
-        for (const word of words) {
-            if ((currentLine + word).length > maxLen && currentLine.length > 0) {
-                lines.push(currentLine.trim());
-                currentLine = word + " ";
-            } else {
-                currentLine += word + " ";
+        let truncatedText = text || "";
+        let textWidth = baseFont.widthOfTextAtSize(truncatedText, 12);
+
+        if (textWidth > maxWidth) {
+            // Truncate based on bounding lengths
+            while (textWidth > maxWidth - baseFont.widthOfTextAtSize("...", 12) && truncatedText.length > 0) {
+                truncatedText = truncatedText.slice(0, -1);
+                textWidth = baseFont.widthOfTextAtSize(truncatedText, 12);
             }
+            truncatedText += "...";
         }
-        if (currentLine.trim()) lines.push(currentLine.trim());
 
-        for (const line of lines) {
-            page.drawText(line, {
-                x: margin,
-                y: y,
-                size: 12,
-                font: baseFont,
-                color: rgb(0, 0, 0),
-                maxWidth: 400,
-            });
-            y -= 15;
-        }
-        return startY - (lines.length * 15);
+        page.drawText(truncatedText, {
+            x: margin,
+            y: startY,
+            size: 12,
+            font: baseFont,
+            color: rgb(0, 0, 0),
+        });
+
+        return startY - 15;
     };
 
     const afterDisclosingY = drawWrappedText(`${formData.disclosing}`, currentY);
