@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { fetchWithTimeout } from "../utils/fetchWithTimeout";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   verifySession,
@@ -18,7 +19,7 @@ import { useToast } from "../context/ToastContext";
 import useNDAForm from "../hooks/useNDAForm";
 import { decrypt } from "../utils/crypto";
 
-export default function SuccessPage() {
+const SuccessPage = React.memo(function SuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const sessionId = searchParams.get("session_id");
@@ -203,7 +204,7 @@ export default function SuccessPage() {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-            const response = await fetch("/api/generate-nda", {
+            const response = await fetchWithTimeout("/api/generate-nda", {
               signal: controller.signal,
               method: "POST",
               headers: {
@@ -242,7 +243,7 @@ export default function SuccessPage() {
             }
 
             // Background telemetry
-            fetch("/api/v1/telemetry/ingest", {
+            fetchWithTimeout("/api/v1/telemetry/ingest", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -459,4 +460,5 @@ export default function SuccessPage() {
       </div>
     </div>
   );
-}
+});
+export default SuccessPage;

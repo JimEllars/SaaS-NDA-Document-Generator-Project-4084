@@ -1,8 +1,9 @@
+import React from 'react';
 import { FiCheckCircle, FiAlertTriangle, FiInfo, FiX } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { useToast } from '../context/ToastContext';
 
-const ToastItem = ({ toast, onClose }) => {
+const ToastItem = React.memo(({ toast, onClose }) => {
   const { type, message } = toast;
 
   let icon = FiInfo;
@@ -32,7 +33,7 @@ const ToastItem = ({ toast, onClose }) => {
       </button>
     </div>
   );
-};
+});
 
 const ToastContainer = () => {
   const { toasts, removeToast } = useToast();

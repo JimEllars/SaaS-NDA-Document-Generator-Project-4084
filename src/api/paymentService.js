@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from "../utils/fetchWithTimeout";
 export const processPayment = async (productId, formHash, customerEmail, utmData = {}) => {
   // Use relative path for proxying through Cloudflare worker
   // Only use simulation in local dev without the env var
@@ -10,7 +11,7 @@ export const processPayment = async (productId, formHash, customerEmail, utmData
     });
   }
 
-  const response = await fetch('/api/create-checkout-session', {
+  const response = await fetchWithTimeout('/api/create-checkout-session', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -42,7 +43,7 @@ export const verifySession = async (sessionId) => {
     });
   }
 
-  const response = await fetch(`/api/verify-session?session_id=${sessionId}`, {
+  const response = await fetchWithTimeout(`/api/verify-session?session_id=${sessionId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json'
@@ -59,7 +60,7 @@ export const verifySession = async (sessionId) => {
 
 
 export const deliverOrchestratedDocument = async (payload) => {
-  const response = await fetch('/api/send-email', {
+  const response = await fetchWithTimeout('/api/send-email', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'

@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from "../utils/fetchWithTimeout";
 import React from 'react';
 import { FiAlertTriangle } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
@@ -17,14 +18,14 @@ class ErrorBoundary extends React.Component {
 
     try {
 
-      fetch('/api/v1/telemetry/errors', {
+      fetchWithTimeout('/api/v1/telemetry/errors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           app_id: "nda-generator",
-          error_message: error.message,
+          error_message: error?.message || 'Unknown Error',
           error_stack: errorInfo.componentStack,
           user_agent: navigator.userAgent
         })

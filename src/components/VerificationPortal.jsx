@@ -6,7 +6,7 @@ import { FiSearch, FiShield, FiCheckCircle,
 import SafeIcon from '../common/SafeIcon';
 import SignatureCanvas from 'react-signature-canvas';
 
-export default function VerificationPortal() {
+const VerificationPortal = React.memo(function VerificationPortal() {
   const [searchParams] = useSearchParams();
   const [traceId, setTraceId] = useState(searchParams.get('trace_id') || '');
   const isSignMode = searchParams.get('action') === 'sign';
@@ -580,4 +580,5 @@ export default function VerificationPortal() {
       </div>
     </div>
   );
-}
+});
+export default VerificationPortal;

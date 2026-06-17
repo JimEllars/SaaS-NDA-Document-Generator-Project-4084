@@ -1,3 +1,4 @@
+import { fetchWithTimeout } from "../utils/fetchWithTimeout";
 import { useState, useCallback } from 'react';
 
 // Mock hook for Vector Intelligence Hub semantic search querying match_ai_interactions RPC
@@ -16,7 +17,7 @@ export const useVectorSearch = () => {
     setError(null);
 
     try {
-      const response = await fetch('/api/v1/telemetry/match_ai_interactions', {
+      const response = await fetchWithTimeout('/api/v1/telemetry/match_ai_interactions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
