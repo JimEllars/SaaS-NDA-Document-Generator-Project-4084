@@ -215,7 +215,22 @@ const VerificationPortal = React.memo(function VerificationPortal() {
       ctx.fillRect(0, 0, jpegCanvas.width, jpegCanvas.height);
       ctx.drawImage(trimmedCanvas, 0, 0);
 
-      setSignatureImage(jpegCanvas.toDataURL("image/jpeg", 0.75));
+      let dataUrl = jpegCanvas.toDataURL("image/jpeg", 0.75);
+      const sizeInBytes = Math.ceil((dataUrl.length * 3) / 4);
+
+      // Canvas Export Optimization & Downscaling
+      if (sizeInBytes > 1000000) { // > 1MB
+        const downscaledCanvas = document.createElement('canvas');
+        downscaledCanvas.width = jpegCanvas.width / 2;
+        downscaledCanvas.height = jpegCanvas.height / 2;
+        const dsCtx = downscaledCanvas.getContext('2d');
+        dsCtx.fillStyle = 'white';
+        dsCtx.fillRect(0, 0, downscaledCanvas.width, downscaledCanvas.height);
+        dsCtx.drawImage(jpegCanvas, 0, 0, downscaledCanvas.width, downscaledCanvas.height);
+        dataUrl = downscaledCanvas.toDataURL("image/jpeg", 0.5);
+      }
+
+      setSignatureImage(dataUrl);
       setIsSigEmpty(false);
       ctx.clearRect(0, 0, jpegCanvas.width, jpegCanvas.height);
     }
@@ -250,26 +265,7 @@ const VerificationPortal = React.memo(function VerificationPortal() {
     setErrorMsg('');
 
     try {
-      // Base64 Payload Trimming (Memory Protection)
       let finalSignatureImage = signatureImage;
-      const sizeInBytes = Math.ceil((finalSignatureImage.length * 3) / 4);
-      if (sizeInBytes > 1000000) { // > 1MB
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.src = finalSignatureImage;
-        await new Promise(resolve => {
-          img.onload = () => {
-            canvas.width = img.width / 2;
-            canvas.height = img.height / 2;
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            finalSignatureImage = canvas.toDataURL('image/jpeg', 0.5); // Downscale & compress
-            resolve();
-          };
-        });
-      }
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -292,8 +288,16 @@ const VerificationPortal = React.memo(function VerificationPortal() {
 
       setStatus('executed');
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error('Execution error:', err);
-      setErrorMsg(err.message || 'Failed to execute document');
+
+      if (err.name === 'AbortError' || err.message.includes('timeout')) {
+        setErrorMsg('Network timeout. Please check your connection and try again.');
+        setStatus('timeout');
+      } else {
+        setErrorMsg(err.message || 'Failed to execute document');
+        setStatus('error');
+      }
     } finally {
       setIsSigning(false);
     }
@@ -355,15 +359,15 @@ const VerificationPortal = React.memo(function VerificationPortal() {
             <div className="bg-amber-900/20 border border-amber-500/30 text-amber-400 p-6 rounded-xl flex flex-col gap-4 mb-6 animate-fade-in">
               <div className="flex items-center gap-3">
                 <SafeIcon icon={FiAlertCircle} size={24} />
-                <h3 className="text-xl font-bold">Verification Request Timeout</h3>
+                <h3 className="text-xl font-bold">Network Connection Interrupted</h3>
               </div>
-              <p className="text-sm">The secure verification query has timed out. The trace ID connection was interrupted. Please retry your verification.</p>
+              <p className="text-sm">The connection timed out during execution. Please check your network and retry.</p>
               <button
-                onClick={handleVerify}
+                onClick={isSignMode ? submitSignature : handleVerify}
                 className="self-start px-6 py-3 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-xl transition flex items-center gap-2 border border-amber-500/50"
               >
                 <SafeIcon icon={FiRefreshCw} size={18} />
-                Retry Verification
+                Retry Connection
               </button>
             </div>
           )}
