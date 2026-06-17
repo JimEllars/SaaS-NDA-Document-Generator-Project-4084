@@ -287,8 +287,8 @@ const VerificationPortal = React.memo(function VerificationPortal() {
       }
 
       setStatus('executed');
-    } catch (err) {
       clearTimeout(timeoutId);
+    } catch (err) {
       console.error('Execution error:', err);
 
       if (err.name === 'AbortError' || err.message.includes('timeout')) {
