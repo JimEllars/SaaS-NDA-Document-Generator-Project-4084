@@ -135,6 +135,7 @@ const NDAGeneratorForm = React.memo(
     }, []);
 
     const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+    const [networkError, setNetworkError] = useState(false);
     const [isSigEmpty, setIsSigEmpty] = useState(true);
     const [signatureMode, setSignatureMode] = useState('draw'); // 'draw' or 'type'
     const [typedSignature, setTypedSignature] = useState('');
@@ -486,7 +487,13 @@ const NDAGeneratorForm = React.memo(
         window.open(url, "_blank");
       } catch (err) {
         console.error(err);
-        addToast(err.message || "Failed to generate preview", "error");
+
+        if (err.name === 'AbortError' || err.message.includes('timeout')) {
+          setNetworkError(true);
+          addToast("Network timeout. Please retry connection.", "error");
+        } else {
+          addToast(err.message || "Failed to generate preview", "error");
+        }
       } finally {
         setIsPreviewLoading(false);
       }
