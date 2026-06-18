@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiSearch, FiCpu, FiMessageSquare, FiBookOpen } from 'react-icons/fi';
+import { FiSearch, FiCpu, FiMessageSquare, FiBookOpen, FiLoader } from 'react-icons/fi';
 import { useVectorSearch } from '../hooks/useVectorSearch';
 
 const IntelligenceHub = () => {
@@ -38,9 +38,47 @@ const IntelligenceHub = () => {
           disabled={isSearching || !query.trim()}
           className={`absolute inset-y-2 right-2 px-4 rounded-lg bg-axim-teal text-black font-bold text-sm hover:bg-teal-400 transition ${isSearching || !query.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {isSearching ? 'Querying...' : 'Search'}
+          {isSearching ? <FiLoader className="animate-spin mx-auto" /> : 'Search'}
         </button>
       </form>
+      <div className="flex flex-wrap gap-2 mt-3">
+        <button
+          type="button"
+          onClick={() => { setQuery("Explain California Jurisdiction Implications"); search("Explain California Jurisdiction Implications"); }}
+          className="text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-axim-teal rounded-full px-3 py-1 transition-colors"
+        >
+          Explain California Jurisdiction Implications
+        </button>
+        <button
+          type="button"
+          onClick={() => { setQuery("Review Robust Indemnity Clause Penalties"); search("Review Robust Indemnity Clause Penalties"); }}
+          className="text-xs bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-400 hover:text-axim-teal rounded-full px-3 py-1 transition-colors"
+        >
+          Review Robust Indemnity Clause Penalties
+        </button>
+      </div>
+
+
+      {isSearching && (
+        <div className="space-y-4" data-testid="skeleton-loader">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-5 animate-pulse">
+            <div className="flex justify-between items-start mb-3">
+              <div className="h-4 bg-white/10 rounded w-1/4"></div>
+              <div className="h-3 bg-white/10 rounded w-1/4"></div>
+            </div>
+            <div className="h-3 bg-white/10 rounded w-full mb-2"></div>
+            <div className="h-3 bg-white/10 rounded w-5/6"></div>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-xl p-5 animate-pulse">
+            <div className="flex justify-between items-start mb-3">
+              <div className="h-4 bg-white/10 rounded w-1/4"></div>
+              <div className="h-3 bg-white/10 rounded w-1/4"></div>
+            </div>
+            <div className="h-3 bg-white/10 rounded w-full mb-2"></div>
+            <div className="h-3 bg-white/10 rounded w-4/6"></div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm">
@@ -48,7 +86,7 @@ const IntelligenceHub = () => {
         </div>
       )}
 
-      {results.length > 0 && (
+      {!isSearching && results.length > 0 && (
         <div className="space-y-4">
           <h4 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Semantic Matches</h4>
           {results.map((res) => (

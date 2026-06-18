@@ -565,6 +565,28 @@ export default {
              payload.utm_campaign = session.metadata.utm_campaign;
              payload.gclid = session.metadata.gclid;
           }
+
+          // Send Permission Synchronization Payload via ctx.waitUntil
+          try {
+            const syncPayload = {
+               session_id: session.id,
+               customer_email: session.customer_details?.email || session.customer_email,
+               status: session.payment_status,
+               timestamp: new Date().toISOString()
+            };
+            const targetBackendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || "https://api.axim.us.com";
+            const syncUrl = new URL("/v1/core/sync-permissions", targetBackendUrl);
+            ctx.waitUntil(fetch(syncUrl, {
+              method: "POST",
+              headers: {
+                 "Content-Type": "application/json",
+                 "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+              },
+              body: JSON.stringify(syncPayload)
+            }).catch(e => console.error("Permission sync failed", e)));
+          } catch (e) {
+            console.error("Failed to enqueue permission sync", e);
+          }
         }
 
         const proxyRequest = new Request(`${backendUrl}/v1/webhook/stripe`, {
@@ -996,6 +1018,7 @@ export default {
 
       const internalRoutes = [
         "/api/v1/telemetry/match_ai_interactions",
+        "/api/v1/ai/onyx-bridge",
         "/api/v1/telemetry/fleet-status",
         "/api/v1/telemetry/ingest",
         "/api/v1/telemetry/events",
@@ -1007,10 +1030,33 @@ export default {
       ];
 
       if (internalRoutes.some((route) => url.pathname.startsWith(route))) {
-        if (!headers.has("Authorization") && env.AXIM_SERVICE_KEY) {
-          headers.set("Authorization", `Bearer ${env.AXIM_SERVICE_KEY}`);
-        } else if (!env.AXIM_SERVICE_KEY) {
+        if (!env.AXIM_SERVICE_KEY) {
           console.warn("AXIM_SERVICE_KEY is missing from worker environment.");
+
+          if (url.pathname.startsWith("/api/v1/ai/onyx-bridge")) {
+            // Write to telemetry stream gracefully and return 500
+            try {
+               const errorPayload = {
+                  message: "Missing AXIM_SERVICE_KEY for Onyx AI Edge-Bridge Ingress Routing",
+                  route: url.pathname,
+                  timestamp: new Date().toISOString()
+               };
+               // Gracefully attempt to send to telemetry
+               const telemetryUrl = new URL("/api/v1/telemetry/errors", targetBackendUrl);
+               ctx.waitUntil(fetch(telemetryUrl, {
+                 method: "POST",
+                 headers: { "Content-Type": "application/json" },
+                 body: JSON.stringify(errorPayload)
+               }).catch(e => console.error("Telemetry failure", e)));
+            } catch (e) { /* ignore */ }
+
+            return new Response(JSON.stringify({ error: "Internal Server Error: Missing Service Key" }), {
+              status: 500,
+              headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
+            });
+          }
+        } else if (!headers.has("Authorization")) {
+          headers.set("Authorization", `Bearer ${env.AXIM_SERVICE_KEY}`);
         }
       }
 

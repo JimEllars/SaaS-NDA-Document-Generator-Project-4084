@@ -20,7 +20,7 @@ describe('Telemetry Queue Stress-Testing', () => {
       <MemoryRouter>
         <ToastProvider>
           <NDAGeneratorForm
-            formData={{ strictness: 'standard', industry: 'general', type: 'unilateral', includeReturn: false, includeNonSolicitation: false, disclosing: 'A', receiving: 'B', jurisdiction: 'Delaware', term: '3', effectiveDate: '2024-01-01' }}
+            formData={{ strictness: 'standard', industry: 'general', type: 'unilateral', includeReturn: false, includeNonSolicitation: false, disclosing: 'ValidNameA', receiving: 'ValidNameB', email: 'test@example.com', recipientEmail: 'other@example.com', jurisdiction: 'Delaware', term: '3', effectiveDate: new Date().toISOString() }}
             setFormData={vi.fn()}
             currentStep={1}
             setCurrentStep={vi.fn()}

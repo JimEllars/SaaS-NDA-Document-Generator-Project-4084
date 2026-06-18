@@ -69,9 +69,9 @@ describe('IntelligenceHub component', () => {
 
     render(<IntelligenceHub />);
 
-    const searchButton = screen.getByRole('button', { name: /querying/i });
+    const searchButton = document.querySelector('button[type="submit"]');
     expect(searchButton).toBeDisabled();
-    expect(searchButton).toHaveTextContent(/querying/i);
+    expect(searchButton).toBeDisabled();
   });
 
   it('renders search results correctly', () => {
