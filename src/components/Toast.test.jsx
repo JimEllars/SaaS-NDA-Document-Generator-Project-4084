@@ -65,7 +65,7 @@ describe('ToastContainer', () => {
     render(<ToastContainer />);
 
     const infoToast = screen.getByText('Info message').closest('div').parentElement;
-    expect(infoToast).toHaveClass('bg-black/80', 'text-blue-400', 'border-blue-500/50');
+    expect(infoToast).toHaveClass('bg-black/80', 'text-zinc-300', 'border-white/10');
 
     const successToast = screen.getByText('Success message').closest('div').parentElement;
     expect(successToast).toHaveClass('bg-black/80', 'text-axim-teal', 'border-axim-teal/50');

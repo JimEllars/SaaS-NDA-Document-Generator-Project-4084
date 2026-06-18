@@ -107,15 +107,15 @@ describe('ConfirmModal Component', () => {
     render(<ConfirmModal {...defaultProps} isDestructive={true} />);
 
     const confirmButton = screen.getByText('Confirm');
-    expect(confirmButton.className).toContain('bg-red-600');
-    expect(confirmButton.className).not.toContain('bg-blue-600');
+    expect(confirmButton.className).toContain('bg-red-500');
+    expect(confirmButton.className).not.toContain('bg-axim-teal');
   });
 
   it('applies standard styling when isDestructive is false', () => {
     render(<ConfirmModal {...defaultProps} isDestructive={false} />);
 
     const confirmButton = screen.getByText('Confirm');
-    expect(confirmButton.className).toContain('bg-blue-600');
-    expect(confirmButton.className).not.toContain('bg-red-600');
+    expect(confirmButton.className).toContain('bg-axim-teal');
+    expect(confirmButton.className).not.toContain('bg-red-500');
   });
 });
