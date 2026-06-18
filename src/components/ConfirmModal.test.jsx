@@ -133,7 +133,7 @@ describe('ConfirmModal', () => {
     );
 
     const confirmButton = screen.getByRole('button', { name: 'Confirm' });
-    expect(confirmButton).toHaveClass('bg-red-600', 'hover:bg-red-700');
+    expect(confirmButton).toHaveClass("bg-red-500", "hover:bg-red-600");
   });
 
   it('applies default styling when isDestructive is false', () => {
@@ -147,7 +147,7 @@ describe('ConfirmModal', () => {
     );
 
     const confirmButton = screen.getByRole('button', { name: 'Confirm' });
-    expect(confirmButton).toHaveClass('bg-blue-600', 'hover:bg-blue-700');
+    expect(confirmButton).toHaveClass("bg-axim-teal", "hover:bg-teal-400");
   });
 
   it('calls onCancel when close icon is clicked', async () => {

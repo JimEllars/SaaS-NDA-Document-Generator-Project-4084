@@ -9,3 +9,5 @@
 - **Updated:** `Toast.jsx` styling to match the dark cyberpunk AXiM theme.
 - **Updated:** `ConfirmModal.jsx` styling to match the dark cyberpunk AXiM theme.
 - **Updated:** `VerificationPortal.jsx` e-signature section styling to match the dark theme and other form elements.
+- **Updated:** Fixed `update_verification_portal.js` syntax issues, ran it to refine the payload truncation and payload limits to protect the worker, and fully passed regressions.
+- **Audited:** `useFormValidation.js` handles edge cases (extremes over 100/500 limits, missing inputs, invalid chars) with robust returns, preventing UI to Edge failures. Tested natively within `useFormValidation.test.jsx`.

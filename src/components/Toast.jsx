@@ -7,7 +7,7 @@ const ToastItem = React.memo(({ toast, onClose }) => {
   const { type, message } = toast;
 
   let icon = FiInfo;
-  let color = 'bg-black/80 backdrop-blur-md text-blue-400 border-blue-500/50';
+  let color = 'bg-black/80 backdrop-blur-md text-zinc-300 border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]';
 
   if (type === 'success') {
     icon = FiCheckCircle;
@@ -27,7 +27,7 @@ const ToastItem = React.memo(({ toast, onClose }) => {
       </div>
       <button
         onClick={() => onClose(toast.id)}
-        className="text-slate-400 hover:text-slate-600 transition shrink-0"
+        className="text-zinc-400 hover:text-zinc-200 transition shrink-0"
       >
         <SafeIcon icon={FiX} size={16} />
       </button>

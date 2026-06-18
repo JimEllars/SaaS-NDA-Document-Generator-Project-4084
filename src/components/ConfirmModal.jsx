@@ -20,7 +20,7 @@ const ConfirmModal = React.memo(({ isOpen, title, message, onConfirm, onCancel, 
 
   return (
     <div
-      className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200"
       onClick={onCancel}
     >
       <div
@@ -32,27 +32,27 @@ const ConfirmModal = React.memo(({ isOpen, title, message, onConfirm, onCancel, 
         aria-labelledby="confirm-modal-title"
       >
         <div className="flex justify-between items-start mb-4">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDestructive ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDestructive ? 'bg-red-500/20 text-red-400' : 'bg-axim-teal/20 text-axim-teal'}`}>
                 <SafeIcon icon={FiAlertCircle} size={20} />
             </div>
-            <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition">
+            <button onClick={onCancel} className="text-zinc-400 hover:text-zinc-200 transition">
                 <SafeIcon icon={FiX} size={20} />
             </button>
         </div>
 
-        <h3 id="confirm-modal-title" className="text-lg font-bold text-slate-900 mb-2">{title}</h3>
-        <p className="text-sm text-slate-600 mb-6 leading-relaxed">{message}</p>
+        <h3 id="confirm-modal-title" className="text-lg font-bold text-zinc-100 mb-2">{title}</h3>
+        <p className="text-sm text-zinc-400 mb-6 leading-relaxed">{message}</p>
 
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 py-2.5 px-4 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 transition"
+            className="flex-1 py-2.5 px-4 bg-transparent border border-white/20 text-zinc-200 font-bold rounded-xl hover:bg-white/10 transition"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
-            className={`flex-1 py-2.5 px-4 text-white font-semibold rounded-xl transition shadow-sm ${isDestructive ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+            className={`flex-1 py-2.5 px-4 text-white font-semibold rounded-xl transition shadow-sm ${isDestructive ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-axim-teal hover:bg-teal-400 text-black'}`}
           >
             {confirmText}
           </button>
