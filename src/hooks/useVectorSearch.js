@@ -17,7 +17,7 @@ export const useVectorSearch = () => {
     setError(null);
 
     try {
-      const response = await fetchWithTimeout('/api/v1/telemetry/match_ai_interactions', {
+      const response = await fetchWithTimeout('/api/v1/ai/onyx-bridge', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
