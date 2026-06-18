@@ -4,7 +4,7 @@ import SafeIcon from '../common/SafeIcon';
 
 const UpsellCard = () => {
   return (
-    <div className="bg-purple-900/30 border border-purple-500/50 rounded-xl p-5 mb-6 flex flex-col md:flex-row items-center gap-4 shadow-[0_0_15px_rgba(147,51,234,0.2)]">
+    <div className="bg-purple-900/20 backdrop-blur-md border border-purple-500/40 rounded-2xl p-5 mb-6 flex flex-col md:flex-row items-center gap-4 shadow-[0_0_20px_rgba(147,51,234,0.25)]">
       <div className="bg-purple-500/20 p-3 rounded-full text-purple-400">
         <SafeIcon icon={FiShield} size={24} />
       </div>

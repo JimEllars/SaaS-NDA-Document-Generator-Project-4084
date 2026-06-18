@@ -29,6 +29,10 @@ const renderWithProviders = (ui) => {
   );
 };
 
+vi.mock('../utils/telemetry', () => ({
+  logException: vi.fn(),
+}));
+
 describe('VerificationPortal Timeout Recovery', () => {
   beforeEach(() => {
     vi.resetAllMocks();
