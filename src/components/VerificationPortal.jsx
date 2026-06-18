@@ -1,3 +1,4 @@
+import { logException } from "../utils/telemetry";
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FiSearch, FiShield, FiCheckCircle,
@@ -130,6 +131,7 @@ const VerificationPortal = React.memo(function VerificationPortal() {
       setStatus('success');
     } catch (err) {
       console.error('Verification error:', err);
+      logException(err, { context: 'VerificationPortal checkHash' });
       if (err.name === 'AbortError') {
         setStatus('timeout');
         setErrorMsg('Network timeout verified. Connection secure but unreachable.');
@@ -290,6 +292,7 @@ const VerificationPortal = React.memo(function VerificationPortal() {
       clearTimeout(timeoutId);
     } catch (err) {
       console.error('Execution error:', err);
+      logException(err, { context: 'VerificationPortal submitSignature' });
 
       if (err.name === 'AbortError' || err.message.includes('timeout')) {
         setErrorMsg('Network timeout. Please check your connection and try again.');

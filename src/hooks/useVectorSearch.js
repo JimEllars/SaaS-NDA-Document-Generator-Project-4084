@@ -22,7 +22,7 @@ export const useVectorSearch = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ query: query.replace(/[{}[\]$<>"']/g, '').trim() })
       });
 
       if (!response.ok) {

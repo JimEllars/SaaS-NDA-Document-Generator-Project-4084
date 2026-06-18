@@ -191,7 +191,33 @@ export default {
         const plainText = generatePlainText(docData, formData);
 
         const start = Date.now();
-        const { pdfBytes, docId } = await generatePdfBytes(plainText, formData);
+        let pdfBytes, docId;
+        try {
+          const result = await generatePdfBytes(plainText, formData);
+          pdfBytes = result.pdfBytes;
+          docId = result.docId;
+        } catch (pdfErr) {
+          ctx.waitUntil(
+            fetch(
+              `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/errors`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${env.AXIM_SERVICE_KEY || "development_key"}`
+                },
+                body: JSON.stringify({
+                  app_id: "nda-generator",
+                  error_message: `PDF Compilation Failed: ${pdfErr.message}`,
+                  error_stack: pdfErr.stack,
+                  context: { formData: { ...formData, email: "***" } },
+                  timestamp: new Date().toISOString()
+                })
+              }
+            ).catch(e => console.error("Telemetry failure", e))
+          );
+          throw pdfErr;
+        }
         const duration_ms = Date.now() - start;
 
         ctx.waitUntil(
@@ -316,7 +342,33 @@ export default {
         const plainText = generatePlainText(docData, formData);
 
         const start = Date.now();
-        const { pdfBytes, docId } = await generatePdfBytes(plainText, formData);
+        let pdfBytes, docId;
+        try {
+          const result = await generatePdfBytes(plainText, formData);
+          pdfBytes = result.pdfBytes;
+          docId = result.docId;
+        } catch (pdfErr) {
+          ctx.waitUntil(
+            fetch(
+              `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/errors`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${env.AXIM_SERVICE_KEY || "development_key"}`
+                },
+                body: JSON.stringify({
+                  app_id: "nda-generator",
+                  error_message: `PDF Compilation Failed: ${pdfErr.message}`,
+                  error_stack: pdfErr.stack,
+                  context: { formData: { ...formData, email: "***" } },
+                  timestamp: new Date().toISOString()
+                })
+              }
+            ).catch(e => console.error("Telemetry failure", e))
+          );
+          throw pdfErr;
+        }
         const duration_ms = Date.now() - start;
 
         ctx.waitUntil(

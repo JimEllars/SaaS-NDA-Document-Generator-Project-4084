@@ -52,7 +52,7 @@ const IntelligenceHub = () => {
         <div className="space-y-4">
           <h4 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Semantic Matches</h4>
           {results.map((res) => (
-            <div key={res.id} className="bg-white/5 border border-white/10 rounded-xl p-5 hover:border-axim-teal/30 transition-colors">
+            <div key={res.id} className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-5 hover:border-axim-teal/30 transition-colors shadow-lg">
               <div className="flex justify-between items-start mb-3">
                 <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${
                   res.type === 'Resolution' ? 'bg-green-500/10 text-green-400' :
