@@ -3,6 +3,8 @@ import { FiShield, FiCpu, FiActivity } from 'react-icons/fi';
 import IntelligenceHub from './IntelligenceHub';
 import FleetHeatmap from './FleetHeatmap';
 import ChatInterface from './ChatInterface';
+import CryptoSealFeed from './CryptoSealFeed';
+import AdminErrorBoundary from './AdminErrorBoundary';
 
 // Placeholder mock data for the hitl_audit_logs table logic
 // In a real application, this would fetch from Supabase:
@@ -33,7 +35,7 @@ export const SecurityAudit = () => {
         A cryptographically verifiable ledger of all Human-in-the-Loop (HITL) interventions.
       </p>
 
-      <div className="bg-black/50 border border-white/10 rounded-xl overflow-hidden">
+      <div className="bg-black/50 border border-white/10 rounded-xl overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="bg-white/5 border-b border-white/10">
             <tr>
@@ -83,7 +85,8 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('audit');
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-6 animate-in fade-in duration-500">
+    <AdminErrorBoundary>
+    <div className="w-full max-w-6xl mx-auto p-4 sm:p-6 animate-in fade-in duration-500 overflow-x-hidden">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-zinc-100 tracking-tight">Command Center</h1>
@@ -134,9 +137,11 @@ const AdminDashboard = () => {
           {activeTab === 'audit' && <SecurityAudit />}
           {activeTab === 'intelligence' && <IntelligenceHub />}
           {activeTab === 'fleet' && <FleetHeatmap />}
+          <CryptoSealFeed />
         </main>
       </div>
     </div>
+    </AdminErrorBoundary>
   );
 };
 

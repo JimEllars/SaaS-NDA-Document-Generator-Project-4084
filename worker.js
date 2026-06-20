@@ -73,20 +73,18 @@ export default {
       }
 
 
-    if (url.pathname === "/api/health" && request.method === "GET") {
+    if ((url.pathname === "/api/health" || url.pathname === "/api/v1/health") && request.method === "GET") {
       return new Response(
         JSON.stringify({
           status: "operational",
           service: "nda_generator",
           timestamp: Date.now(),
+          edge_readiness: {
+            service_key_bound: !!env.AXIM_SERVICE_KEY,
+            cache_available: typeof caches !== 'undefined'
+          }
         }),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "https://axim.us.com",
-          },
-        },
+        { headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -917,6 +915,43 @@ export default {
       }
     }
 
+
+    if (request.method === "POST" && url.pathname === "/api/v1/telemetry/diagnostics") {
+      try {
+        const payload = await request.json();
+
+        const targetBackendUrl =
+          env.BACKEND_URL ||
+          env.VITE_PAYMENT_API_URL ||
+          "https://api.axim.us.com";
+        const telemetryUrl = new URL("/v1/telemetry/diagnostics", targetBackendUrl);
+
+        // Dispatch to Core API exclusively via ctx.waitUntil()
+        ctx.waitUntil(
+            fetch(telemetryUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+                },
+                body: JSON.stringify(payload)
+            }).catch(e => console.error("Failed to forward telemetry diagnostics", e))
+        );
+
+        return new Response(JSON.stringify({ status: "queued" }), {
+          status: 202,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" },
+        });
+
+      } catch (err) {
+        console.error("Telemetry Diagnostics Error:", err);
+        return new Response(
+          JSON.stringify({ error: "Internal Server Error" }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     if (request.method === "GET" && url.pathname === "/api/v1/vault-download") {
       try {
         const traceId = url.searchParams.get("trace_id");
@@ -1017,6 +1052,7 @@ export default {
       headers.set("Referer", targetBackendUrl);
 
       const internalRoutes = [
+        "/api/v1/telemetry/diagnostics",
         "/api/v1/telemetry/match_ai_interactions",
         "/api/v1/ai/onyx-bridge",
         "/api/v1/telemetry/fleet-status",
