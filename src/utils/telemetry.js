@@ -1,5 +1,18 @@
 import { fetchWithTimeout } from "./fetchWithTimeout.js";
 
+const getEnvContext = () => {
+    if (typeof window === 'undefined') return 'unknown';
+    const hostname = window.location.hostname;
+    if (hostname === 'quickndacontract.com' || hostname === 'www.quickndacontract.com') {
+        return 'production';
+    }
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'local';
+    }
+    return 'staging';
+};
+
+
 // Queue to hold offline diagnostics
 let diagnosticQueue = [];
 let isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
@@ -31,6 +44,7 @@ const flushDiagnosticQueue = async () => {
 
     const payload = {
         app_id: "nda-generator",
+        env: getEnvContext(),
         events: [...diagnosticQueue],
         flushed_at: new Date().toISOString(),
     };
@@ -71,6 +85,7 @@ export const flushTelemetry = async (payload) => {
 export const logException = (error, context = {}) => {
     const payload = {
         app_id: "nda-generator",
+        env: getEnvContext(),
         error_message: error?.message || "Unknown error",
         error_stack: error?.stack || null,
         context,
