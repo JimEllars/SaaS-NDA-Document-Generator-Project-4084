@@ -1,4 +1,13 @@
 import { fetchWithTimeout } from "../utils/fetchWithTimeout";
+
+const getBaseUrl = () => {
+    if (import.meta.env.PROD) {
+        // Explicitly use the proxy gateway that routes to unified production AXiM Core API
+        return '';
+    }
+    return import.meta.env.VITE_PAYMENT_API_URL || '';
+};
+
 export const processPayment = async (productId, formHash, customerEmail, utmData = {}) => {
   // Use relative path for proxying through Cloudflare worker
   // Only use simulation in local dev without the env var
@@ -11,7 +20,7 @@ export const processPayment = async (productId, formHash, customerEmail, utmData
     });
   }
 
-  const response = await fetchWithTimeout('/api/create-checkout-session', {
+  const response = await fetchWithTimeout(`${getBaseUrl()}/api/create-checkout-session`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -43,7 +52,7 @@ export const verifySession = async (sessionId) => {
     });
   }
 
-  const response = await fetchWithTimeout(`/api/verify-session?session_id=${sessionId}`, {
+  const response = await fetchWithTimeout(`${getBaseUrl()}/api/verify-session?session_id=${sessionId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json'
@@ -60,7 +69,7 @@ export const verifySession = async (sessionId) => {
 
 
 export const deliverOrchestratedDocument = async (payload) => {
-  const response = await fetchWithTimeout('/api/send-email', {
+  const response = await fetchWithTimeout(`${getBaseUrl()}/api/send-email`, {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'

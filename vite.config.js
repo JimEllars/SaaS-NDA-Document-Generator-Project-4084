@@ -17,11 +17,15 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true
-  },
-  esbuild: {
-    drop: ['debugger'],
-    pure: ['console.log', 'console.info', 'console.debug', 'console.trace'],
+    sourcemap: true,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.trace']
+      }
+    }
   },
   test: {
     environment: 'jsdom',
