@@ -68,38 +68,3 @@ export const hashFormData = async (formData) => {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
-
-
-export const sanitizeInput = (str, maxLength = 500) => {
-    if (!str || typeof str !== 'string') return str;
-
-    // Truncate at maximum characters
-    let sanitized = str.substring(0, maxLength);
-
-    // Strip out prompt injection sequences
-    const injectionPatterns = [
-        /ignore previous instructions/gi,
-        /system override/gi,
-        /you are now/gi,
-        /bypass restrictions/gi,
-        /drop tables/gi,
-        /<script.*?>.*?<\/script>/gi,
-        /<[^>]*>/g // Basic HTML tag stripping
-    ];
-
-    let triggered = false;
-    for (const pattern of injectionPatterns) {
-        if (pattern.test(sanitized)) {
-            triggered = true;
-            sanitized = sanitized.replace(pattern, "[REDACTED]");
-        }
-    }
-
-    // Strict regex replacement to strip curly braces, brackets, and vector math symbols
-    if (/[{}[\]<>\\|]/g.test(sanitized)) {
-        triggered = true;
-        sanitized = sanitized.replace(/[{}[\]<>\\|]/g, "");
-    }
-
-    return { sanitized, triggered };
-};

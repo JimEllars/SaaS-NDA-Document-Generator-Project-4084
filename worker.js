@@ -57,9 +57,6 @@ function checkRateLimit(ip) {
   ipRequests.set(ip, requests);
   return true;
 }
-
-
-
 export default {
     async fetch(request, env, ctx) {
     const handleRequest = async () => {
@@ -140,81 +137,38 @@ export default {
     }
 
 
-function sanitizeFormData(formData, ctx, env) {
+    function sanitizeFormData(formData, ctx, env) {
       const sanitized = { ...formData };
       const fieldsToSanitize = ['disclosing', 'receiving', 'organization', 'email', 'recipientEmail'];
       let modified = false;
 
-      const injectionPatterns = [
-        /ignore previous instructions/gi,
-        /system override/gi,
-        /you are now/gi,
-        /bypass restrictions/gi,
-        /drop tables/gi,
-        /<script.*?>.*?<\/script>/gi,
-        /<[^>]*>/g // Basic HTML tag stripping
-      ];
-
       for (const field of fieldsToSanitize) {
         if (typeof sanitized[field] === 'string') {
-          let original = sanitized[field];
-
-          // Truncate structural inputs safely at maximum word boundaries
-          if (original.length > 500) {
-              original = original.substring(0, 500);
-              modified = true;
-          }
-
-          let current = original;
-
-          for (const pattern of injectionPatterns) {
-              if (pattern.test(current)) {
-                  modified = true;
-                  current = current.replace(pattern, "[REDACTED]");
-              }
-          }
-
-          // Strict regex replacement to strip curly braces, brackets, and vector math symbols
-          if (/[{}[\]<>\\|]/g.test(current)) {
-              modified = true;
-              current = current.replace(/[{}[\]<>\\|]/g, "");
-          }
-
-          current = current.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\u017F]/g, '');
-
-          sanitized[field] = current;
-          if (original !== current) {
+          const original = sanitized[field];
+          sanitized[field] = original.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\u017F]/g, '');
+          if (original !== sanitized[field]) {
             modified = true;
           }
         }
       }
 
-      if (modified && ctx) {
-        const telemetryUrl = new URL("/api/v1/telemetry/errors", env.BACKEND_URL || env.VITE_PAYMENT_API_URL || "https://api.axim.us.com");
-        const alertPayload = {
-            telemetry_envelope: {
-              project_id: "AXIM_NDA_GENERATOR",
-              environment: "production",
-              timestamp: new Date().toISOString()
-            },
-            event_payload: {
-              event_type: "rag_payload_sanitation_alert",
-              severity: "MEDIUM",
-              component_origin: "edge_worker",
-              error_message: "Sanitation breach detected during payload ingestion.",
-              error_stack: null
-            }
-        };
-
+      if (modified && ctx && env) {
         ctx.waitUntil(
-          fetch(telemetryUrl, {
+          fetch(
+            `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/ingest`,
+            {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                ...(env.AXIM_SERVICE_KEY ? { "Authorization": "Bearer " + env.AXIM_SERVICE_KEY } : {})
+                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
               },
-              body: JSON.stringify(alertPayload)
-          }).catch(e => console.error("Failed to forward sanitation alert", e))
+              body: JSON.stringify({
+                event: "pdf_sanitization_triggered",
+                app_type: "nda",
+                severity: "WARNING",
+              }),
+            }
+          ).catch((e) => console.error("Telemetry failed for sanitization:", e))
         );
       }
 

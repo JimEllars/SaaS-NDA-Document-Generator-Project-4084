@@ -120,25 +120,3 @@ export const logException = (error, context = {}) => {
     };
     flushTelemetry(payload);
 };
-
-
-export const logSanitationAlert = (context = {}) => {
-    const errorOrigin = context.component_origin || context.origin || "unknown";
-    const envString = typeof window !== 'undefined' && (window.location.hostname === 'quickndacontract.com' || window.location.hostname === 'www.quickndacontract.com') ? 'production' : 'development';
-
-    const payload = {
-        telemetry_envelope: {
-            project_id: "AXIM_NDA_GENERATOR",
-            environment: envString,
-            timestamp: new Date().toISOString()
-        },
-        event_payload: {
-            event_type: "rag_payload_sanitation_alert",
-            severity: context.severity || "MEDIUM",
-            component_origin: errorOrigin,
-            error_message: context.message || "Sanitation breach detected during client-side execution.",
-            error_stack: null
-        }
-    };
-    flushTelemetry(payload);
-};

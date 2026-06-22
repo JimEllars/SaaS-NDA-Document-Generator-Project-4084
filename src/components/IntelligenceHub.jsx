@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { FiSearch, FiCpu, FiMessageSquare, FiBookOpen, FiLoader, FiShield } from 'react-icons/fi';
-import { sanitizeInput } from '../utils/crypto';
-import { logSanitationAlert } from '../utils/telemetry';
+import { FiSearch, FiCpu, FiMessageSquare, FiBookOpen, FiLoader } from 'react-icons/fi';
 import { useVectorSearch } from '../hooks/useVectorSearch';
 
 const IntelligenceHub = () => {
@@ -10,30 +8,16 @@ const IntelligenceHub = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    const { sanitized, triggered } = sanitizeInput(query);
-    if (triggered) {
-      logSanitationAlert({
-          message: "Prompt injection or unsafe formatting detected and scrubbed before vector query.",
-          component_origin: "intelligence_hub",
-          severity: "HIGH"
-      });
-    }
-    search(sanitized);
+    search(query);
   };
 
   return (
     <div className="space-y-6">
-<div>
-        <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
-            <FiCpu className="text-axim-teal" /> Vector Intelligence Hub
-            </h3>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-axim-teal/10 border border-axim-teal/20 rounded-full" aria-label="Secure Edge Active">
-                <FiShield className="text-axim-teal w-3 h-3" />
-                <span className="text-[10px] font-bold text-axim-teal uppercase tracking-wider">Edge Shield</span>
-            </div>
-        </div>
-        <p className="text-sm text-zinc-400">
+      <div>
+        <h3 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
+          <FiCpu className="text-axim-teal" /> Vector Intelligence Hub
+        </h3>
+        <p className="text-sm text-zinc-400 mt-2">
           Semantic search across ecosystem memory: AI interactions, error resolutions, and knowledge base.
         </p>
       </div>

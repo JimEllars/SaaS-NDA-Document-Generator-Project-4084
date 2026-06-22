@@ -17,8 +17,8 @@ body {
 }
 
 select option {
-  background-color: #0f172a !important; /* Enforce deep slate background */
-  color: #f8fafc !important;            /* Enforce high-contrast light text */
+  background-color: #09090b !important; /* Force obsidian/zinc-950 dark background */
+  color: #f4f4f5 !important;            /* Force zinc-100 high-contrast light text */
 }
 
 #root {

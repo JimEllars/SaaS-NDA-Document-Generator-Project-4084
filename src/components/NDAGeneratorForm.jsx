@@ -33,7 +33,7 @@ import { JURISDICTIONS, INDUSTRY_OPTIONS } from "../common/documentConstants";
 const FIELD_BASE_CLASSES =
   "w-full p-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500/40 focus:border-purple-400 focus:bg-slate-900/80 transition-all duration-300 outline-none text-zinc-100 placeholder-zinc-500 duration-500";
 const INPUT_CLASSES = `${FIELD_BASE_CLASSES} transition-all`;
-const SELECT_CLASSES = `${FIELD_BASE_CLASSES} bg-slate-900/50 dark:bg-slate-950 text-slate-100`;
+const SELECT_CLASSES = `${FIELD_BASE_CLASSES} bg-zinc-900/90 text-zinc-100`;
 const LABEL_CLASSES = "text-sm font-bold text-zinc-300 mb-2";
 const TOGGLE_BUTTON_BASE_CLASSES =
   "flex-1 py-3 text-sm font-bold rounded-lg transition";
@@ -516,14 +516,6 @@ const handleContextChipClick = useCallback((chipType) => {
 
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {/* Edge Shield Indicator */}
-        <div className="flex justify-center mt-2 mb-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-axim-teal/10 border border-axim-teal/20 rounded-full shadow-sm" aria-label="Secure Edge Active">
-                <SafeIcon icon={FiShield} size={14} className="text-axim-teal" />
-                <span className="text-xs font-semibold text-axim-teal tracking-wide">Shield Protected</span>
-            </div>
-        </div>
-
         {/* Instructions */}
         <div className="bg-axim-teal/5 border border-axim-teal/20 rounded-xl p-4 text-sm text-zinc-300">
           <p className="flex gap-2">
