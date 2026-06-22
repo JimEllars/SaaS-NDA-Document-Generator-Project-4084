@@ -68,6 +68,8 @@ const flushDiagnosticQueue = async () => {
 };
 
 export const flushTelemetry = async (payload) => {
+    payload.project_id = "AXIM_NDA_GENERATOR";
+    payload.environment = "production";
     try {
         const url = import.meta.env.VITE_TELEMETRY_URL || '/api/v1/telemetry/errors';
         await fetchWithTimeout(url, {

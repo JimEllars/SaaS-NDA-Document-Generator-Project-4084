@@ -31,7 +31,7 @@ const IntelligenceHub = () => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="e.g., How did we resolve the 500 error on the orchestrator yesterday?"
-          className="w-full bg-black/60 border border-white/10 text-zinc-100 rounded-xl pl-12 pr-24 py-4 focus:ring-2 focus:ring-axim-teal focus:border-axim-teal outline-none transition"
+          className="w-full bg-black/60 border border-white/10 text-zinc-100 rounded-xl pl-12 pr-24 py-4 focus:ring-2 focus:ring-purple-500/40 focus:border-purple-400 focus:bg-slate-900/80 transition-all duration-300 outline-none transition"
         />
         <button
           type="submit"
