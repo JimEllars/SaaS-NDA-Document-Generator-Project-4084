@@ -19,6 +19,14 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     minify: 'terser',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
+          ui: ['react-icons']
+        }
+      }
+    },
     terserOptions: {
       compress: {
         drop_console: true,

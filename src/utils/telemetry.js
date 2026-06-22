@@ -79,6 +79,18 @@ export const flushTelemetry = async (payload) => {
         });
     } catch (e) {
         console.error("Telemetry failed to flush", e);
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                const stored = window.localStorage.getItem('axim_telemetry_buffer') || '[]';
+                const buffer = JSON.parse(stored);
+                buffer.push(payload);
+                window.localStorage.setItem('axim_telemetry_buffer', JSON.stringify(buffer));
+            } else {
+                diagnosticQueue.push(payload);
+            }
+        } catch (storageError) {
+            console.error("Failed to buffer telemetry locally", storageError);
+        }
     }
 };
 
