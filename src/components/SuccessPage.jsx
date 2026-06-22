@@ -83,6 +83,7 @@ const SuccessPage = React.memo(function SuccessPage() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      try { sessionStorage.removeItem("axim_nda_draft"); localStorage.removeItem("axim_nda_draft"); } catch(e) { console.warn("Failed to clean up draft from storage", e); }
       URL.revokeObjectURL(url);
 
       addToast("DOCX downloaded successfully", "success");
@@ -100,6 +101,7 @@ const SuccessPage = React.memo(function SuccessPage() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      try { sessionStorage.removeItem("axim_nda_draft"); localStorage.removeItem("axim_nda_draft"); } catch(e) { console.warn("Failed to clean up draft from storage", e); }
     } else {
       addToast("Document is not ready yet.", "error");
     }

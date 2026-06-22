@@ -31,9 +31,9 @@ import useFormValidation from "../hooks/useFormValidation";
 import { JURISDICTIONS, INDUSTRY_OPTIONS } from "../common/documentConstants";
 
 const FIELD_BASE_CLASSES =
-  "w-full p-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl focus:ring-2 focus:ring-axim-teal focus:border-axim-teal focus:shadow-[0_0_15px_rgba(0,229,255,0.4)] outline-none text-zinc-100 placeholder-zinc-500 duration-500";
+  "w-full p-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500/40 focus:border-purple-400 focus:bg-slate-900/80 transition-all duration-300 outline-none text-zinc-100 placeholder-zinc-500 duration-500";
 const INPUT_CLASSES = `${FIELD_BASE_CLASSES} transition-all`;
-const SELECT_CLASSES = FIELD_BASE_CLASSES;
+const SELECT_CLASSES = `${FIELD_BASE_CLASSES} bg-slate-900/50 dark:bg-slate-950 text-slate-100`;
 const LABEL_CLASSES = "text-sm font-bold text-zinc-300 mb-2";
 const TOGGLE_BUTTON_BASE_CLASSES =
   "flex-1 py-3 text-sm font-bold rounded-lg transition";
