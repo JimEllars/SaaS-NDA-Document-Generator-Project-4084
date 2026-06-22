@@ -414,6 +414,21 @@ const NDAGeneratorForm = React.memo(
       setCurrentStep((prev) => Math.max(prev - 1, 1));
     };
 
+const handleContextChipClick = useCallback((chipType) => {
+      queueTelemetry(`context_chip_clicked_${chipType}`);
+      setFormData((prev) => {
+        let updates = {};
+        if (chipType === "Standard Tech NDA") {
+          updates = { industry: "tech", strictness: "standard", type: "mutual", term: "3" };
+        } else if (chipType === "NDA Contract Template") {
+          updates = { industry: "general", strictness: "standard", type: "unilateral", term: "2" };
+        } else if (chipType === "NDA Contract Example") {
+          updates = { industry: "creative", strictness: "standard", type: "mutual", term: "1" };
+        }
+        return { ...prev, ...updates };
+      });
+    }, [setFormData, queueTelemetry]);
+
     const progressSteps = [
       { id: 1, label: "1. Details" },
       { id: 2, label: "2. Clauses" },
@@ -501,6 +516,14 @@ const NDAGeneratorForm = React.memo(
 
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* Edge Shield Indicator */}
+        <div className="flex justify-center mt-2 mb-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-axim-teal/10 border border-axim-teal/20 rounded-full shadow-sm" aria-label="Secure Edge Active">
+                <SafeIcon icon={FiShield} size={14} className="text-axim-teal" />
+                <span className="text-xs font-semibold text-axim-teal tracking-wide">Shield Protected</span>
+            </div>
+        </div>
+
         {/* Instructions */}
         <div className="bg-axim-teal/5 border border-axim-teal/20 rounded-xl p-4 text-sm text-zinc-300">
           <p className="flex gap-2">
@@ -514,6 +537,22 @@ const NDAGeneratorForm = React.memo(
             download the legally binding document in PDF format.
           </p>
         </div>
+
+        {/* Context Choice Chips */}
+        {currentStep === 1 && (
+          <div className="flex flex-wrap gap-2 mb-2 px-2">
+            {["Standard Tech NDA", "NDA Contract Template", "NDA Contract Example"].map((chip) => (
+              <button
+                key={chip}
+                onClick={() => handleContextChipClick(chip)}
+                type="button"
+                className="px-4 py-2 text-xs font-semibold bg-white/5 backdrop-blur-md border border-white/10 rounded-full text-zinc-300 hover:bg-axim-teal/20 hover:text-axim-teal hover:border-axim-teal/50 transition-all duration-300 shadow-sm"
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+        )}
 
         {renderProgressBar()}
 
@@ -1292,7 +1331,7 @@ const NDAGeneratorForm = React.memo(
                   </div>
 
                   {!isFormValid && (
-                    <p className="text-sm text-red-400 mt-4 font-medium flex items-center justify-center gap-2 animate-pulse">
+                    <p className="text-sm text-red-400 mt-4 font-medium flex items-center justify-center gap-2 animate-pulse" aria-live="polite">
                       <SafeIcon icon={FiAlertCircle} size={16} />
                       {validationMessage}
                     </p>
