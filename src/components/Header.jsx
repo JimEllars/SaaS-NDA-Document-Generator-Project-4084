@@ -1,10 +1,19 @@
 import React from 'react';
+import { FiAlertTriangle } from 'react-icons/fi';
 import { FiShield, FiTrash2 } from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 
 const Header = React.memo(({ isPaid, onClear, onStartOver }) => {
   return (
-    <div className="max-w-3xl w-full flex justify-between items-center mb-8 no-print">
+    <>
+      {!import.meta.env.PROD && (
+        <div className="w-full max-w-3xl mb-4 bg-axim-teal/10 border border-axim-teal/30 text-axim-teal text-xs py-2 px-4 rounded-lg flex items-center justify-center gap-2 backdrop-blur-md">
+          <FiAlertTriangle size={14} />
+          <span>Staging Environment - Do not enter real PII. Activity is strictly monitored.</span>
+        </div>
+      )}
+      <div className="max-w-3xl w-full flex justify-between items-center mb-8 no-print">
+
       <div>
         <a href="https://axim.us.com" className="text-sm text-axim-teal hover:underline mb-2 inline-block font-semibold flex items-center gap-1 opacity-80 hover:opacity-100 transition">
           &larr; Back to AXiM Ecosystem
@@ -32,6 +41,7 @@ const Header = React.memo(({ isPaid, onClear, onStartOver }) => {
         </button>
       )}
     </div>
+    </>
   );
 }, (prevProps, nextProps) => {
   return prevProps.isPaid === nextProps.isPaid;
