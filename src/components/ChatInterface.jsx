@@ -15,7 +15,7 @@ const ChatInterface = () => {
     };
 
     return (
-        <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+        <div className="p-4 bg-zinc-950/80 backdrop-blur-md border border-zinc-800/60 rounded-xl">
             <h4 className="text-zinc-100 font-bold mb-2">System Alert: High latency detected</h4>
             <p className="text-zinc-400 text-sm mb-4">AI recommends running: purge_cloudflare_cache</p>
             <div className="flex gap-2">

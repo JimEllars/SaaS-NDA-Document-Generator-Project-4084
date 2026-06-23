@@ -18,6 +18,51 @@ let diagnosticQueue = [];
 let isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
 
 // Listen for network changes in browser environment
+
+const flushLocalStorageQueue = async () => {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+
+    try {
+        const stored = window.localStorage.getItem('axim_telemetry_buffer');
+        if (!stored) return;
+
+        const buffer = JSON.parse(stored);
+        if (!Array.isArray(buffer) || buffer.length === 0) return;
+
+        const url = import.meta.env.VITE_TELEMETRY_URL || '/api/v1/telemetry/errors';
+
+        const successfulIndices = [];
+
+        for (let i = 0; i < buffer.length; i++) {
+            try {
+                const response = await fetchWithTimeout(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(buffer[i])
+                });
+
+                if (response && (response.status === 200 || response.status === 202)) {
+                    successfulIndices.push(i);
+                }
+            } catch (err) {
+                console.error("Failed to sync queued telemetry packet", err);
+            }
+        }
+
+        if (successfulIndices.length > 0) {
+            const remaining = buffer.filter((_, index) => !successfulIndices.includes(index));
+            if (remaining.length === 0) {
+                window.localStorage.removeItem('axim_telemetry_buffer');
+            } else {
+                window.localStorage.setItem('axim_telemetry_buffer', JSON.stringify(remaining));
+            }
+        }
+    } catch (e) {
+        console.error("Error processing local storage telemetry queue", e);
+    }
+};
+
+// Listen for network changes in browser environment
 if (typeof window !== 'undefined') {
     window.addEventListener('offline', () => {
         isOffline = true;
@@ -36,7 +81,21 @@ if (typeof window !== 'undefined') {
         if (diagnosticQueue.length > 0) {
             flushDiagnosticQueue();
         }
+        flushLocalStorageQueue();
     });
+
+    window.addEventListener('focus', () => {
+        if (!isOffline) {
+            flushLocalStorageQueue();
+        }
+    });
+
+    // Initial flush
+    setTimeout(() => {
+        if (!isOffline) {
+            flushLocalStorageQueue();
+        }
+    }, 1000);
 }
 
 const flushDiagnosticQueue = async () => {

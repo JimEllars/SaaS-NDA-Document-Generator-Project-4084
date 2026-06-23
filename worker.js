@@ -230,6 +230,34 @@ export default {
           const result = await generatePdfBytes(plainText, formData);
           pdfBytes = result.pdfBytes;
           docId = result.docId;
+          const end = Date.now();
+          const duration = end - start;
+
+          ctx.waitUntil(
+            fetch(
+              `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/errors`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+                },
+                body: JSON.stringify({
+                  telemetry_envelope: {
+                    project_id: "AXIM_NDA_GENERATOR",
+                    environment: "production",
+                    timestamp: new Date().toISOString()
+                  },
+                  event_payload: {
+                    event_type: "document_generation_perf",
+                    execution_duration_ms: duration,
+                    severity: "INFO",
+                    trace_id: docId
+                  }
+                })
+              }
+            ).catch(e => console.error("Telemetry failure", e))
+          );
         } catch (pdfErr) {
           ctx.waitUntil(
             fetch(
@@ -381,6 +409,34 @@ export default {
           const result = await generatePdfBytes(plainText, formData);
           pdfBytes = result.pdfBytes;
           docId = result.docId;
+          const end = Date.now();
+          const duration = end - start;
+
+          ctx.waitUntil(
+            fetch(
+              `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/errors`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+                },
+                body: JSON.stringify({
+                  telemetry_envelope: {
+                    project_id: "AXIM_NDA_GENERATOR",
+                    environment: "production",
+                    timestamp: new Date().toISOString()
+                  },
+                  event_payload: {
+                    event_type: "document_generation_perf",
+                    execution_duration_ms: duration,
+                    severity: "INFO",
+                    trace_id: docId
+                  }
+                })
+              }
+            ).catch(e => console.error("Telemetry failure", e))
+          );
         } catch (pdfErr) {
           ctx.waitUntil(
             fetch(
