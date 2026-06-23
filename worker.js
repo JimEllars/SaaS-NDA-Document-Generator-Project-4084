@@ -111,15 +111,43 @@ export default {
 
     function sanitizeFormData(formData, ctx, env) {
       const sanitized = { ...formData };
-      const fieldsToSanitize = ['disclosing', 'receiving', 'organization', 'email', 'recipientEmail'];
+      const fieldsToSanitize = ['disclosing', 'receiving', 'organization', 'email', 'recipientEmail', 'jurisdiction', 'purpose', 'customClauses'];
       let modified = false;
+
+      const badPhrases = [
+        "ignore previous instructions",
+        "system bypass",
+        "override system",
+        "ignore instructions"
+      ];
 
       for (const field of fieldsToSanitize) {
         if (typeof sanitized[field] === 'string') {
-          const original = sanitized[field];
-          sanitized[field] = original.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\u017F]/g, '');
-          if (original !== sanitized[field]) {
+          let original = sanitized[field];
+          // 1. Slice extreme length (10k chars limit)
+          if (original.length > 10000) {
+            original = original.slice(0, 10000);
             modified = true;
+          }
+
+          // 2. Filter unprintable chars
+          let cleaned = original.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\u017F\n\r\t]/g, '');
+          if (cleaned !== original) {
+            modified = true;
+          }
+
+          // 3. Filter adversarial overrides
+          for (const phrase of badPhrases) {
+            if (cleaned.toLowerCase().includes(phrase)) {
+                modified = true;
+                const regex = new RegExp(phrase, 'gi');
+                cleaned = cleaned.replace(regex, '[REDACTED]');
+            }
+          }
+
+          sanitized[field] = cleaned;
+          if (sanitized[field] !== formData[field]) {
+              modified = true;
           }
         }
       }
@@ -135,9 +163,17 @@ export default {
                 Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
               },
               body: JSON.stringify({
-                event: "pdf_sanitization_triggered",
-                app_type: "nda",
-                severity: "WARNING",
+                  telemetry_envelope: {
+                      project_id: "AXIM_NDA_GENERATOR",
+                      environment: "production",
+                      timestamp: new Date().toISOString()
+                  },
+                  event_payload: {
+                      event_type: "rag_sanitation_intervention",
+                      app_type: "nda",
+                      severity: "HIGH",
+                      details: "Input contained illegal characters, extreme lengths, or adversarial override phrases."
+                  }
               }),
             }
           ).catch((e) => console.error("Telemetry failed for sanitization:", e))

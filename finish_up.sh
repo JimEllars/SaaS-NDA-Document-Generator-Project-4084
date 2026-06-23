@@ -1,1 +1,1 @@
-echo 'done'
+echo "finished"

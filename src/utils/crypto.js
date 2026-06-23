@@ -68,3 +68,45 @@ export const hashFormData = async (formData) => {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
+
+
+export const sanitizeInput = (input) => {
+    if (typeof input !== 'string') return input;
+
+    // Gracefully slice extreme text lengths
+    let sanitized = input.slice(0, 10000);
+
+    // Character containment filters (stripping dangerous control chars)
+    // and maintaining standard printable ASCII/UTF-8
+    sanitized = sanitized.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\u017F\n\r\t]/g, '');
+
+    // Adversarial override string filtering
+    const badPhrases = [
+        "ignore previous instructions",
+        "system bypass",
+        "override system",
+        "ignore instructions"
+    ];
+
+    let original = sanitized.toLowerCase();
+    let hasViolation = false;
+
+    if (input.length > 10000) {
+        hasViolation = true;
+    }
+
+    if (input.replace(/[^\x20-\x7E\xA0-\xFF\u0100-\u017F\n\r\t]/g, '') !== input) {
+        hasViolation = true;
+    }
+
+    for (const phrase of badPhrases) {
+        if (sanitized.toLowerCase().includes(phrase)) {
+            hasViolation = true;
+            // Filter it out using case-insensitive regex
+            const regex = new RegExp(phrase, 'gi');
+            sanitized = sanitized.replace(regex, '[REDACTED]');
+        }
+    }
+
+    return { sanitized, hasViolation };
+};

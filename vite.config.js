@@ -16,6 +16,7 @@ export default defineConfig({
     historyApiFallback: true,
   },
   build: {
+    target: 'es2022',
     outDir: 'dist',
     sourcemap: true,
     minify: 'terser',

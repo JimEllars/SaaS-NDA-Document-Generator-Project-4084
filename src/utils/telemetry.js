@@ -68,8 +68,28 @@ const flushDiagnosticQueue = async () => {
 };
 
 export const flushTelemetry = async (payload) => {
-    payload.project_id = "AXIM_NDA_GENERATOR";
-    payload.environment = "production";
+    // Determine if this is a standard payload or if it needs to be wrapped
+    let finalPayload;
+
+    // Check if it's already wrapped in the new telemetry_envelope schema
+    if (payload.telemetry_envelope) {
+        finalPayload = payload;
+    } else {
+        // Legacy or general error payload wrapping
+        finalPayload = {
+            telemetry_envelope: {
+                project_id: "AXIM_NDA_GENERATOR",
+                environment: "production",
+                timestamp: new Date().toISOString()
+            },
+            event_payload: {
+                ...payload,
+                event_type: payload.event_type || "general_telemetry",
+                severity: payload.severity || "INFO"
+            }
+        };
+    }
+
     try {
         const url = import.meta.env.VITE_TELEMETRY_URL || '/api/v1/telemetry/errors';
         await fetchWithTimeout(url, {
@@ -77,7 +97,7 @@ export const flushTelemetry = async (payload) => {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(finalPayload)
         });
     } catch (e) {
         console.error("Telemetry failed to flush", e);
@@ -85,10 +105,10 @@ export const flushTelemetry = async (payload) => {
             if (typeof window !== 'undefined' && window.localStorage) {
                 const stored = window.localStorage.getItem('axim_telemetry_buffer') || '[]';
                 const buffer = JSON.parse(stored);
-                buffer.push(payload);
+                buffer.push(finalPayload);
                 window.localStorage.setItem('axim_telemetry_buffer', JSON.stringify(buffer));
             } else {
-                diagnosticQueue.push(payload);
+                diagnosticQueue.push(finalPayload);
             }
         } catch (storageError) {
             console.error("Failed to buffer telemetry locally", storageError);
