@@ -32,6 +32,8 @@ const SuccessPage = React.memo(function SuccessPage() {
   const [documentMeta, setDocumentMeta] = useState({ id: null, hash: null });
   const [email, setEmail] = useState("");
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+
 
   // Use a ref to hold the formData so it's accessible outside the effect
   const savedFormDataRef = useRef(null);
@@ -114,6 +116,18 @@ const SuccessPage = React.memo(function SuccessPage() {
     setEmail("");
     navigate("/");
   }, [navigate, resetForm]);
+
+
+  const handleCopyHash = useCallback(() => {
+    if (documentMeta.hash) {
+      navigator.clipboard.writeText(documentMeta.hash)
+        .then(() => {
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 2000);
+        })
+        .catch(err => console.error("Failed to copy text: ", err));
+    }
+  }, [documentMeta.hash]);
 
   const handleSendEmail = useCallback(async () => {
     if (isSendingEmail) return;
@@ -380,14 +394,22 @@ const SuccessPage = React.memo(function SuccessPage() {
                 <span className="text-axim-teal">{documentMeta.id}</span>
               </div>
               {documentMeta.hash && (
-                <div className="flex justify-between border-b border-white/5 pb-1">
+                <div className="flex justify-between border-b border-white/5 pb-1 items-center">
                   <span className="text-zinc-500">Document Hash:</span>
-                  <span
-                    className="truncate max-w-[200px]"
-                    title={documentMeta.hash}
-                  >
-                    {documentMeta.hash}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="truncate max-w-[120px]"
+                      title={documentMeta.hash}
+                    >
+                      {documentMeta.hash.substring(0, 16)}...
+                    </span>
+                    <button
+                      onClick={handleCopyHash}
+                      className="text-[10px] bg-axim-teal/20 text-axim-teal px-2 py-0.5 rounded border border-axim-teal/30 hover:bg-axim-teal/40 transition-colors"
+                    >
+                      {copySuccess ? 'Copied!' : 'Copy Seal'}
+                    </button>
+                  </div>
                 </div>
               )}
               <div className="flex justify-between pt-1">
