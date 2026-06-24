@@ -164,9 +164,12 @@ export default {
               },
               body: JSON.stringify({
                   telemetry_envelope: {
-                      project_id: "AXIM_NDA_GENERATOR",
-                      environment: "production",
-                      timestamp: new Date().toISOString()
+                    project_id: "AXIM_NDA_GENERATOR",
+                    environment: "production",
+                    timestamp: new Date().toISOString(),
+                    ecosystem_link: {
+                        source: "web_client"
+                    }
                   },
                   event_payload: {
                       event_type: "rag_sanitation_intervention",
@@ -246,7 +249,10 @@ export default {
                   telemetry_envelope: {
                     project_id: "AXIM_NDA_GENERATOR",
                     environment: "production",
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    ecosystem_link: {
+                        source: "web_client"
+                    }
                   },
                   event_payload: {
                     event_type: "document_generation_perf",
@@ -332,6 +338,81 @@ export default {
         return new Response(
           JSON.stringify({ error: "Internal Server Error" }),
           { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+
+    // --- NEW: Headless Generation Route for AXiM Core ---
+    if (request.method === "POST" && url.pathname === "/api/v1/generate-headless") {
+      try {
+        const authHeader = request.headers.get("Authorization");
+        const expectedToken = env.AXIM_CORE_TOKEN || env.AXIM_SERVICE_KEY;
+
+        if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        let formData = await request.json();
+        formData = sanitizeFormData(formData, ctx, env);
+
+        const start = Date.now();
+        const docId = crypto.randomUUID();
+
+        const plainText = generatePlainText(null, formData);
+        const pdfBytes = await generatePdfBytes(plainText, formData);
+
+        const hashArray = await hashFormData(formData);
+        const duration_ms = Date.now() - start;
+
+        // Telemetry for Headless Generation
+        ctx.waitUntil(
+          fetch(
+            `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/ingest`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              },
+              body: JSON.stringify({
+                event: "headless_pdf_generation_success",
+                app_type: "nda",
+                source: "axim_core_api",
+                generation_latency_ms: duration_ms,
+                trace_id: docId
+              }),
+            }
+          ).catch((err) => console.error("Telemetry failed:", err))
+        );
+
+        return new Response(
+          JSON.stringify({
+            status: "success",
+            document_id: docId,
+            hash: hashArray,
+            pdf_base64: btoa(Array.from(pdfBytes).map(b => String.fromCharCode(b)).join('')),
+            metadata: {
+                generated_at: new Date().toISOString(),
+                parties: formData.parties,
+                jurisdiction: formData.jurisdiction,
+                sector: formData.sector
+            }
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+
+      } catch (err) {
+        console.error("Headless Generation Error:", err);
+        return new Response(
+          JSON.stringify({ error: "Internal Server Error", details: err.message }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
         );
       }
     }
@@ -425,7 +506,10 @@ export default {
                   telemetry_envelope: {
                     project_id: "AXIM_NDA_GENERATOR",
                     environment: "production",
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    ecosystem_link: {
+                        source: "web_client"
+                    }
                   },
                   event_payload: {
                     event_type: "document_generation_perf",

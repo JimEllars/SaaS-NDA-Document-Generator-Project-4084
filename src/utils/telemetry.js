@@ -139,7 +139,10 @@ export const flushTelemetry = async (payload) => {
             telemetry_envelope: {
                 project_id: "AXIM_NDA_GENERATOR",
                 environment: "production",
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                ecosystem_link: {
+                    source: "web_client"
+                }
             },
             event_payload: {
                 ...payload,

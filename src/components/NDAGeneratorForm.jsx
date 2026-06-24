@@ -501,6 +501,18 @@ const NDAGeneratorForm = React.memo(
 
     return (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+        {/* Ecosystem Sync Indicator */}
+        {new URLSearchParams(window.location.search).get('ecosystem_sync') === 'true' && (
+          <div className="flex items-center gap-2 mb-4">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-axim-teal opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-axim-teal"></span>
+            </span>
+            <span className="text-xs font-semibold text-axim-teal tracking-wider uppercase">Ecosystem Sync Active</span>
+          </div>
+        )}
+
         {/* Instructions */}
         <div className="bg-axim-teal/5 border border-axim-teal/20 rounded-xl p-4 text-sm text-zinc-300">
           <p className="flex gap-2">
