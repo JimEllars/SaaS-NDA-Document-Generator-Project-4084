@@ -20,11 +20,14 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     minify: 'terser',
+    cssMinify: true,
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
-          ui: ['react-icons']
+          react: ['react', 'react-dom', 'react-router-dom'],
+          animation: ['framer-motion'],
+          icons: ['react-icons'],
+          pdf: ['pdf-lib']
         }
       }
     },
