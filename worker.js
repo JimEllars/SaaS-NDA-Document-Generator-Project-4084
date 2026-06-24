@@ -250,7 +250,7 @@ export default {
                   },
                   event_payload: {
                     event_type: "document_generation_perf",
-                    execution_duration_ms: duration,
+                    generation_latency_ms: duration,
                     severity: "INFO",
                     trace_id: docId
                   }
@@ -294,7 +294,7 @@ export default {
               body: JSON.stringify({
                 event: "pdf_generation_success",
                 app_type: "nda",
-                duration_ms: duration_ms,
+                generation_latency_ms: duration_ms,
               }),
             }
           ).catch(e => console.error(e))
@@ -429,7 +429,7 @@ export default {
                   },
                   event_payload: {
                     event_type: "document_generation_perf",
-                    execution_duration_ms: duration,
+                    generation_latency_ms: duration,
                     severity: "INFO",
                     trace_id: docId
                   }
@@ -473,7 +473,7 @@ export default {
               body: JSON.stringify({
                 event: "pdf_generation_success",
                 app_type: "nda",
-                duration_ms: duration_ms,
+                generation_latency_ms: duration_ms,
               }),
             }
           ).catch(e => console.error(e))

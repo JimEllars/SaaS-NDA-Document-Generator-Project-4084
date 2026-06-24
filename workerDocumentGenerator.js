@@ -416,12 +416,17 @@ const generateExecutionParts = (formData, textParts) => {
 export const generatePlainText = (documentData, formData) => {
   if (!documentData) return "";
 
+  const start = Date.now();
   const textParts = [];
   generateHeaderParts(documentData, textParts);
   generateSectionsParts(documentData, textParts);
   generateExecutionParts(formData, textParts);
 
   const result = textParts.join("");
+  const duration = Date.now() - start;
+  // Make the duration available (if needed) - we'll just log or we can modify the worker
+  console.log(`generatePlainText latency: ${duration}ms`);
+
   // Explicitly clear intermediate parameter mapping string array
   textParts.length = 0;
   return result;

@@ -308,7 +308,7 @@ const VerificationPortal = React.memo(function VerificationPortal() {
 
   return (
     <div className="flex flex-col items-center w-full max-w-2xl mx-auto mt-10">
-      <div className="bg-zinc-950/80 backdrop-blur-md border border-zinc-800/60 rounded-2xl p-8 shadow-xl w-full text-zinc-100 relative overflow-hidden">
+      <div className="bg-zinc-950/75 backdrop-blur-md border border-zinc-800/50 rounded-2xl p-8 shadow-xl w-full text-zinc-100 relative overflow-hidden">
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-axim-teal rounded-full opacity-10 blur-3xl pointer-events-none"></div>
         <div className="relative z-10">
           <div className="flex flex-col items-center mb-8">
@@ -449,7 +449,7 @@ const VerificationPortal = React.memo(function VerificationPortal() {
               </div>
 
               {isSignMode && (
-                <div className="bg-zinc-950/80 backdrop-blur-md border border-zinc-800/60 p-8 rounded-2xl mt-4 relative overflow-hidden">
+                <div className="bg-zinc-950/75 backdrop-blur-md border border-zinc-800/50 p-8 rounded-2xl mt-4 relative overflow-hidden">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold flex items-center gap-2">
                       <SafeIcon icon={FiPenTool} size={20} /> Counterparty Signature
