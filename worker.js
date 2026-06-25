@@ -370,7 +370,7 @@ export default {
         if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
           });
         }
 
@@ -431,7 +431,7 @@ export default {
           }),
           {
             status: 200,
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
           }
         );
 
@@ -439,7 +439,7 @@ export default {
         console.error("Headless Generation Error:", err);
         return new Response(
           JSON.stringify({ error: "Internal Server Error", details: err.message }),
-          { status: 500, headers: { "Content-Type": "application/json" } }
+          { status: 500, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" } }
         );
       }
     }
