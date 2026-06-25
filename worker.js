@@ -298,9 +298,18 @@ export default {
                 Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
               },
               body: JSON.stringify({
-                event: "pdf_generation_success",
-                app_type: "nda",
-                generation_latency_ms: duration_ms,
+                telemetry_envelope: {
+                  project_id: "AXIM_NDA_GENERATOR",
+                  environment: "production",
+                  timestamp: new Date().toISOString(),
+                  ecosystem_link: { source: "web_client" }
+                },
+                event_payload: {
+                  event: "pdf_generation_success",
+                  event_type: "document_generation_perf",
+                  app_type: "nda",
+                  generation_latency_ms: duration_ms,
+                }
               }),
             }
           ).catch(e => console.error(e))
@@ -326,10 +335,19 @@ export default {
                 Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
               },
               body: JSON.stringify({
-                event: "pdf_generation_failed",
-                app_type: "nda",
-                severity: "CRITICAL",
-                error_message: err.message,
+                telemetry_envelope: {
+                  project_id: "AXIM_NDA_GENERATOR",
+                  environment: "production",
+                  timestamp: new Date().toISOString(),
+                  ecosystem_link: { source: "web_client" }
+                },
+                event_payload: {
+                  event: "pdf_generation_failed",
+                  event_type: "pdf_generation_failed",
+                  app_type: "nda",
+                  severity: "CRITICAL",
+                  error_message: err.message,
+                }
               }),
             },
           ),
@@ -362,7 +380,8 @@ export default {
         const start = Date.now();
         const docId = crypto.randomUUID();
 
-        const plainText = generatePlainText(null, formData);
+        const documentData = generateDocument({ ...formData, isPaid: true });
+        const plainText = generatePlainText(documentData, formData);
         const pdfBytes = await generatePdfBytes(plainText, formData);
 
         const hashArray = await hashFormData(formData);
@@ -379,11 +398,19 @@ export default {
                 Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
               },
               body: JSON.stringify({
-                event: "headless_pdf_generation_success",
-                app_type: "nda",
-                source: "axim_core_api",
-                generation_latency_ms: duration_ms,
-                trace_id: docId
+                telemetry_envelope: {
+                  project_id: "AXIM_NDA_GENERATOR",
+                  environment: "production",
+                  timestamp: new Date().toISOString(),
+                  ecosystem_link: { source: "axim_core_api" }
+                },
+                event_payload: {
+                  event: "headless_pdf_generation_success",
+                  event_type: "document_generation_perf",
+                  app_type: "nda",
+                  generation_latency_ms: duration_ms,
+                  trace_id: docId
+                }
               }),
             }
           ).catch((err) => console.error("Telemetry failed:", err))
@@ -555,9 +582,18 @@ export default {
                 Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
               },
               body: JSON.stringify({
-                event: "pdf_generation_success",
-                app_type: "nda",
-                generation_latency_ms: duration_ms,
+                telemetry_envelope: {
+                  project_id: "AXIM_NDA_GENERATOR",
+                  environment: "production",
+                  timestamp: new Date().toISOString(),
+                  ecosystem_link: { source: "web_client" }
+                },
+                event_payload: {
+                  event: "pdf_generation_success",
+                  event_type: "document_generation_perf",
+                  app_type: "nda",
+                  generation_latency_ms: duration_ms,
+                }
               }),
             }
           ).catch(e => console.error(e))
@@ -630,10 +666,19 @@ export default {
                 Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
               },
               body: JSON.stringify({
-                event: "pdf_generation_failed",
-                app_type: "nda",
-                severity: "CRITICAL",
-                error_message: err.message,
+                telemetry_envelope: {
+                  project_id: "AXIM_NDA_GENERATOR",
+                  environment: "production",
+                  timestamp: new Date().toISOString(),
+                  ecosystem_link: { source: "web_client" }
+                },
+                event_payload: {
+                  event: "pdf_generation_failed",
+                  event_type: "pdf_generation_failed",
+                  app_type: "nda",
+                  severity: "CRITICAL",
+                  error_message: err.message,
+                }
               }),
             },
           ),

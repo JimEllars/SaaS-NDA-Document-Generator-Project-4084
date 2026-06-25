@@ -27,7 +27,7 @@ export default defineConfig({
           react: ['react', 'react-dom', 'react-router-dom'],
           animation: ['framer-motion'],
           icons: ['react-icons'],
-          pdf: ['pdf-lib']
+
         }
       }
     },
