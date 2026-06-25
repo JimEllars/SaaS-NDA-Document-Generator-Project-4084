@@ -73,6 +73,47 @@ export default {
       }
 
 
+        if (request.method === "POST" && url.pathname === "/api/v1/generate-headless") {
+      const authHeader = request.headers.get("Authorization");
+      if (!authHeader || authHeader !== `Bearer ${env.AXIM_SERVICE_KEY}`) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      try {
+        const formData = await request.json();
+        const docData = generateDocument({ ...formData, isPaid: true });
+        const plainText = docData.plainText;
+        const pdfBytes = await generatePdfBytes(plainText, { ...formData, isPaid: true });
+
+        // Convert Uint8Array to base64
+        let binary = '';
+        const len = pdfBytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(pdfBytes[i]);
+        }
+        const base64Pdf = btoa(binary);
+
+        const docHash = await hashFormData(formData);
+
+        return new Response(JSON.stringify({
+          docId: docData.docId,
+          hash: docHash,
+          pdfBytes: base64Pdf
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "Generation failed", details: e.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+    }
+
     if ((url.pathname === "/api/health" || url.pathname === "/api/v1/health") && request.method === "GET") {
       return new Response(
         JSON.stringify({

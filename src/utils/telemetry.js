@@ -102,10 +102,16 @@ const flushDiagnosticQueue = async () => {
     if (diagnosticQueue.length === 0) return;
 
     const payload = {
-        app_id: "nda-generator",
-        env: getEnvContext(),
-        events: [...diagnosticQueue],
-        flushed_at: new Date().toISOString(),
+        telemetry_envelope: {
+            project_id: "AXIM_NDA_GENERATOR",
+            environment: getEnvContext(),
+            orchestration_engine: window.location.search.includes('source=onyx') ? "Onyx" : "None",
+            timestamp: new Date().toISOString()
+        },
+        event_payload: {
+            events: [...diagnosticQueue],
+            flushed_at: new Date().toISOString()
+        }
     };
 
     diagnosticQueue = []; // Clear queue
@@ -185,12 +191,17 @@ export const flushTelemetry = async (payload) => {
 
 export const logException = (error, context = {}) => {
     const payload = {
-        app_id: "nda-generator",
-        env: getEnvContext(),
-        error_message: error?.message || "Unknown error",
-        error_stack: error?.stack || null,
-        context,
-        timestamp: new Date().toISOString()
+        telemetry_envelope: {
+            project_id: "AXIM_NDA_GENERATOR",
+            environment: getEnvContext(),
+            orchestration_engine: window.location.search.includes('source=onyx') ? "Onyx" : "None",
+            timestamp: new Date().toISOString()
+        },
+        event_payload: {
+            error_message: error?.message || "Unknown error",
+            error_stack: error?.stack || null,
+            context
+        }
     };
     flushTelemetry(payload);
 };
