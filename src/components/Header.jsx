@@ -27,12 +27,12 @@ const Header = React.memo(({ isPaid, onClear, onStartOver }) => {
       )}
       <div className="max-w-3xl w-full flex justify-between items-center mb-8 no-print relative">
         {isEcosystemSync ? (
-          <div className="absolute -top-6 right-0 bg-axim-teal/10 border border-axim-teal/30 text-axim-teal text-xs py-1 px-3 rounded-full flex items-center gap-2 backdrop-blur-md animate-pulse shadow-[0_0_10px_rgba(0,229,255,0.2)]">
+          <div className="absolute -top-6 right-0 bg-green-500/10 border border-green-500/30 text-green-500 text-xs py-1 px-3 rounded-full flex items-center gap-2 backdrop-blur-md animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.2)]">
             <FiActivity size={12} />
             <span>Ecosystem Sync Active</span>
           </div>
         ) : (
-          <div className="absolute -top-6 right-0 bg-zinc-800/50 border border-zinc-700/50 text-zinc-400 text-xs py-1 px-3 rounded-full flex items-center gap-2 backdrop-blur-md">
+          <div className="absolute -top-6 right-0 bg-zinc-800/50 border border-zinc-700/50 text-zinc-500 text-xs py-1 px-3 rounded-full flex items-center gap-2 backdrop-blur-md">
             <FiActivity size={12} />
             <span>Standalone Mode</span>
           </div>

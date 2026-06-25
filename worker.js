@@ -99,6 +99,16 @@ export default {
     }
 
     if (request.method === "OPTIONS") {
+      const origin = request.headers.get("Origin") || "";
+      if (url.pathname === "/api/v1/generate-headless") {
+        if (!origin.endsWith("axim.us.com")) {
+          return new Response(JSON.stringify({ status: "error", message: "Ecosystem Handshake Unauthorized" }), {
+            status: 403,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+      }
+
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "https://axim.us.com",
@@ -368,7 +378,7 @@ export default {
         const expectedToken = env.AXIM_CORE_TOKEN || env.AXIM_SERVICE_KEY;
 
         if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
-          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          return new Response(JSON.stringify({ status: "error", message: "Ecosystem Handshake Unauthorized" }), {
             status: 401,
             headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
           });
@@ -388,6 +398,51 @@ export default {
         const duration_ms = Date.now() - start;
 
         // Telemetry for Headless Generation
+        ctx.waitUntil(
+            (async () => {
+                try {
+                    const messageString = docId + duration_ms;
+                    const encoder = new TextEncoder();
+                    const key = await crypto.subtle.importKey(
+                        'raw',
+                        encoder.encode(env.AXIM_SERVICE_KEY || 'default-secret'),
+                        { name: 'HMAC', hash: 'SHA-256' },
+                        false,
+                        ['sign']
+                    );
+                    const signatureBuffer = await crypto.subtle.sign(
+                        'HMAC',
+                        key,
+                        encoder.encode(messageString)
+                    );
+                    const signatureHex = Array.from(new Uint8Array(signatureBuffer))
+                        .map(b => b.toString(16).padStart(2, '0'))
+                        .join('');
+
+                    await fetch(`${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/api/v1/onyx/callback`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                        },
+                        body: JSON.stringify({
+                            hash: hashArray,
+                            metadata: {
+                                generated_at: new Date().toISOString(),
+                                parties: formData.parties,
+                                jurisdiction: formData.jurisdiction,
+                                sector: formData.sector
+                            },
+                            latency_ms: duration_ms,
+                            signature: signatureHex
+                        })
+                    });
+                } catch (err) {
+                    console.error("Failed to fire Onyx webhook", err);
+                }
+            })()
+        );
+
         ctx.waitUntil(
           fetch(
             `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/ingest`,
@@ -437,6 +492,36 @@ export default {
 
       } catch (err) {
         console.error("Headless Generation Error:", err);
+
+        ctx.waitUntil(
+          fetch(
+            `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/telemetry/ingest`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              },
+              body: JSON.stringify({
+                telemetry_envelope: {
+                  project_id: "AXIM_NDA_GENERATOR",
+                  environment: "production",
+                  timestamp: new Date().toISOString(),
+                  orchestration_engine: "Onyx",
+                  ecosystem_link: { source: "axim_core_api" }
+                },
+                event_payload: {
+                  event: "headless_pdf_generation_failed",
+                  event_type: "pdf_generation_failed",
+                  app_type: "nda",
+                  severity: "CRITICAL",
+                  error_message: err.message,
+                }
+              }),
+            }
+          ).catch((e) => console.error("Telemetry failed:", e))
+        );
+
         return new Response(
           JSON.stringify({ error: "Internal Server Error", details: err.message }),
           { status: 500, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" } }

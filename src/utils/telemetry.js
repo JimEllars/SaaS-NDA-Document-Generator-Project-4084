@@ -150,6 +150,11 @@ export const flushTelemetry = async (payload) => {
                 severity: payload.severity || "INFO"
             }
         };
+
+        if (payload.context && payload.context.source === "onyx") {
+            finalPayload.telemetry_envelope.orchestration_engine = "Onyx";
+        }
+
     }
 
     try {
