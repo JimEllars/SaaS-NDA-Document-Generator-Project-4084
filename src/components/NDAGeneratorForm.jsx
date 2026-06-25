@@ -93,7 +93,8 @@ const NDAGeneratorForm = React.memo(
 
     const { isValid: isFormValid, validationMessage } =
       useFormValidation(formData);
-    const sigCanvas = useRef(null);
+    const isOnyxSync = typeof window !== 'undefined' && window.location.search.includes('source=onyx');
+  const sigCanvas = useRef(null);
 
     // Handle window resize for SignatureCanvas
     React.useEffect(() => {
@@ -503,13 +504,13 @@ const NDAGeneratorForm = React.memo(
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
         {/* Ecosystem Sync Indicator */}
-        {new URLSearchParams(window.location.search).get('ecosystem_sync') === 'true' && (
-          <div className="flex items-center gap-2 mb-4">
+        {isOnyxSync && (
+          <div className="bg-white/5 backdrop-blur-md border border-axim-teal/30 rounded-xl p-4 mb-6 flex items-center gap-3">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-axim-teal opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-axim-teal"></span>
             </span>
-            <span className="text-xs font-semibold text-axim-teal tracking-wider uppercase">Ecosystem Sync Active</span>
+            <span className="text-sm font-semibold text-axim-teal tracking-wider uppercase">Ecosystem Sync Active: Data provided by AXiM Core</span>
           </div>
         )}
 
@@ -719,11 +720,17 @@ const NDAGeneratorForm = React.memo(
                           name="email"
                           value={formData.email || ""}
                           onChange={handleInputChange}
-                          className={INPUT_CLASSES}
+                          className={`${INPUT_CLASSES} ${isOnyxSync ? 'opacity-70 cursor-not-allowed' : ''}`}
                           placeholder="Enter your email address"
                           autoComplete="email"
                           required
+                          disabled={isOnyxSync}
                         />
+                        {isOnyxSync && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                            <SafeIcon icon={FiLock} size={16} />
+                          </div>
+                        )}
                         {userSession?.email &&
                           formData.email === userSession.email && (
                             <div

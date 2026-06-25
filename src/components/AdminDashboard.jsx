@@ -91,14 +91,10 @@ const AdminDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold text-zinc-100 tracking-tight flex items-center gap-3">
             Command Center
-            {typeof window !== 'undefined' && (new URLSearchParams(window.location.search).has('axim_sync') || new URLSearchParams(window.location.search).has('partner_id') || new URLSearchParams(window.location.search).has('trace_id')) ? (
-              <span title="Ecosystem Sync Active" className="flex h-3 w-3 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
-            ) : (
-              <span title="Standalone Mode" className="relative inline-flex rounded-full h-3 w-3 bg-zinc-500"></span>
-            )}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-green-500/20 bg-green-500/10 text-green-400 text-xs font-medium ml-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+              AXiM Core: Connected
+            </span>
           </h1>
           <p className="text-zinc-400 mt-1">AXiM Core Intelligence & Fleet Control</p>
         </div>
