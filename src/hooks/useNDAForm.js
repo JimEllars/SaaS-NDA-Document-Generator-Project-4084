@@ -136,6 +136,10 @@ const useNDAForm = () => {
 
   const resetForm = useCallback(() => {
     const defaultData = getDefaultFormData();
+    try {
+        if (typeof localStorage !== "undefined") localStorage.removeItem('axim_nda_draft_state');
+    } catch(e) { /* ignore */ }
+
     setFormDataInternal(defaultData);
     setCurrentStepInternal(1);
     formDataRef.current = defaultData;

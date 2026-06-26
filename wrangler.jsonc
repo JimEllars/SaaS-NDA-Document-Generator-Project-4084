@@ -14,5 +14,16 @@
   "assets": {
     "directory": "dist",
     "binding": "ASSETS"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "AXIM_EDGE_KV",
+      "id": "AXIM_EDGE_KV"
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "*/15 * * * *"
+    ]
   }
 }

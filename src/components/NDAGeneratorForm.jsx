@@ -1,6 +1,7 @@
 import { fetchWithTimeout } from "../utils/fetchWithTimeout";
 import SignatureCanvas from "react-signature-canvas";
 import React, { useRef, useState, useEffect, useCallback } from "react";
+import { useDebounce } from "use-debounce";
 import useVectorSearch from "../hooks/useVectorSearch";
 // Use named imports from react-icons to enable tree-shaking and reduce bundle size
 import {
@@ -59,7 +60,42 @@ const NDAGeneratorForm = React.memo(
       `sess_${Math.random().toString(36).substring(2, 9)}`,
     );
 
+
+    const [debouncedFormData] = useDebounce(formData, 1000);
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const source = urlParams.get('source');
+        if (source === 'onyx') return;
+
+        const savedDraft = localStorage.getItem('axim_nda_draft_state');
+        if (savedDraft) {
+            try {
+                const parsedDraft = JSON.parse(savedDraft);
+                setFormData(prev => ({
+                    ...prev,
+                    ...parsedDraft
+                }));
+            } catch (e) {
+                console.error('Failed to parse autosaved draft', e);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const source = urlParams.get('source');
+        if (source === 'onyx') return;
+
+        const draftToSave = { ...debouncedFormData };
+        // Exclude sensitive payment parameters if any, currently mostly just standard form data
+        delete draftToSave.signatureImage;
+
+        localStorage.setItem('axim_nda_draft_state', JSON.stringify(draftToSave));
+    }, [debouncedFormData]);
+
     const handleBypass = React.useCallback(() => {
+
       // Navigate using a dummy session ID to trigger successful state
       window.location.href = "/success?session_id=AXM-BYPASS";
     }, []);
@@ -463,6 +499,8 @@ const NDAGeneratorForm = React.memo(
 
 
     const handlePurchaseClick = () => {
+    localStorage.removeItem('axim_nda_draft_state');
+
       if (isOffline) return;
       queueTelemetry("nda_checkout_initiated");
       flushTelemetry(); // Flush immediately before redirect
