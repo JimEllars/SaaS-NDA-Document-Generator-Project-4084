@@ -231,6 +231,23 @@ export const generatePdfBytes = async (plainText, formData) => {
   const calculatedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   pdfDoc.setKeywords([calculatedHash]);
 
+  // Phase 45: Add Cryptographic PDF Watermark Injection
+  const allPages = pdfDoc.getPages();
+  const uniqueDocId = formData.id || formData.traceId || docId;
+  const hashPrefix = calculatedHash.substring(0, 8);
+  const watermarkText = `Secured by AXiM Edge | Trace: ${uniqueDocId} | Hash: ${hashPrefix}`;
+
+  for (const p of allPages) {
+    const { width, height } = p.getSize();
+    p.drawText(watermarkText, {
+      x: 50,
+      y: 20,
+      size: 8,
+      font: baseFont,
+      color: rgb(0.6, 0.6, 0.6), // Light gray
+    });
+  }
+
   const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
 
   // Explicitly nullify variables

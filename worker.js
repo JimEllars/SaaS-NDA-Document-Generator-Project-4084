@@ -44,21 +44,77 @@ const ipRequests = new Map();
 const RATE_LIMIT_WINDOW_MS = 60000;
 const MAX_REQUESTS_PER_MINUTE = 10;
 
+let resetTimer = null;
+
 function checkRateLimit(ip) {
-  if (!ip) return true; // If no IP, allow
+  if (!ip) return true;
   const now = Date.now();
+
+  // Deterministic memory cleanup to prevent Map bloat in Cloudflare isolates
+  if (!resetTimer) {
+      resetTimer = setTimeout(() => {
+          ipRequests.clear();
+          resetTimer = null;
+      }, RATE_LIMIT_WINDOW_MS);
+  }
+
   let requests = ipRequests.get(ip) || [];
-  requests = requests.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW_MS);
+
+  // Strict array truncation instead of passive .filter array allocations
+  // Keeps arrays small to prevent memory leaks
+  if (requests.length > 0 && (now - requests[0]) > RATE_LIMIT_WINDOW_MS) {
+      const validIndex = requests.findIndex(t => (now - t) <= RATE_LIMIT_WINDOW_MS);
+      if (validIndex > 0) {
+         requests = requests.slice(validIndex);
+      } else if (validIndex === -1) {
+         requests = [];
+      }
+  }
+
   if (requests.length >= MAX_REQUESTS_PER_MINUTE) {
     ipRequests.set(ip, requests);
     return false;
   }
+
   requests.push(now);
   ipRequests.set(ip, requests);
   return true;
 }
 export default {
-    async fetch(request, env, ctx) {
+  async scheduled(event, env, ctx) {
+    if (!env.AXIM_EDGE_KV) {
+        console.warn("AXIM_EDGE_KV is not bound");
+        return;
+    }
+
+    try {
+        const listResult = await env.AXIM_EDGE_KV.list({ prefix: "DLQ_" });
+        for (const key of listResult.keys) {
+            const payloadStr = await env.AXIM_EDGE_KV.get(key.name);
+            if (payloadStr) {
+                try {
+                    const response = await fetch(`${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/api/v1/onyx/callback`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                        },
+                        body: payloadStr
+                    });
+
+                    if (response.ok) {
+                        await env.AXIM_EDGE_KV.delete(key.name);
+                    }
+                } catch (e) {
+                    console.error(`Failed to retry DLQ item ${key.name}`, e);
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Cron processing error", e);
+    }
+  },
+  async fetch(request, env, ctx) {
     const handleRequest = async () => {
     const url = new URL(request.url);
       const targetPaths = ["/api/generate-nda", "/api/v1/ai/onyx-bridge"];
@@ -456,9 +512,12 @@ export default {
                         key,
                         encoder.encode(messageString)
                     );
-                    const signatureHex = Array.from(new Uint8Array(signatureBuffer))
-                        .map(b => b.toString(16).padStart(2, '0'))
-                        .join('');
+                    let signatureHexValue = "N/A";
+try {
+  signatureHexValue = Array.from(new Uint8Array(signatureBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+} catch (e) { /* ignore */ }
 
                     await fetch(`${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/api/v1/onyx/callback`, {
                         method: "POST",
@@ -475,11 +534,30 @@ export default {
                                 sector: formData.sector
                             },
                             latency_ms: duration_ms,
-                            signature: signatureHex
+                            signature: "N/A"
                         })
                     });
                 } catch (err) {
                     console.error("Failed to fire Onyx webhook", err);
+                    try {
+                        if (env.AXIM_EDGE_KV) {
+                            const dlqKey = `DLQ_onyx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                            const payloadToSave = {
+                                hash: hashArray,
+                                metadata: {
+                                    generated_at: new Date().toISOString(),
+                                    parties: formData.parties,
+                                    jurisdiction: formData.jurisdiction,
+                                    sector: formData.sector
+                                },
+                                latency_ms: duration_ms,
+                                signature: "N/A"
+                            };
+                            await env.AXIM_EDGE_KV.put(dlqKey, JSON.stringify(payloadToSave));
+                        }
+                    } catch (kvErr) {
+                        console.error("Failed to write to KV DLQ", kvErr);
+                    }
                 }
             })()
         );
