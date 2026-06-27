@@ -555,7 +555,7 @@ try {
     .join('');
 } catch (e) { /* ignore */ }
 
-                    await fetch(`${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/api/v1/onyx/callback`, {
+                    const webhookResponse = await fetch(`${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/api/v1/onyx/callback`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -570,11 +570,43 @@ try {
                                 sector: formData.sector
                             },
                             latency_ms: duration_ms,
-                            signature: "N/A"
+                            signature: signatureHexValue
                         })
                     });
+
+                    if (!webhookResponse.ok) {
+                       throw new Error(`Webhook failed with status: ${webhookResponse.status}`);
+                    }
                 } catch (err) {
                     console.error("Failed to fire Onyx webhook", err);
+                    try {
+                        const telemetryUrl = new URL("/api/v1/telemetry/errors", env.VITE_PAYMENT_API_URL || "https://api.axim.us.com");
+                        await fetch(telemetryUrl, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+                            },
+                            body: JSON.stringify({
+                                telemetry_envelope: {
+                                    project_id: "AXIM_NDA_GENERATOR",
+                                    environment: "production",
+                                    orchestration_engine: "Onyx",
+                                    timestamp: new Date().toISOString()
+                                },
+                                event_payload: {
+                                    event: "onyx_webhook_failure",
+                                    event_type: "onyx_webhook_failure",
+                                    severity: "HIGH",
+                                    error_message: err.message,
+                                    hash: hashArray,
+                                    latency_ms: duration_ms
+                                }
+                            })
+                        });
+                    } catch (telemetryErr) {
+                        console.error("Failed to dispatch DLQ telemetry", telemetryErr);
+                    }
                     try {
                         if (env.AXIM_EDGE_KV) {
                             const dlqKey = `DLQ_onyx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
