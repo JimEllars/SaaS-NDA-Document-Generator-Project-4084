@@ -82,6 +82,41 @@ export const SecurityAudit = () => {
 };
 
 export const OnyxHealthStatus = () => {
+    const [healthData, setHealthData] = useState({
+        status: 'Offline',
+        dlq_depth: 0,
+        timestamp: null,
+        loading: true
+    });
+
+    React.useEffect(() => {
+        const fetchHealth = async () => {
+            try {
+                const res = await fetch('/api/v1/system/health', {
+                    headers: {
+                        'Authorization': `Bearer ${import.meta.env.VITE_AXIM_SERVICE_KEY || 'development_key'}`
+                    }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setHealthData({ ...data, loading: false });
+                } else {
+                    setHealthData(prev => ({ ...prev, status: 'Error', loading: false }));
+                }
+            } catch (err) {
+                console.error("Failed to fetch Onyx health", err);
+                setHealthData(prev => ({ ...prev, status: 'Error', loading: false }));
+            }
+        };
+        fetchHealth();
+        const interval = setInterval(fetchHealth, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const dlqColor = healthData.dlq_depth < 5 ? 'text-green-400' : 'text-amber-400';
+    const dotColor = healthData.dlq_depth < 5 ? 'bg-green-500' : 'bg-amber-500';
+    const pingColor = healthData.dlq_depth < 5 ? 'bg-green-400' : 'bg-amber-400';
+
     return (
         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 flex items-center justify-between mb-8 shadow-lg">
             <div className="flex items-center gap-4">
@@ -89,19 +124,19 @@ export const OnyxHealthStatus = () => {
                     <FiCpu className="text-axim-teal text-xl" />
                 </div>
                 <div>
-                    <h3 className="text-zinc-100 font-semibold">Ecosystem Health</h3>
+                    <h3 className="text-zinc-100 font-semibold">Onyx Link</h3>
                     <p className="text-sm text-zinc-400">Onyx Integration Layer</p>
                 </div>
             </div>
 
             <div className="flex items-center gap-3">
                 <div className="text-right">
-                    <div className="text-green-400 font-medium text-sm">Online</div>
-                    <div className="text-zinc-500 text-xs mt-0.5">Latency: ~45ms</div>
+                    <div className={`${healthData.status === 'online' ? dlqColor : 'text-red-400'} font-medium text-sm capitalize`}>{healthData.status === 'online' ? 'Online' : 'Offline'}</div>
+                    <div className="text-zinc-500 text-xs mt-0.5">DLQ: {healthData.dlq_depth} | Last: {healthData.timestamp ? new Date(healthData.timestamp).toLocaleTimeString() : 'N/A'}</div>
                 </div>
                 <div className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                  {healthData.status === 'online' && <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${pingColor} opacity-75`}></span>}
+                  <span className={`relative inline-flex rounded-full h-3 w-3 ${healthData.status === 'online' ? dotColor : 'bg-red-500'}`}></span>
                 </div>
             </div>
         </div>

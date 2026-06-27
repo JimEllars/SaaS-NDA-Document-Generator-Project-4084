@@ -89,6 +89,32 @@ export default {
 
     try {
         const listResult = await env.AXIM_EDGE_KV.list({ prefix: "DLQ_" });
+
+        // Ecosystem Heartbeat
+        const baseUrl = env.VITE_PAYMENT_API_URL || "https://api.axim.us.com";
+        const heartbeatPayload = {
+            telemetry_envelope: {
+                project_id: "AXIM_NDA_GENERATOR",
+                environment: "production",
+                orchestration_engine: "Onyx",
+                timestamp: new Date().toISOString()
+            },
+            event_payload: {
+                event_type: "ecosystem_heartbeat",
+                active_dlq_count: listResult.keys.length
+            }
+        };
+
+        ctx.waitUntil(
+            fetch(`${baseUrl}/v1/telemetry/events`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+                },
+                body: JSON.stringify(heartbeatPayload)
+            }).catch(e => console.error("Heartbeat telemetry failed", e))
+        );
         for (const key of listResult.keys) {
             const payloadStr = await env.AXIM_EDGE_KV.get(key.name);
             if (payloadStr) {
@@ -206,6 +232,71 @@ export default {
       }
     }
 
+
+
+    if (request.method === "GET" && url.pathname === "/api/v1/onyx/hydrate") {
+        const id = url.searchParams.get("id");
+        if (!id) {
+            return new Response(JSON.stringify({ error: "Missing id parameter" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
+            });
+        }
+
+        const backendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || "https://api.axim.us.com";
+        try {
+            const onyxResponse = await fetch(`${backendUrl}/v1/onyx/hydrate?id=${id}`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                }
+            });
+
+            if (!onyxResponse.ok) {
+                 return new Response(JSON.stringify({ error: "Failed to hydrate from Onyx" }), {
+                     status: onyxResponse.status,
+                     headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
+                 });
+            }
+
+            const data = await onyxResponse.json();
+            return new Response(JSON.stringify(data), {
+                headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
+            });
+        } catch (err) {
+             console.error("Onyx Hydration Error:", err);
+             return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+                 status: 500,
+                 headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
+             });
+        }
+    }
+    if (request.method === "GET" && url.pathname === "/api/v1/system/health") {
+      const authHeader = request.headers.get("Authorization");
+      const expectedToken = env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : null;
+
+      if (!authHeader || !expectedToken || authHeader !== expectedToken) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
+        });
+      }
+
+      let dlqDepth = 0;
+      if (env.AXIM_EDGE_KV) {
+         const listResult = await env.AXIM_EDGE_KV.list({ prefix: "DLQ_" });
+         dlqDepth = listResult.keys.length;
+      }
+
+      return new Response(JSON.stringify({
+          status: "online",
+          ecosystem: "AXiM Core",
+          timestamp: new Date().toISOString(),
+          dlq_depth: dlqDepth
+      }), {
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
+      });
+    }
     if ((url.pathname === "/api/health" || url.pathname === "/api/v1/health") && request.method === "GET") {
       return new Response(
         JSON.stringify({

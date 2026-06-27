@@ -67,7 +67,29 @@ const NDAGeneratorForm = React.memo(
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const source = urlParams.get('source');
-        if (source === 'onyx') return;
+        const onyxSyncId = urlParams.get('onyx_sync_id');
+
+        if (source === 'onyx' && onyxSyncId) {
+            fetch(`/api/v1/onyx/hydrate?id=${onyxSyncId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && !data.error) {
+                        setFormData(prev => ({
+                            ...prev,
+                            disclosing: data.company_name || prev.disclosing,
+                            email: data.email || prev.email,
+                            industry: data.sector || prev.industry
+                        }));
+                        addToast("Onyx Context Hydrated", "success");
+                    } else {
+                        addToast("Failed to hydrate Onyx Context", "error");
+                    }
+                })
+                .catch(err => {
+                    console.error('Onyx hydration error', err);
+                    addToast("Failed to hydrate Onyx Context", "error");
+                });
+        }
 
         const savedDraft = localStorage.getItem('axim_nda_draft_state');
         if (savedDraft) {
@@ -718,10 +740,16 @@ const NDAGeneratorForm = React.memo(
                           onChange={handleInputChange}
                           placeholder="Company or Individual Name"
                           autoComplete="organization"
-                          className={INPUT_CLASSES}
+                          className={`${INPUT_CLASSES} ${isOnyxSync ? 'opacity-70 cursor-not-allowed' : ''}`}
+                          disabled={isOnyxSync}
                           required
                           maxLength="255"
                         />
+                        {isOnyxSync && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                            <SafeIcon icon={FiLock} size={16} />
+                          </div>
+                        )}
                         {userSession?.name &&
                           formData.disclosing === userSession.name && (
                             <div
