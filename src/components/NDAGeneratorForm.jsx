@@ -62,6 +62,7 @@ const NDAGeneratorForm = React.memo(
 
 
     const [debouncedFormData] = useDebounce(formData, 1000);
+    const [showSaveIndicator, setShowSaveIndicator] = useState(false);
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -92,6 +93,9 @@ const NDAGeneratorForm = React.memo(
         delete draftToSave.signatureImage;
 
         localStorage.setItem('axim_nda_draft_state', JSON.stringify(draftToSave));
+        setShowSaveIndicator(true);
+        const timer = setTimeout(() => setShowSaveIndicator(false), 2000);
+        return () => clearTimeout(timer);
     }, [debouncedFormData]);
 
     const handleBypass = React.useCallback(() => {
@@ -618,6 +622,16 @@ const NDAGeneratorForm = React.memo(
           </div>
         )}
         <AnimatePresence mode="wait">
+          {/* Autosave Indicator */}
+          <div
+            className={`fixed bottom-8 right-8 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-700 shadow-lg transition-opacity duration-500 ${
+              showSaveIndicator ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
+            aria-live="polite"
+          >
+            <SafeIcon icon={FiCheck} className="text-axim-teal" size={14} />
+            <span className="text-xs text-zinc-300">Draft saved locally</span>
+          </div>
           {currentStep === 1 && (
             <motion.div
               key="step1"

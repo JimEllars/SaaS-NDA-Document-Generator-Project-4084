@@ -93,18 +93,54 @@ export default {
             const payloadStr = await env.AXIM_EDGE_KV.get(key.name);
             if (payloadStr) {
                 try {
-                    const response = await fetch(`${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/api/v1/onyx/callback`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
-                        },
-                        body: payloadStr
-                    });
+                    let response;
+                    const baseUrl = env.VITE_PAYMENT_API_URL || "https://api.axim.us.com";
+
+                    if (key.name.startsWith("DLQ_stripe_")) {
+                        response = await fetch(`${baseUrl}/v1/webhook/stripe`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                            },
+                            body: payloadStr
+                        });
+                    } else {
+                        // Default to onyx callback
+                        response = await fetch(`${baseUrl}/api/v1/onyx/callback`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                            },
+                            body: payloadStr
+                        });
+                    }
 
                     if (response.ok) {
                         await env.AXIM_EDGE_KV.delete(key.name);
+                    } else if (response.status >= 400 && response.status < 500) {
+                        // Poison pill - client error (4xx). Never going to succeed.
+                        await env.AXIM_EDGE_KV.delete(key.name);
+
+                        // Fire telemetry event
+                        ctx.waitUntil(
+                          fetch(`${baseUrl}/v1/telemetry/events`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                            },
+                            body: JSON.stringify({
+                                event_type: "dlq_poison_message_dropped",
+                                key: key.name,
+                                status: response.status,
+                                timestamp: new Date().toISOString()
+                            })
+                          }).catch(e => console.error("Telemetry failed", e))
+                        );
                     }
+                    // If 5xx, do nothing and let it retry on next cron cycle
                 } catch (e) {
                     console.error(`Failed to retry DLQ item ${key.name}`, e);
                 }
@@ -1018,9 +1054,28 @@ try {
           body: JSON.stringify(payload)
         });
 
-        const response = await fetch(proxyRequest);
-
-        return new Response(response.body, response);
+        try {
+            const response = await fetch(proxyRequest);
+            if (response.status >= 500) {
+                throw new Error(`Stripe webhook backend returned ${response.status}`);
+            }
+            return new Response(response.body, response);
+        } catch (fetchErr) {
+            console.error("Stripe webhook proxy failed, writing to DLQ", fetchErr);
+            if (env.AXIM_EDGE_KV) {
+                try {
+                    await env.AXIM_EDGE_KV.put(`DLQ_stripe_${eventId}`, JSON.stringify(payload));
+                    return new Response(JSON.stringify({ status: "queued", message: "Buffered for retry" }), {
+                        status: 202,
+                        headers: { "Content-Type": "application/json" }
+                    });
+                } catch (kvErr) {
+                    console.error("Failed to write to KV DLQ", kvErr);
+                }
+            }
+            // Propagate the error so Stripe knows it failed and retries naturally
+            throw fetchErr;
+        }
       } catch (err) {
         console.error("Stripe Webhook Error:", err);
         return new Response(

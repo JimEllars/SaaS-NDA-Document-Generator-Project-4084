@@ -310,7 +310,7 @@ const SuccessPage = React.memo(function SuccessPage() {
       <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
         <div className="bg-white/5 border border-white/10 rounded-3xl p-8 text-center max-w-sm w-full shadow-2xl">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-axim-teal border-t-transparent mx-auto mb-4"></div>
-          <h3 className="text-xl font-bold text-zinc-100 mb-2">
+          <h3 className="text-xl font-bold text-zinc-100 print:text-black mb-2">
             Verifying Payment
           </h3>
           <p className="text-zinc-400">
@@ -363,8 +363,8 @@ const SuccessPage = React.memo(function SuccessPage() {
   }
 
   return (
-    <div className="w-full">
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 text-center max-w-2xl mx-auto shadow-2xl animate-in zoom-in duration-300 no-print mt-12">
+    <div className="w-full print:bg-white print:text-black">
+      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 text-center max-w-2xl mx-auto shadow-2xl animate-in zoom-in duration-300 print:shadow-none print:border-none print:bg-white mt-12">
         <div className="w-20 h-20 bg-axim-teal/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-axim-teal/30">
           <SafeIcon
             icon={FiCheckCircle}
@@ -375,7 +375,7 @@ const SuccessPage = React.memo(function SuccessPage() {
         <h2 className="text-3xl font-bold text-zinc-100 mb-4">
           Payment Successful!
         </h2>
-        <p className="text-zinc-300 mb-8 text-lg">
+        <p className="text-zinc-300 print:text-black mb-8 text-lg">
           Thank you for your purchase. Your secure Non-Disclosure Agreement is
           ready.
         </p>
@@ -428,8 +428,14 @@ const SuccessPage = React.memo(function SuccessPage() {
             <SafeIcon icon={FiShield} />
             Verify This Document
           </button>
+          <button
+            onClick={() => window.print()}
+            className="text-axim-teal font-medium py-3 px-8 rounded-xl hover:text-teal-400 transition-all flex items-center justify-center underline print:hidden"
+          >
+            Print Receipt
+          </button>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8 print:hidden">
           <button
             onClick={handleDownload}
             className="bg-axim-teal text-black font-bold py-3 px-8 rounded-xl hover:bg-teal-400 hover:shadow-[0_0_20px_rgba(0,229,255,0.4)] transition-all flex items-center justify-center"
@@ -451,7 +457,7 @@ const SuccessPage = React.memo(function SuccessPage() {
           </button>
         </div>
 
-        <div className="bg-black/30 border border-white/10 rounded-xl p-6 text-left max-w-md mx-auto">
+        <div className="bg-black/30 border border-white/10 rounded-xl p-6 text-left max-w-md mx-auto print:hidden">
           <h3 className="text-lg font-bold text-zinc-100 mb-2 flex items-center gap-2">
             <SafeIcon icon={FiMail} className="text-axim-teal" />
             Email My Document
