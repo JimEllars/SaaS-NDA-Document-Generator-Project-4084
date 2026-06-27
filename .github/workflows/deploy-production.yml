@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm install --no-audit --no-fund
-          npm install esbuild@0.21.5 --no-audit --no-fund
+
 
 
       - name: Run Tests

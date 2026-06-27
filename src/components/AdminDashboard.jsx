@@ -81,6 +81,33 @@ export const SecurityAudit = () => {
   );
 };
 
+export const OnyxHealthStatus = () => {
+    return (
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-4 flex items-center justify-between mb-8 shadow-lg">
+            <div className="flex items-center gap-4">
+                <div className="p-3 bg-axim-teal/10 rounded-lg">
+                    <FiCpu className="text-axim-teal text-xl" />
+                </div>
+                <div>
+                    <h3 className="text-zinc-100 font-semibold">Ecosystem Health</h3>
+                    <p className="text-sm text-zinc-400">Onyx Integration Layer</p>
+                </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+                <div className="text-right">
+                    <div className="text-green-400 font-medium text-sm">Online</div>
+                    <div className="text-zinc-500 text-xs mt-0.5">Latency: ~45ms</div>
+                </div>
+                <div className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('audit');
 
@@ -99,6 +126,8 @@ const AdminDashboard = () => {
           <p className="text-zinc-400 mt-1">AXiM Core Intelligence & Fleet Control</p>
         </div>
       </div>
+
+      <OnyxHealthStatus />
 
       <div className="flex flex-col md:flex-row gap-8">
         <aside className="w-full md:w-64 flex-shrink-0">
