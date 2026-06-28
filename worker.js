@@ -245,7 +245,7 @@ export default {
 
         const backendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || "https://api.axim.us.com";
         try {
-            const onyxResponse = await fetch(`${backendUrl}/v1/onyx/hydrate?id=${id}`, {
+            const onyxResponse = await fetch(`${backendUrl}/v1/crm/contact?id=${id}`, {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
@@ -700,7 +700,7 @@ try {
                     }
                     try {
                         if (env.AXIM_EDGE_KV) {
-                            const dlqKey = `DLQ_onyx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                            const dlqKey = `DLQ_onyx_${Date.now()}_${crypto.randomUUID()}`;
                             const payloadToSave = {
                                 hash: hashArray,
                                 metadata: {
