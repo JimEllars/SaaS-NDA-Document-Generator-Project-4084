@@ -1,4 +1,5 @@
 import { fetchWithTimeout } from "../utils/fetchWithTimeout";
+import { flushTelemetry as flushGlobalTelemetry } from "../utils/telemetry";
 import SignatureCanvas from "react-signature-canvas";
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useDebounce } from "use-debounce";
@@ -57,7 +58,7 @@ const NDAGeneratorForm = React.memo(
 
 
     const trackingSessionId = React.useRef(
-      `sess_${Math.random().toString(36).substring(2, 9)}`,
+      `sess_${crypto.randomUUID()}`,
     );
 
 
@@ -70,6 +71,7 @@ const NDAGeneratorForm = React.memo(
         const onyxSyncId = urlParams.get('onyx_sync_id');
 
         if (source === 'onyx' && onyxSyncId) {
+            setIsOnyxLocked(true);
             fetch(`/api/v1/onyx/hydrate?id=${onyxSyncId}`)
                 .then(res => res.json())
                 .then(data => {
@@ -83,11 +85,14 @@ const NDAGeneratorForm = React.memo(
                         addToast("Onyx Context Hydrated", "success");
                     } else {
                         addToast("Failed to hydrate Onyx Context", "error");
+                        setIsOnyxLocked(false);
                     }
                 })
                 .catch(err => {
                     console.error('Onyx hydration error', err);
                     addToast("Failed to hydrate Onyx Context", "error");
+                    setIsOnyxLocked(false);
+                    flushGlobalTelemetry({ event_type: "onyx_hydration_failure", error: err?.message || 'Unknown' });
                 });
         }
 
@@ -156,6 +161,8 @@ const NDAGeneratorForm = React.memo(
     const { isValid: isFormValid, validationMessage } =
       useFormValidation(formData);
     const isOnyxSync = typeof window !== 'undefined' && window.location.search.includes('source=onyx');
+    const [isOnyxLocked, setIsOnyxLocked] = useState(false);
+
   const sigCanvas = useRef(null);
 
     // Handle window resize for SignatureCanvas
@@ -568,7 +575,7 @@ const NDAGeneratorForm = React.memo(
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
         {/* Ecosystem Sync Indicator */}
-        {isOnyxSync && (
+        {isOnyxLocked && (
           <div className="bg-white/5 backdrop-blur-md border border-axim-teal/30 rounded-xl p-4 mb-6 flex items-center gap-3">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-axim-teal opacity-75"></span>
@@ -740,12 +747,12 @@ const NDAGeneratorForm = React.memo(
                           onChange={handleInputChange}
                           placeholder="Company or Individual Name"
                           autoComplete="organization"
-                          className={`${INPUT_CLASSES} ${isOnyxSync ? 'opacity-70 cursor-not-allowed' : ''}`}
-                          disabled={isOnyxSync}
+                          className={`${INPUT_CLASSES} ${isOnyxLocked ? 'opacity-70 cursor-not-allowed' : ''}`}
+                          disabled={isOnyxLocked}
                           required
                           maxLength="255"
                         />
-                        {isOnyxSync && (
+                        {isOnyxLocked && (
                           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400">
                             <SafeIcon icon={FiLock} size={16} />
                           </div>
@@ -800,13 +807,13 @@ const NDAGeneratorForm = React.memo(
                           name="email"
                           value={formData.email || ""}
                           onChange={handleInputChange}
-                          className={`${INPUT_CLASSES} ${isOnyxSync ? 'opacity-70 cursor-not-allowed' : ''}`}
+                          className={`${INPUT_CLASSES} ${isOnyxLocked ? 'opacity-70 cursor-not-allowed' : ''}`}
                           placeholder="Enter your email address"
                           autoComplete="email"
                           required
-                          disabled={isOnyxSync}
+                          disabled={isOnyxLocked}
                         />
-                        {isOnyxSync && (
+                        {isOnyxLocked && (
                           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400">
                             <SafeIcon icon={FiLock} size={16} />
                           </div>
