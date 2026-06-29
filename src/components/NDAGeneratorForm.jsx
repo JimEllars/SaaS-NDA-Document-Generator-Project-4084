@@ -420,7 +420,7 @@ const NDAGeneratorForm = React.memo(
       return `${localPart.substring(0, 2)}***@${domain}`;
     };
 
-    const flushTelemetry = useCallback(() => {
+    const flushTelemetry = useCallback((isUnloading = false) => {
       if (telemetryQueue.current.length === 0) return;
 
       // Compress Telemetry Payload Array
@@ -442,27 +442,34 @@ const NDAGeneratorForm = React.memo(
       });
       telemetryQueue.current = [];
 
+      const payloadString = JSON.stringify({ batch: compressedEvents });
+
       try {
-        fetchWithTimeout("/api/v1/telemetry/events", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ batch: compressedEvents }),
-        });
+        if (isUnloading && typeof navigator !== 'undefined' && navigator.sendBeacon) {
+          const blob = new Blob([payloadString], { type: 'application/json' });
+          navigator.sendBeacon('/api/v1/telemetry/events', blob);
+        } else {
+          fetchWithTimeout("/api/v1/telemetry/events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: payloadString,
+          });
+        }
       } catch (e) {
         // Silently fail telemetry in production
       }
     }, []);
 
     useEffect(() => {
-      const intervalId = setInterval(flushTelemetry, 10000);
-      const handleBeforeUnload = () => flushTelemetry();
+      const intervalId = setInterval(() => flushTelemetry(false), 10000);
+      const handleBeforeUnload = () => flushTelemetry(true);
 
       window.addEventListener("beforeunload", handleBeforeUnload);
 
       return () => {
         clearInterval(intervalId);
         window.removeEventListener("beforeunload", handleBeforeUnload);
-        flushTelemetry();
+        flushTelemetry(true);
       };
     }, [flushTelemetry]);
 

@@ -183,6 +183,39 @@ export default {
       if (targetPaths.some(p => url.pathname.startsWith(p))) {
         const clientIp = request.headers.get("CF-Connecting-IP");
         if (!checkRateLimit(clientIp)) {
+          // Perimeter Breach Alert
+          try {
+             // Basic IP masking (take first half of IPv4 or use an anonymous label if IPv6)
+             const maskedIp = clientIp ? (clientIp.includes(':') ? 'ipv6-masked' : clientIp.split('.').slice(0, 2).join('.') + '.*.*') : 'unknown';
+             const errorPayload = {
+               telemetry_envelope: {
+                 project_id: "AXIM_NDA_GENERATOR",
+                 environment: env.AXIM_ENV || "production",
+                 timestamp: new Date().toISOString()
+               },
+               event_payload: {
+                 event_type: "perimeter_rate_limit_breach",
+                 severity: "WARNING",
+                 message: "Rate limit shield activated",
+                 ip_masked: maskedIp
+               }
+             };
+
+             const targetBackendUrl = env.BACKEND_URL || env.VITE_PAYMENT_API_URL || "https://api.axim.us.com";
+             const telemetryUrl = new URL("/api/v1/telemetry/errors", targetBackendUrl);
+
+             ctx.waitUntil(fetch(telemetryUrl, {
+               method: "POST",
+               headers: {
+                 "Content-Type": "application/json",
+                 "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+               },
+               body: JSON.stringify(errorPayload)
+             }).catch(e => console.error("Telemetry failure on rate limit breach", e)));
+          } catch (e) {
+             console.error("Failed to enqueue perimeter alert", e);
+          }
+
           return new Response(JSON.stringify({ error: "Too Many Requests. Please slow down." }), {
             status: 429,
             headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }

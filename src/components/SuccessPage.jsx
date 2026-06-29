@@ -111,7 +111,10 @@ const SuccessPage = React.memo(function SuccessPage() {
 
   const handleStartOver = useCallback(() => {
     resetForm();
-    try { localStorage.clear(); } catch(e) { console.warn("localStorage.clear failed", e); }
+    try {
+      localStorage.clear();
+      localStorage.removeItem("axim_nda_draft_state");
+    } catch(e) { console.warn("localStorage.clear failed", e); }
     try { localStorage.removeItem("axim_delivery_email"); } catch(e) { console.warn("localStorage.removeItem failed", e); }
     setEmail("");
     navigate("/");
@@ -451,9 +454,9 @@ const SuccessPage = React.memo(function SuccessPage() {
           </button>
           <button
             onClick={handleStartOver}
-            className="bg-transparent border border-white/20 text-zinc-200 font-bold py-3 px-8 rounded-xl hover:bg-white/10 transition-all"
+            className="bg-transparent border border-white/20 text-zinc-200 font-bold py-3 px-8 rounded-xl hover:bg-white/10 transition-all backdrop-blur-md"
           >
-            Create New NDA
+            Generate Another NDA
           </button>
         </div>
 
