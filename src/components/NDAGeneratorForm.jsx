@@ -579,7 +579,20 @@ const NDAGeneratorForm = React.memo(
     };
 
     return (
-      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+        <AnimatePresence>
+          {isOffline && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-amber-500/20 backdrop-blur-md border border-amber-500/50 text-amber-200 text-sm py-2 px-4 rounded-xl flex items-center justify-center gap-2 w-full mb-4 shadow-lg shadow-amber-500/10 z-50 relative top-0 left-0"
+            >
+              <SafeIcon icon={FiAlertCircle} size={16} />
+              <span className="font-medium">Network connection lost. Changes are being securely saved locally.</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Ecosystem Sync Indicator */}
         {isOnyxLocked && (
