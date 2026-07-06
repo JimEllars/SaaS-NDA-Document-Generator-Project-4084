@@ -99,7 +99,14 @@ const SuccessPage = React.memo(function SuccessPage() {
     if (documentBlobUrl) {
       const a = document.createElement("a");
       a.href = documentBlobUrl;
-      a.download = "NDA.pdf";
+
+      let filename = "NDA.pdf";
+      if (savedFormDataRef.current && savedFormDataRef.current.partyName) {
+        const sanitizedPartyName = savedFormDataRef.current.partyName.replace(/[^a-zA-Z0-9]/g, '_');
+        const dateStr = new Date().toISOString().split('T')[0];
+        filename = `AXiM_NDA_${sanitizedPartyName}_${dateStr}.pdf`;
+      }
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

@@ -177,6 +177,7 @@ export default {
     }
   },
   async fetch(request, env, ctx) {
+    ctx.passThroughOnException();
     const handleRequest = async () => {
     const url = new URL(request.url);
       const targetPaths = ["/api/generate-nda", "/api/v1/ai/onyx-bridge"];
@@ -582,10 +583,11 @@ export default {
           ).catch(e => console.error(e))
         );
 
+        const sanitizedPartyName = (formData.disclosing || "Draft").replace(/[^a-zA-Z0-9]/g, '_');
         return new Response(pdfBytes, {
           headers: {
             "Content-Type": "application/pdf",
-            "Content-Disposition": 'inline; filename="Preview.pdf"',
+            "Content-Disposition": `inline; filename="AXiM_Preview_${sanitizedPartyName}.pdf"`,
             "Access-Control-Allow-Origin": "https://axim.us.com",
           },
         });
@@ -1145,28 +1147,22 @@ try {
           });
         }
 
-        // Use cache API for idempotency check (60 second TTL)
-        const cache = caches.default;
-
-        const cacheKey = new Request(`https://internal.webhook.cache/${eventId}`, { method: 'GET' });
-
+        // Global Idempotency via KV
         try {
-          const cachedEvent = await cache.match(cacheKey);
-          if (cachedEvent) {
-            return new Response(JSON.stringify({ received: true, duplicate: true }), {
-              status: 200,
-              headers: { "Content-Type": "application/json" }
-            });
-          }
+          if (env.AXIM_EDGE_KV) {
+            const cachedEvent = await env.AXIM_EDGE_KV.get(eventId);
+            if (cachedEvent) {
+              return new Response(JSON.stringify({ received: true, duplicate: true }), {
+                status: 200,
+                headers: { "Content-Type": "application/json" }
+              });
+            }
 
-          // Cache the event immediately to prevent race conditions
-          const idempotencyResponse = new Response("processed", {
-              status: 200,
-              headers: { "Cache-Control": "max-age=60" }
-          });
-          ctx.waitUntil(cache.put(cacheKey, idempotencyResponse));
-        } catch (cacheErr) {
-          console.warn("Cache idempotency check failed:", cacheErr);
+            // Cache the event immediately to prevent race conditions (5 min TTL)
+            ctx.waitUntil(env.AXIM_EDGE_KV.put(eventId, "processed", { expirationTtl: 300 }));
+          }
+        } catch (kvErr) {
+          console.warn("KV idempotency check failed:", kvErr);
         }
 
         // Proxy the webhook to the actual backend
@@ -1798,7 +1794,22 @@ try {
 
     // Default: Return static assets or route to app
     if (env.ASSETS) {
-      return env.ASSETS.fetch(request);
+      const assetResponse = await env.ASSETS.fetch(request);
+
+      const newHeaders = new Headers(assetResponse.headers);
+      newHeaders.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+      newHeaders.set('X-Content-Type-Options', 'nosniff');
+      newHeaders.set('X-Frame-Options', 'DENY');
+
+      const currentCSP = newHeaders.get('Content-Security-Policy') || '';
+      // Inject strict CSP
+      newHeaders.set('Content-Security-Policy', "default-src 'self'; connect-src 'self' https://api.axim.us.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://js.stripe.com; font-src 'self' https://fonts.gstatic.com data:; frame-src https://js.stripe.com;");
+
+      return new Response(assetResponse.body, {
+        status: assetResponse.status,
+        statusText: assetResponse.statusText,
+        headers: newHeaders
+      });
     }
 
     return new Response("Not Found", { status: 404 });
@@ -1810,14 +1821,11 @@ try {
       // If it's a valid response object, we add headers
       if (response instanceof Response) {
         const newHeaders = new Headers(response.headers);
-        newHeaders.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-        newHeaders.set('X-Content-Type-Options', 'nosniff');
-        newHeaders.set('X-XSS-Protection', '1; mode=block');
-        newHeaders.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://api.axim.us.com wss://api.axim.us.com; frame-src https://js.stripe.com;");
-        // Do not overwrite if it already exists, but for DENY it's probably fine
-        if (!newHeaders.has('X-Frame-Options')) {
-          newHeaders.set('X-Frame-Options', 'DENY');
-        }
+        if (!newHeaders.has('Strict-Transport-Security')) newHeaders.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+        if (!newHeaders.has('X-Content-Type-Options')) newHeaders.set('X-Content-Type-Options', 'nosniff');
+        if (!newHeaders.has('X-XSS-Protection')) newHeaders.set('X-XSS-Protection', '1; mode=block');
+        if (!newHeaders.has('Content-Security-Policy')) newHeaders.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://api.axim.us.com wss://api.axim.us.com; frame-src https://js.stripe.com;");
+        if (!newHeaders.has('X-Frame-Options')) newHeaders.set('X-Frame-Options', 'DENY');
 
         return new Response(response.body, {
           status: response.status,
