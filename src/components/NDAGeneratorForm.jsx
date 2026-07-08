@@ -64,6 +64,16 @@ const NDAGeneratorForm = React.memo(
 
     const [debouncedFormData] = useDebounce(formData, 1000);
     const [showSaveIndicator, setShowSaveIndicator] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState(null);
+    useEffect(() => {
+      window.onTurnstileSuccess = (token) => {
+        setTurnstileToken(token);
+        setFormData(prev => ({ ...prev, 'cf-turnstile-response': token }));
+      };
+      return () => {
+        delete window.onTurnstileSuccess;
+      };
+    }, []);
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -96,6 +106,23 @@ const NDAGeneratorForm = React.memo(
                 });
         }
 
+
+        // Fetch edge geo context
+        if (!formData.jurisdiction) {
+          fetch('/api/v1/context/geo')
+            .then(res => res.json())
+            .then(data => {
+              if (data && data.state) {
+                setFormData(prev => ({
+                  ...prev,
+                  jurisdiction: data.state
+                }));
+              }
+            })
+            .catch(err => {
+              console.error('Geo context fetch error', err);
+            });
+        }
         const savedDraft = localStorage.getItem('axim_nda_draft_state');
         if (savedDraft) {
             try {
@@ -1380,6 +1407,7 @@ const NDAGeneratorForm = React.memo(
                   <div className="flex flex-col gap-4">
                     {formData.strictness === "robust" && <UpsellCard />}
 
+                    <div className="cf-turnstile mb-4 self-center" data-sitekey="1x00000000000000000000AA" data-callback="onTurnstileSuccess"></div>
                     <div className="flex flex-col md:flex-row gap-4">
                       <button
                       onClick={prevStep}
@@ -1391,7 +1419,7 @@ const NDAGeneratorForm = React.memo(
                       {userSession?.is_partner && !isEditing ? (
                         <button
                           onClick={onPartnerCheckout}
-                          disabled={!isFormValid || isOffline}
+                          disabled={!isFormValid || isOffline || !turnstileToken}
                           className={`flex-1 bg-amber-500 text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-amber-400 hover:shadow-[0_0_15px_rgba(245,158,11,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? "opacity-50 cursor-not-allowed hover:shadow-none" : ""}`}
                         >
                           <SafeIcon icon={FiUnlock} size={20} />
@@ -1400,7 +1428,7 @@ const NDAGeneratorForm = React.memo(
                       ) : (
                         <button
                           onClick={isEditing ? onUpdate : handlePurchaseClick}
-                          disabled={!isFormValid || isOffline}
+                          disabled={!isFormValid || isOffline || !turnstileToken}
                           className={`flex-1 bg-axim-teal text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 hover:shadow-[0_0_15px_rgba(0,229,255,0.4)] transition transform active:scale-95 shadow-lg ${!isFormValid ? "opacity-50 cursor-not-allowed hover:shadow-none" : ""}`}
                         >
                           <SafeIcon
