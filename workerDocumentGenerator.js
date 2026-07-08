@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
-export const generatePdfBytes = async (plainText, formData) => {
+export const generatePdfBytes = async (plainText, formData, cryptoKey) => {
   let pdfDoc = await PDFDocument.create();
   const classicFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const classicBoldFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
@@ -225,8 +225,15 @@ export const generatePdfBytes = async (plainText, formData) => {
 
 
 
+
+  if (!cryptoKey) {
+    throw new Error("Cryptographic sealing engine unavailable. Ecosystem misconfiguration.");
+  }
+
   const encoder = new TextEncoder();
-  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(plainText));
+  const dataToHash = encoder.encode(plainText + cryptoKey);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", dataToHash);
+
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const calculatedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   pdfDoc.setKeywords([calculatedHash]);

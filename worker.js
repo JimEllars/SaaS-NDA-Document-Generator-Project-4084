@@ -539,7 +539,7 @@ export default {
         const start = Date.now();
         let pdfBytes, docId;
         try {
-          const result = await generatePdfBytes(plainText, formData);
+          const result = await generatePdfBytes(plainText, formData, env.AXIM_CRYPTO_KEY);
           pdfBytes = result.pdfBytes;
           docId = result.docId;
           const end = Date.now();
@@ -674,6 +674,13 @@ export default {
     // --- NEW: Headless Generation Route for AXiM Core ---
     if (request.method === "POST" && url.pathname === "/api/v1/generate-headless") {
       try {
+
+        if (!env.AXIM_CRYPTO_KEY) {
+          return new Response(JSON.stringify({ error: "Cryptographic sealing engine unavailable. Ecosystem misconfiguration." }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
+          });
+        }
         const authHeader = request.headers.get("Authorization");
         const expectedToken = env.AXIM_CORE_TOKEN || env.AXIM_SERVICE_KEY;
 
@@ -692,7 +699,7 @@ export default {
 
         const documentData = generateDocument({ ...formData, isPaid: true });
         const plainText = generatePlainText(documentData, formData);
-        const pdfBytes = await generatePdfBytes(plainText, formData);
+        const pdfBytes = await generatePdfBytes(plainText, formData, env.AXIM_CRYPTO_KEY);
 
         const hashArray = await hashFormData(formData);
         const duration_ms = Date.now() - start;
@@ -885,6 +892,13 @@ try {
 
     if (request.method === "POST" && url.pathname === "/api/generate-nda") {
       try {
+
+        if (!env.AXIM_CRYPTO_KEY) {
+          return new Response(JSON.stringify({ error: "Cryptographic sealing engine unavailable. Ecosystem misconfiguration." }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
+          });
+        }
         let formData = await request.json();
         formData = sanitizeFormData(formData, ctx, env);
         if (env.TURNSTILE_SECRET_KEY) {
@@ -963,7 +977,7 @@ try {
         const start = Date.now();
         let pdfBytes, docId;
         try {
-          const result = await generatePdfBytes(plainText, formData);
+          const result = await generatePdfBytes(plainText, formData, env.AXIM_CRYPTO_KEY);
           pdfBytes = result.pdfBytes;
           docId = result.docId;
           const end = Date.now();

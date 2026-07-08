@@ -12,6 +12,7 @@ import {
   FiSend,
   FiFileText,
   FiShield,
+  FiLock,
 } from "react-icons/fi";
 
 import SafeIcon from "../common/SafeIcon";
@@ -401,7 +402,13 @@ const SuccessPage = React.memo(function SuccessPage() {
             <div className="space-y-2 text-xs text-zinc-300 font-mono">
               <div className="flex justify-between border-b border-white/5 pb-1">
                 <span className="text-zinc-500">Secure Trace ID:</span>
-                <span className="text-axim-teal">{documentMeta.id}</span>
+                <span className="text-axim-teal flex items-center gap-2">
+                  {documentMeta.id}
+                  <span className="inline-flex items-center gap-1 bg-axim-teal/20 text-axim-teal text-[10px] px-2 py-0.5 rounded-full border border-axim-teal/30 shadow-[0_0_10px_rgba(0,229,255,0.2)]">
+                    <SafeIcon icon={FiLock} size={10} />
+                    Cryptographically Sealed
+                  </span>
+                </span>
               </div>
               {documentMeta.hash && (
                 <div className="flex justify-between border-b border-white/5 pb-1 items-center">
