@@ -1,3 +1,25 @@
+
+async function verifyTurnstileToken(token, secret, ip) {
+  try {
+    const formData = new FormData();
+    formData.append('secret', secret);
+    formData.append('response', token);
+    if (ip) {
+      formData.append('remoteip', ip);
+    }
+
+    const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      body: formData,
+      method: 'POST',
+    });
+
+    const outcome = await result.json();
+    return outcome.success;
+  } catch (err) {
+    console.error('Turnstile verification error:', err);
+    return false;
+  }
+}
 import {
   generateDocument,
   generatePlainText,
@@ -181,6 +203,15 @@ export default {
     const handleRequest = async () => {
     const url = new URL(request.url);
       const targetPaths = ["/api/generate-nda", "/api/v1/ai/onyx-bridge"];
+
+      if (request.method === "GET" && url.pathname === "/api/v1/context/geo") {
+        const state = request.cf?.regionCode || "TX";
+        const country = request.cf?.country || "US";
+        return new Response(JSON.stringify({ state, country }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
+        });
+      }
       if (targetPaths.some(p => url.pathname.startsWith(p))) {
         const clientIp = request.headers.get("CF-Connecting-IP");
         if (!checkRateLimit(clientIp)) {
@@ -236,6 +267,16 @@ export default {
 
       try {
         const formData = await request.json();
+        if (env.TURNSTILE_SECRET_KEY) {
+          const turnstileToken = formData['cf-turnstile-response'];
+          const isValid = await verifyTurnstileToken(turnstileToken, env.TURNSTILE_SECRET_KEY, request.headers.get('CF-Connecting-IP'));
+          if (!isValid) {
+            return new Response(JSON.stringify({ error: 'Bot verification failed. Please try again.' }), {
+              status: 403,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
+            });
+          }
+        }
         const docData = generateDocument({ ...formData, isPaid: true });
         const plainText = docData.plainText;
         const pdfBytes = await generatePdfBytes(plainText, { ...formData, isPaid: true });
@@ -846,6 +887,16 @@ try {
       try {
         let formData = await request.json();
         formData = sanitizeFormData(formData, ctx, env);
+        if (env.TURNSTILE_SECRET_KEY) {
+          const turnstileToken = formData['cf-turnstile-response'];
+          const isValid = await verifyTurnstileToken(turnstileToken, env.TURNSTILE_SECRET_KEY, request.headers.get('CF-Connecting-IP'));
+          if (!isValid) {
+            return new Response(JSON.stringify({ error: 'Bot verification failed. Please try again.' }), {
+              status: 403,
+              headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
+            });
+          }
+        }
         const sessionId = formData.sessionId;
 
         if (!sessionId) {
@@ -1803,7 +1854,7 @@ try {
 
       const currentCSP = newHeaders.get('Content-Security-Policy') || '';
       // Inject strict CSP
-      newHeaders.set('Content-Security-Policy', "default-src 'self'; connect-src 'self' https://api.axim.us.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://js.stripe.com; font-src 'self' https://fonts.gstatic.com data:; frame-src https://js.stripe.com;");
+      newHeaders.set('Content-Security-Policy', "default-src 'self'; connect-src 'self' https://api.axim.us.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://challenges.cloudflare.com; font-src 'self' https://fonts.gstatic.com data:; frame-src https://js.stripe.com https://challenges.cloudflare.com;");
 
       return new Response(assetResponse.body, {
         status: assetResponse.status,
@@ -1824,7 +1875,7 @@ try {
         if (!newHeaders.has('Strict-Transport-Security')) newHeaders.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
         if (!newHeaders.has('X-Content-Type-Options')) newHeaders.set('X-Content-Type-Options', 'nosniff');
         if (!newHeaders.has('X-XSS-Protection')) newHeaders.set('X-XSS-Protection', '1; mode=block');
-        if (!newHeaders.has('Content-Security-Policy')) newHeaders.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://api.axim.us.com wss://api.axim.us.com; frame-src https://js.stripe.com;");
+        if (!newHeaders.has('Content-Security-Policy')) newHeaders.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://api.axim.us.com wss://api.axim.us.com; frame-src https://js.stripe.com https://challenges.cloudflare.com;");
         if (!newHeaders.has('X-Frame-Options')) newHeaders.set('X-Frame-Options', 'DENY');
 
         return new Response(response.body, {
