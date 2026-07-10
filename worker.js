@@ -254,9 +254,8 @@ export default {
           });
         }
       }
-
-
-        if (request.method === "POST" && url.pathname === "/api/v1/generate-headless") {
+    // Legacy endpoint retained for compatibility only; primary route is handled later.
+        if (request.method === "POST" && url.pathname === "/api/v1/generate-headless-legacy") {
       const authHeader = request.headers.get("Authorization");
       if (!authHeader || authHeader !== `Bearer ${env.AXIM_SERVICE_KEY}`) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
