@@ -17,6 +17,9 @@ const getEnvContext = () => {
 let diagnosticQueue = [];
 let isOffline = typeof navigator !== 'undefined' ? !navigator.onLine : false;
 
+let eventQueue = [];
+let flushTimeout = null;
+
 // Listen for network changes in browser environment
 
 const flushLocalStorageQueue = async () => {
@@ -82,12 +85,17 @@ if (typeof window !== 'undefined') {
             flushDiagnosticQueue();
         }
         flushLocalStorageQueue();
+        flushTelemetry(); // Flush standard event queue on restore
     });
 
     window.addEventListener('focus', () => {
         if (!isOffline) {
             flushLocalStorageQueue();
         }
+    });
+
+    window.addEventListener('beforeunload', () => {
+        flushTelemetry(true);
     });
 
     // Initial flush
@@ -132,15 +140,12 @@ const flushDiagnosticQueue = async () => {
     }
 };
 
-export const flushTelemetry = async (payload) => {
-    // Determine if this is a standard payload or if it needs to be wrapped
+export const logTelemetryEvent = (payload) => {
     let finalPayload;
 
-    // Check if it's already wrapped in the new telemetry_envelope schema
     if (payload.telemetry_envelope) {
         finalPayload = payload;
     } else {
-        // Legacy or general error payload wrapping
         finalPayload = {
             telemetry_envelope: {
                 project_id: "AXIM_NDA_GENERATOR",
@@ -160,17 +165,54 @@ export const flushTelemetry = async (payload) => {
         if (payload.context && payload.context.source === "onyx") {
             finalPayload.telemetry_envelope.orchestration_engine = "Onyx";
         }
+    }
 
+    eventQueue.push(finalPayload);
+
+    if (eventQueue.length >= 10) {
+        flushTelemetry();
+    } else {
+        if (flushTimeout) clearTimeout(flushTimeout);
+        flushTimeout = setTimeout(() => flushTelemetry(), 3000);
+    }
+};
+
+export const flushTelemetry = async (isUnloading = false) => {
+    if (eventQueue.length === 0) return;
+    if (flushTimeout) clearTimeout(flushTimeout);
+
+    const payloadToFlush = [...eventQueue];
+    eventQueue = [];
+
+    const url = import.meta.env.VITE_TELEMETRY_URL || '/api/v1/telemetry/events';
+
+    // Batch payload wrapper
+    const bulkPayload = {
+        telemetry_envelope: {
+            project_id: "AXIM_NDA_GENERATOR",
+            environment: getEnvContext(),
+            orchestration_engine: typeof window !== 'undefined' && window.location.search.includes('source=onyx') ? "Onyx" : "None",
+            timestamp: new Date().toISOString()
+        },
+        event_payload: {
+            batch: payloadToFlush,
+            flushed_at: new Date().toISOString()
+        }
+    };
+
+    if (isUnloading && typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        const blob = new Blob([JSON.stringify(bulkPayload)], { type: 'application/json' });
+        navigator.sendBeacon(url, blob);
+        return;
     }
 
     try {
-        const url = import.meta.env.VITE_TELEMETRY_URL || '/api/v1/telemetry/errors';
         await fetchWithTimeout(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(finalPayload)
+            body: JSON.stringify(bulkPayload)
         });
     } catch (e) {
         console.error("Telemetry failed to flush", e);
@@ -178,10 +220,10 @@ export const flushTelemetry = async (payload) => {
             if (typeof window !== 'undefined' && window.localStorage) {
                 const stored = window.localStorage.getItem('axim_telemetry_buffer') || '[]';
                 const buffer = JSON.parse(stored);
-                buffer.push(finalPayload);
+                buffer.push(...payloadToFlush);
                 window.localStorage.setItem('axim_telemetry_buffer', JSON.stringify(buffer));
             } else {
-                diagnosticQueue.push(finalPayload);
+                diagnosticQueue.push(...payloadToFlush);
             }
         } catch (storageError) {
             console.error("Failed to buffer telemetry locally", storageError);
@@ -194,7 +236,7 @@ export const logException = (error, context = {}) => {
         telemetry_envelope: {
             project_id: "AXIM_NDA_GENERATOR",
             environment: getEnvContext(),
-            orchestration_engine: window.location.search.includes('source=onyx') ? "Onyx" : "None",
+            orchestration_engine: typeof window !== 'undefined' && window.location.search.includes('source=onyx') ? "Onyx" : "None",
             timestamp: new Date().toISOString()
         },
         event_payload: {
@@ -203,5 +245,5 @@ export const logException = (error, context = {}) => {
             context
         }
     };
-    flushTelemetry(payload);
+    logTelemetryEvent(payload);
 };

@@ -1,5 +1,5 @@
 import { fetchWithTimeout } from "../utils/fetchWithTimeout";
-import { flushTelemetry as flushGlobalTelemetry } from "../utils/telemetry";
+import { logTelemetryEvent as flushGlobalTelemetry } from "../utils/telemetry";
 import SignatureCanvas from "react-signature-canvas";
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useDebounce } from "use-debounce";

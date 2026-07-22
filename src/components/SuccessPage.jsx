@@ -375,7 +375,7 @@ const SuccessPage = React.memo(function SuccessPage() {
 
   return (
     <div className="w-full print:bg-white print:text-black">
-      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 text-center max-w-2xl mx-auto shadow-2xl animate-in zoom-in duration-300 print:shadow-none print:border-none print:bg-white mt-12">
+      <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 text-center max-w-2xl mx-auto shadow-2xl animate-fade-in-up duration-500 ease-out print:shadow-none print:border-none print:bg-white mt-12">
         <div className="w-20 h-20 bg-axim-teal/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-axim-teal/30">
           <SafeIcon
             icon={FiCheckCircle}
