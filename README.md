@@ -43,7 +43,7 @@ Set **vars** (non-secret):
 Set **secrets** (sensitive) with Wrangler:
 
 ```bash
-wrangler secret put AXIM_SERVICE_KEY
+wrangler secret put AXIM_CORE_API_KEY
 wrangler secret put AXIM_CORE_TOKEN
 wrangler secret put TURNSTILE_SECRET_KEY
 wrangler secret put STRIPE_WEBHOOK_SECRET
