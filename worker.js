@@ -110,7 +110,13 @@ export default {
     }
 
     try {
-        const listResult = await env.AXIM_EDGE_KV.list({ prefix: "DLQ_" });
+        const [listResult1, listResult2] = await Promise.all([
+            env.AXIM_EDGE_KV.list({ prefix: "DLQ_", limit: 50 }),
+            env.AXIM_EDGE_KV.list({ prefix: "dlq:", limit: 50 })
+        ]);
+
+        const allKeys = [...listResult1.keys, ...listResult2.keys].slice(0, 50);
+        const active_dlq_count = listResult1.keys.length + listResult2.keys.length;
 
         // Ecosystem Heartbeat
         const baseUrl = env.VITE_PAYMENT_API_URL || "https://api.axim.us.com";
@@ -123,7 +129,7 @@ export default {
             },
             event_payload: {
                 event_type: "ecosystem_heartbeat",
-                active_dlq_count: listResult.keys.length
+                active_dlq_count: active_dlq_count
             }
         };
 
@@ -137,7 +143,8 @@ export default {
                 body: JSON.stringify(heartbeatPayload)
             }).catch(e => console.error("Heartbeat telemetry failed", e))
         );
-        for (const key of listResult.keys) {
+
+        for (const key of allKeys) {
             const payloadStr = await env.AXIM_EDGE_KV.get(key.name);
             if (payloadStr) {
                 try {
@@ -152,6 +159,30 @@ export default {
                                 "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
                             },
                             body: payloadStr
+                        });
+                    } else if (key.name.startsWith("dlq:email:")) {
+                        const payload = JSON.parse(payloadStr);
+                        response = await fetch(`${baseUrl}/v1/email/transactional/nda-receipt`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                            },
+                            body: JSON.stringify({
+                                docId: payload.docId,
+                                recipientEmail: payload.recipientEmail,
+                                timestamp: payload.timestamp || new Date().toISOString()
+                            })
+                        });
+                    } else if (key.name.startsWith("dlq:lead:")) {
+                        const payload = JSON.parse(payloadStr);
+                        response = await fetch(`${baseUrl}/v1/crm/leads/ingest`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                            },
+                            body: JSON.stringify(payload)
                         });
                     } else {
                         // Default to onyx callback
@@ -1106,6 +1137,54 @@ try {
         // ----------------------------------------------------
         // --- NEW: Phase 61 Centralized Core Email Dispatch ---
         const recipientEmail = formData.recipientEmail || formData.email;
+
+        // Phase 62: Core API Lead Synchronization
+        ctx.waitUntil(
+          (async () => {
+            try {
+              const leadPayload = {
+                disclosingParty: formData.partyA || formData.disclosingParty,
+                receivingParty: formData.partyB || formData.receivingParty,
+                email: recipientEmail,
+                docId: docId,
+                timestamp: new Date().toISOString(),
+                source: "nda_generator"
+              };
+
+              const leadResponse = await fetch("https://api.axim.us.com/v1/crm/leads/ingest", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                },
+                body: JSON.stringify(leadPayload)
+              });
+
+              if (!leadResponse.ok) {
+                throw new Error(`Lead API returned ${leadResponse.status}`);
+              }
+            } catch (leadErr) {
+              console.error("Lead sync failed:", leadErr);
+              if (env.AXIM_EDGE_KV) {
+                try {
+                  const dlqPayload = {
+                    event: "lead_sync_failed",
+                    docId: docId,
+                    email: recipientEmail,
+                    disclosingParty: formData.partyA || formData.disclosingParty,
+                    receivingParty: formData.partyB || formData.receivingParty,
+                    error: leadErr.message,
+                    timestamp: new Date().toISOString()
+                  };
+                  await env.AXIM_EDGE_KV.put(`dlq:lead:${docId}`, JSON.stringify(dlqPayload));
+                } catch (kvErr) {
+                  console.error("KV DLQ lead write failed:", kvErr);
+                }
+              }
+            }
+          })()
+        );
+
         if (recipientEmail) {
           ctx.waitUntil(
             (async () => {
