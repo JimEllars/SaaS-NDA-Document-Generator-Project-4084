@@ -9,6 +9,15 @@ export default {
       colors: {
         'axim-teal': '#00E5FF',
         'void': '#000000',
+      },
+      animation: {
+        'fade-in-up': 'fadeInUp 500ms ease-out',
+      },
+      keyframes: {
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        }
       }
     }
   },

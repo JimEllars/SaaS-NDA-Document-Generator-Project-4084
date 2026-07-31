@@ -1697,6 +1697,56 @@ try {
       }
     }
 
+
+    async function getEcosystemConfig(request, env, ctx) {
+      const cacheUrl = new URL(request.url);
+      const cacheKey = new Request(cacheUrl.toString(), request);
+      const cache = caches.default;
+
+      let cachedResponse = await cache.match(cacheKey);
+
+      const fetchAndUpdateCache = async () => {
+        try {
+          const configResponse = await fetch("https://api.axim.us.com/v1/config/nda-generator", {
+             headers: env.AXIM_SERVICE_KEY ? { "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}` } : {}
+          });
+          if (configResponse.ok) {
+            let responseToCache = new Response(configResponse.body, configResponse);
+            responseToCache.headers.set("Cache-Control", "s-maxage=60");
+            await cache.put(cacheKey, responseToCache);
+          }
+        } catch (e) {
+          console.error("Background config refresh failed:", e);
+        }
+      };
+
+      if (cachedResponse) {
+        ctx.waitUntil(fetchAndUpdateCache());
+        return cachedResponse;
+      }
+
+      try {
+        const configResponse = await fetch("https://api.axim.us.com/v1/config/nda-generator", {
+             headers: env.AXIM_SERVICE_KEY ? { "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}` } : {}
+        });
+        if (configResponse.ok) {
+           let responseToCache = configResponse.clone();
+           let cacheHeaders = new Headers(responseToCache.headers);
+           cacheHeaders.set("Cache-Control", "s-maxage=60");
+           let finalResponseToCache = new Response(responseToCache.body, { ...responseToCache, headers: cacheHeaders });
+           ctx.waitUntil(cache.put(cacheKey, finalResponseToCache));
+           return configResponse;
+        }
+        return new Response(JSON.stringify({ error: "Failed to load config" }), { status: 502, headers: { "Content-Type": "application/json" } });
+      } catch (e) {
+         return new Response(JSON.stringify({ error: "Config proxy error" }), { status: 502, headers: { "Content-Type": "application/json" } });
+      }
+    }
+
+    if (url.pathname === "/api/config") {
+       return getEcosystemConfig(request, env, ctx);
+    }
+
     if (url.pathname.startsWith("/api/")) {
       // Modify the URL to point to the actual payment backend
       const targetBackendUrl =
