@@ -138,7 +138,7 @@ export default {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+                    "Authorization": env.AXIM_CORE_API_KEY ? `Bearer ${env.AXIM_CORE_API_KEY}` : ""
                 },
                 body: JSON.stringify(heartbeatPayload)
             }).catch(e => console.error("Heartbeat telemetry failed", e))
@@ -148,6 +148,29 @@ export default {
             const payloadStr = await env.AXIM_EDGE_KV.get(key.name);
             if (payloadStr) {
                 try {
+                    let payloadData;
+                    let isJson = false;
+                    let retryCount = 0;
+                    let rawPayload = payloadStr;
+
+                    try {
+                        payloadData = JSON.parse(payloadStr);
+                        isJson = true;
+                        retryCount = payloadData.retryCount || 0;
+                        if (payloadData.nextRetry && Date.now() < payloadData.nextRetry) {
+                            continue;
+                        }
+                    } catch (e) {
+                        // Keep it as raw string if it's not JSON
+                    }
+
+                    if (isJson) {
+                       // for stripe webhooks or others if they are wrapped
+                       if (payloadData.rawPayload) {
+                           rawPayload = payloadData.rawPayload;
+                       }
+                    }
+
                     let response;
                     const baseUrl = env.VITE_PAYMENT_API_URL || "https://api.axim.us.com";
 
@@ -156,17 +179,17 @@ export default {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
-                                "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                                "Authorization": `Bearer ${env.AXIM_CORE_API_KEY}`
                             },
-                            body: payloadStr
+                            body: isJson && payloadData.rawPayload ? payloadData.rawPayload : payloadStr
                         });
                     } else if (key.name.startsWith("dlq:email:")) {
-                        const payload = JSON.parse(payloadStr);
+                        const payload = isJson ? payloadData : JSON.parse(payloadStr);
                         response = await fetch(`${baseUrl}/v1/email/transactional/nda-receipt`, {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
-                                "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                                "Authorization": `Bearer ${env.AXIM_CORE_API_KEY}`
                             },
                             body: JSON.stringify({
                                 docId: payload.docId,
@@ -175,12 +198,12 @@ export default {
                             })
                         });
                     } else if (key.name.startsWith("dlq:lead:")) {
-                        const payload = JSON.parse(payloadStr);
+                        const payload = isJson ? (payloadData.rawPayload ? JSON.parse(payloadData.rawPayload) : payloadData) : JSON.parse(payloadStr);
                         response = await fetch(`${baseUrl}/v1/crm/leads/ingest`, {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
-                                "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                                "Authorization": `Bearer ${env.AXIM_CORE_API_KEY}`
                             },
                             body: JSON.stringify(payload)
                         });
@@ -190,9 +213,9 @@ export default {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
-                                "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                                "Authorization": `Bearer ${env.AXIM_CORE_API_KEY}`
                             },
-                            body: payloadStr
+                            body: isJson && payloadData.rawPayload ? payloadData.rawPayload : payloadStr
                         });
                     }
 
@@ -208,7 +231,7 @@ export default {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
-                                "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                                "Authorization": `Bearer ${env.AXIM_CORE_API_KEY}`
                             },
                             body: JSON.stringify({
                                 event_type: "dlq_poison_message_dropped",
@@ -218,8 +241,37 @@ export default {
                             })
                           }).catch(e => console.error("Telemetry failed", e))
                         );
+                    } else {
+                        // 5xx error or other failure - implement backoff
+                        retryCount++;
+                        if (retryCount > 5) {
+                            // Dead letter queue
+                            const newKey = key.name.replace(/^(DLQ_|dlq:)/, "dlq_dead_");
+                            await env.AXIM_EDGE_KV.put(newKey, payloadStr);
+                            await env.AXIM_EDGE_KV.delete(key.name);
+                        } else {
+                            // Calculate next retry time
+                            let delayMins = 5;
+                            if (retryCount === 2) delayMins = 15;
+                            if (retryCount >= 3) delayMins = 60;
+
+                            const nextRetry = Date.now() + (delayMins * 60 * 1000);
+                            let updatedPayloadStr = payloadStr;
+
+                            if (isJson) {
+                                payloadData.retryCount = retryCount;
+                                payloadData.nextRetry = nextRetry;
+                                updatedPayloadStr = JSON.stringify(payloadData);
+                            } else {
+                                updatedPayloadStr = JSON.stringify({
+                                    rawPayload: payloadStr,
+                                    retryCount: retryCount,
+                                    nextRetry: nextRetry
+                                });
+                            }
+                            await env.AXIM_EDGE_KV.put(key.name, updatedPayloadStr);
+                        }
                     }
-                    // If 5xx, do nothing and let it retry on next cron cycle
                 } catch (e) {
                     console.error(`Failed to retry DLQ item ${key.name}`, e);
                 }
@@ -271,7 +323,7 @@ export default {
                method: "POST",
                headers: {
                  "Content-Type": "application/json",
-                 "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+                 "Authorization": env.AXIM_CORE_API_KEY ? `Bearer ${env.AXIM_CORE_API_KEY}` : ""
                },
                body: JSON.stringify(errorPayload)
              }).catch(e => console.error("Telemetry failure on rate limit breach", e)));
@@ -288,7 +340,7 @@ export default {
     // Legacy endpoint retained for compatibility only; primary route is handled later.
         if (request.method === "POST" && url.pathname === "/api/v1/generate-headless-legacy") {
       const authHeader = request.headers.get("Authorization");
-      if (!authHeader || authHeader !== `Bearer ${env.AXIM_SERVICE_KEY}`) {
+      if (!authHeader || authHeader !== `Bearer ${env.AXIM_CORE_API_KEY}`) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { "Content-Type": "application/json" }
@@ -353,7 +405,7 @@ export default {
             const onyxResponse = await fetch(`${backendUrl}/v1/crm/contact?id=${id}`, {
                 method: "GET",
                 headers: {
-                    "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                    "Authorization": `Bearer ${env.AXIM_CORE_API_KEY}`
                 }
             });
 
@@ -378,7 +430,7 @@ export default {
     }
     if (request.method === "GET" && url.pathname === "/api/v1/system/health") {
       const authHeader = request.headers.get("Authorization");
-      const expectedToken = env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : null;
+      const expectedToken = env.AXIM_CORE_API_KEY ? `Bearer ${env.AXIM_CORE_API_KEY}` : null;
 
       if (!authHeader || !expectedToken || authHeader !== expectedToken) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -409,7 +461,7 @@ export default {
           service: "nda_generator",
           timestamp: Date.now(),
           edge_readiness: {
-            service_key_bound: !!env.AXIM_SERVICE_KEY,
+            service_key_bound: !!env.AXIM_CORE_API_KEY,
             cache_available: typeof caches !== 'undefined'
           }
         }),
@@ -499,7 +551,7 @@ export default {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: JSON.stringify({
                   telemetry_envelope: {
@@ -582,7 +634,7 @@ export default {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+                  "Authorization": env.AXIM_CORE_API_KEY ? `Bearer ${env.AXIM_CORE_API_KEY}` : ""
                 },
                 body: JSON.stringify({
                   telemetry_envelope: {
@@ -611,7 +663,7 @@ export default {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  "Authorization": `Bearer ${env.AXIM_SERVICE_KEY || "development_key"}`
+                  "Authorization": `Bearer ${env.AXIM_CORE_API_KEY || "development_key"}`
                 },
                 body: JSON.stringify({
                   app_id: "nda-generator",
@@ -634,7 +686,7 @@ export default {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: JSON.stringify({
                 telemetry_envelope: {
@@ -672,7 +724,7 @@ export default {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: JSON.stringify({
                 telemetry_envelope: {
@@ -712,7 +764,7 @@ export default {
           });
         }
         const authHeader = request.headers.get("Authorization");
-        const expectedToken = env.AXIM_CORE_TOKEN || env.AXIM_SERVICE_KEY;
+        const expectedToken = env.AXIM_CORE_TOKEN || env.AXIM_CORE_API_KEY;
 
         if (!authHeader || authHeader !== `Bearer ${expectedToken}`) {
           return new Response(JSON.stringify({ status: "error", message: "Ecosystem Handshake Unauthorized" }), {
@@ -742,7 +794,7 @@ export default {
                     const encoder = new TextEncoder();
                     const key = await crypto.subtle.importKey(
                         'raw',
-                        encoder.encode(env.AXIM_SERVICE_KEY || 'default-secret'),
+                        encoder.encode(env.AXIM_CORE_API_KEY || 'default-secret'),
                         { name: 'HMAC', hash: 'SHA-256' },
                         false,
                         ['sign']
@@ -763,7 +815,7 @@ try {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                            "Authorization": `Bearer ${env.AXIM_CORE_API_KEY}`
                         },
                         body: JSON.stringify({
                             hash: hashArray,
@@ -789,7 +841,7 @@ try {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
-                                "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+                                "Authorization": env.AXIM_CORE_API_KEY ? `Bearer ${env.AXIM_CORE_API_KEY}` : ""
                             },
                             body: JSON.stringify({
                                 telemetry_envelope: {
@@ -815,6 +867,7 @@ try {
                         if (env.AXIM_EDGE_KV) {
                             const dlqKey = `DLQ_onyx_${Date.now()}_${crypto.randomUUID()}`;
                             const payloadToSave = {
+                                retryCount: 0,
                                 hash: hashArray,
                                 metadata: {
                                     generated_at: new Date().toISOString(),
@@ -841,7 +894,7 @@ try {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: JSON.stringify({
                 telemetry_envelope: {
@@ -891,7 +944,7 @@ try {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: JSON.stringify({
                 telemetry_envelope: {
@@ -960,7 +1013,7 @@ try {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
             },
           },
         );
@@ -1020,7 +1073,7 @@ try {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+                  "Authorization": env.AXIM_CORE_API_KEY ? `Bearer ${env.AXIM_CORE_API_KEY}` : ""
                 },
                 body: JSON.stringify({
                   telemetry_envelope: {
@@ -1049,7 +1102,7 @@ try {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  "Authorization": `Bearer ${env.AXIM_SERVICE_KEY || "development_key"}`
+                  "Authorization": `Bearer ${env.AXIM_CORE_API_KEY || "development_key"}`
                 },
                 body: JSON.stringify({
                   app_id: "nda-generator",
@@ -1072,7 +1125,7 @@ try {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: JSON.stringify({
                 telemetry_envelope: {
@@ -1108,7 +1161,7 @@ try {
             {
               method: "POST",
               headers: {
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: vaultFormData,
             },
@@ -1123,7 +1176,7 @@ try {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: JSON.stringify({
                 event: "b2b_lead_converted",
@@ -1155,7 +1208,7 @@ try {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                  Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
                 },
                 body: JSON.stringify(leadPayload)
               });
@@ -1193,7 +1246,7 @@ try {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                    Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
                   },
                   body: JSON.stringify({
                     docId: docId,
@@ -1247,7 +1300,7 @@ try {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: JSON.stringify({
                 telemetry_envelope: {
@@ -1377,7 +1430,7 @@ try {
               method: "POST",
               headers: {
                  "Content-Type": "application/json",
-                 "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}`
+                 "Authorization": `Bearer ${env.AXIM_CORE_API_KEY}`
               },
               body: JSON.stringify(syncPayload)
             }).catch(e => console.error("Permission sync failed", e)));
@@ -1438,7 +1491,7 @@ try {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: JSON.stringify({
                 event: "document_executed",
@@ -1474,7 +1527,7 @@ try {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
             },
             body: JSON.stringify(payload),
           },
@@ -1525,7 +1578,7 @@ try {
           {
             method: "GET",
             headers: {
-              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
             },
           },
         );
@@ -1586,7 +1639,7 @@ try {
           {
             method: "GET",
             headers: {
-              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
             },
           },
         );
@@ -1612,7 +1665,7 @@ try {
           {
             method: "GET",
             headers: {
-              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
             },
           }
         );
@@ -1630,7 +1683,7 @@ try {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: JSON.stringify({
                 templateId: "nda_v1_executed",
@@ -1651,7 +1704,7 @@ try {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+                Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
               },
               body: JSON.stringify({
                 event: "document_executed",
@@ -1702,7 +1755,7 @@ try {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
             },
             body: JSON.stringify({ trace_id }),
           }
@@ -1750,7 +1803,7 @@ try {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": env.AXIM_SERVICE_KEY ? `Bearer ${env.AXIM_SERVICE_KEY}` : ""
+                    "Authorization": env.AXIM_CORE_API_KEY ? `Bearer ${env.AXIM_CORE_API_KEY}` : ""
                 },
                 body: JSON.stringify(payload)
             }).catch(e => console.error("Failed to forward telemetry diagnostics", e))
@@ -1789,7 +1842,7 @@ try {
           {
             method: "GET",
             headers: {
-              Authorization: `Bearer ${env.AXIM_SERVICE_KEY}`,
+              Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
             },
           },
         );
@@ -1830,7 +1883,7 @@ try {
       const fetchAndUpdateCache = async () => {
         try {
           const configResponse = await fetch("https://api.axim.us.com/v1/config/nda-generator", {
-             headers: env.AXIM_SERVICE_KEY ? { "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}` } : {}
+             headers: env.AXIM_CORE_API_KEY ? { "Authorization": `Bearer ${env.AXIM_CORE_API_KEY}` } : {}
           });
           if (configResponse.ok) {
             let responseToCache = new Response(configResponse.body, configResponse);
@@ -1849,7 +1902,7 @@ try {
 
       try {
         const configResponse = await fetch("https://api.axim.us.com/v1/config/nda-generator", {
-             headers: env.AXIM_SERVICE_KEY ? { "Authorization": `Bearer ${env.AXIM_SERVICE_KEY}` } : {}
+             headers: env.AXIM_CORE_API_KEY ? { "Authorization": `Bearer ${env.AXIM_CORE_API_KEY}` } : {}
         });
         if (configResponse.ok) {
            let responseToCache = configResponse.clone();
@@ -1944,14 +1997,14 @@ try {
       ];
 
       if (internalRoutes.some((route) => url.pathname.startsWith(route))) {
-        if (!env.AXIM_SERVICE_KEY) {
-          console.warn("AXIM_SERVICE_KEY is missing from worker environment.");
+        if (!env.AXIM_CORE_API_KEY) {
+          console.warn("AXIM_CORE_API_KEY is missing from worker environment.");
 
           if (url.pathname.startsWith("/api/v1/ai/onyx-bridge")) {
             // Write to telemetry stream gracefully and return 500
             try {
                const errorPayload = {
-                  message: "Missing AXIM_SERVICE_KEY for Onyx AI Edge-Bridge Ingress Routing",
+                  message: "Missing AXIM_CORE_API_KEY for Onyx AI Edge-Bridge Ingress Routing",
                   route: url.pathname,
                   timestamp: new Date().toISOString()
                };
@@ -1970,7 +2023,7 @@ try {
             });
           }
         } else if (!headers.has("Authorization")) {
-          headers.set("Authorization", `Bearer ${env.AXIM_SERVICE_KEY}`);
+          headers.set("Authorization", `Bearer ${env.AXIM_CORE_API_KEY}`);
         }
       }
 

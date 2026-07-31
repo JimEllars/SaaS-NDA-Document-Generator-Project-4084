@@ -13,7 +13,7 @@ const emailDispatchLogic = `// -------------------------------------------------
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
-                    Authorization: \`Bearer \${env.AXIM_SERVICE_KEY}\`,
+                    Authorization: \`Bearer \${env.AXIM_CORE_API_KEY}\`,
                   },
                   body: JSON.stringify({
                     docId: docId,
