@@ -1367,55 +1367,11 @@ const NDAGeneratorForm = React.memo(
               <section className="bg-white/5 backdrop-blur-md border border-white/10 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
                 <div className="relative z-10">
                   {!isEditing && (
-                    <>
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-xl font-bold">
-                          Generate Professional PDF
-                        </h3>
-                        <div className="flex flex-col items-end">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider backdrop-blur-sm">
-                              75% Off Promo
-                            </span>
-                            <span className="line-through text-zinc-400/70 text-sm font-medium">
-                              $8.00
-                            </span>
-                          </div>
-                          <span className="text-emerald-500 font-bold text-2xl drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">
-                            $2.00
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-zinc-300 text-sm mb-6 leading-relaxed">
-                        Get a watermark-free, legally formatted document ready
-                        for digital signatures and immediate use.
-                      </p>
-
-                      <ul className="text-zinc-300 text-sm mb-6 space-y-2">
-                        <li className="flex items-center gap-2 text-axim-teal">
-                          <SafeIcon icon={FiCheck} size={16} />
-                          <span className="text-zinc-300">
-                            Professional formatting
-                          </span>
-                        </li>
-                        <li className="flex items-center gap-2 text-axim-teal">
-                          <SafeIcon icon={FiCheck} size={16} />
-                          <span className="text-zinc-300">
-                            Industry-specific clauses
-                          </span>
-                        </li>
-                        <li className="flex items-center gap-2 text-axim-teal">
-                          <SafeIcon icon={FiCheck} size={16} />
-                          <span className="text-zinc-300">
-                            Instant download
-                          </span>
-                        </li>
-                      </ul>
-                    </>
+                    <UpsellCard />
                   )}
 
                   <div className="flex flex-col gap-4">
-                    {formData.strictness === "robust" && <UpsellCard />}
+                    {/* High-Stakes Upsell / Notification can go here, removing old UpsellCard invocation for robust strictness */}
 
                     <div className="cf-turnstile mb-4 self-center" data-sitekey="1x00000000000000000000AA" data-callback="onTurnstileSuccess"></div>
                     <div className="flex flex-col md:flex-row gap-4">
