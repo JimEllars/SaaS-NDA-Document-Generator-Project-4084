@@ -1766,6 +1766,16 @@ try {
           // Inject the current origin for success and cancel URLs
           const clientOrigin = request.headers.get("Origin") || url.origin;
           body.success_url = `${clientOrigin}/success?session_id={CHECKOUT_SESSION_ID}`;
+          body.line_items = [{
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: "NDA Document Generation"
+              },
+              unit_amount: 200
+            },
+            quantity: 1
+          }];
           body.cancel_url = `${clientOrigin}/?canceled=true`;
           // Customer email is already in body.customer_email
           if (body.formHash) {
