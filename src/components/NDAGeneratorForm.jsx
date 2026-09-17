@@ -1,3 +1,4 @@
+import { TextInput, SelectInput, ToggleInput, ButtonGroup } from "./form-inputs";
 import { fetchWithTimeout } from "../utils/fetchWithTimeout";
 import { logTelemetryEvent as flushGlobalTelemetry } from "../utils/telemetry";
 import SignatureCanvas from "react-signature-canvas";
@@ -786,19 +787,15 @@ const NDAGeneratorForm = React.memo(
                         {formData.type === "mutual" ? "(Party 1)" : ""}
                       </label>
                       <div className="relative">
-                        <input
-                          id="disclosing"
-                          aria-invalid={!isFormValid && validationMessage.includes("disclosing") ? "true" : "false"}
-                          name="disclosing"
-                          value={formData.disclosing}
-                          onChange={handleInputChange}
-                          placeholder="Company or Individual Name"
-                          autoComplete="organization"
-                          className={`${INPUT_CLASSES} ${isOnyxLocked ? 'opacity-70 cursor-not-allowed' : ''}`}
-                          disabled={isOnyxLocked}
-                          required
-                          maxLength="255"
-                        />
+                        <TextInput
+        id="disclosing"
+        name="disclosing"
+        value={formData.disclosing}
+        onChange={handleInputChange}
+        placeholder="Company or Individual Name"
+        ariaInvalid={!isFormValid && validationMessage.includes("disclosing") ? "true" : "false"}
+        disabled={isOnyxLocked}
+      />
                         {isOnyxLocked && (
                           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400">
                             <SafeIcon icon={FiLock} size={16} />
@@ -823,18 +820,14 @@ const NDAGeneratorForm = React.memo(
                         Receiving Party{" "}
                         {formData.type === "mutual" ? "(Party 2)" : ""}
                       </label>
-                      <input
-                        id="receiving"
-                        aria-invalid={!isFormValid && validationMessage.includes("receiving") ? "true" : "false"}
-                        name="receiving"
-                        value={formData.receiving}
-                        onChange={handleInputChange}
-                        placeholder="Counterparty Name"
-                        autoComplete="organization"
-                        className={INPUT_CLASSES}
-                        required
-                        maxLength="255"
-                      />
+                      <TextInput
+        id="receiving"
+        name="receiving"
+        value={formData.receiving}
+        onChange={handleInputChange}
+        placeholder="Counterparty Name"
+        ariaInvalid={!isFormValid && validationMessage.includes("receiving") ? "true" : "false"}
+      />
                     </div>
                   </div>
 
@@ -847,19 +840,16 @@ const NDAGeneratorForm = React.memo(
                         Email Address (for document delivery)
                       </label>
                       <div className="relative">
-                        <input
-                          type="email"
-                          id="email"
-                          aria-invalid={!isFormValid && validationMessage.includes("email") ? "true" : "false"}
-                          name="email"
-                          value={formData.email || ""}
-                          onChange={handleInputChange}
-                          className={`${INPUT_CLASSES} ${isOnyxLocked ? 'opacity-70 cursor-not-allowed' : ''}`}
-                          placeholder="Enter your email address"
-                          autoComplete="email"
-                          required
-                          disabled={isOnyxLocked}
-                        />
+                        <TextInput
+        id="email"
+        name="email"
+        type="email"
+        value={formData.email || ""}
+        onChange={handleInputChange}
+        placeholder="Enter your email address"
+        ariaInvalid={!isFormValid && validationMessage.includes("email") ? "true" : "false"}
+        disabled={isOnyxLocked}
+      />
                         {isOnyxLocked && (
                           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400">
                             <SafeIcon icon={FiLock} size={16} />
@@ -880,16 +870,14 @@ const NDAGeneratorForm = React.memo(
                       <label htmlFor="recipientEmail" className={LABEL_CLASSES}>
                         Recipient Email Address (Optional - Send copy to counterparty)
                       </label>
-                      <input
-                        type="email"
-                        id="recipientEmail"
-                        name="recipientEmail"
-                        value={formData.recipientEmail || ""}
-                        onChange={handleInputChange}
-                        className={INPUT_CLASSES}
-                        placeholder="Enter counterparty email (optional)"
-                        autoComplete="email"
-                      />
+                      <TextInput
+        id="recipientEmail"
+        name="recipientEmail"
+        type="email"
+        value={formData.recipientEmail || ""}
+        onChange={handleInputChange}
+        placeholder="Enter counterparty email (optional)"
+      />
                     </div>
                   </div>
 
@@ -935,17 +923,13 @@ const NDAGeneratorForm = React.memo(
                       <SafeIcon icon={FiCalendar} size={14} />
                       Effective Date
                     </label>
-                    <input
-                      id="effectiveDate"
-                      name="effectiveDate"
-                      type="date"
-                      value={formData.effectiveDate || ""}
-                      onChange={handleInputChange}
-                      min="2000-01-01"
-                      max="2099-12-31"
-                      className={INPUT_CLASSES}
-                      required
-                    />
+                    <TextInput
+        id="effectiveDate"
+        name="effectiveDate"
+        type="date"
+        value={formData.effectiveDate || ""}
+        onChange={handleInputChange}
+      />
                   </div>
 
                   {/* Industry and Jurisdiction */}
@@ -957,19 +941,13 @@ const NDAGeneratorForm = React.memo(
                       >
                         Industry Sector
                       </label>
-                      <select
-                        id="industry"
-                        name="industry"
-                        value={formData.industry}
-                        onChange={handleInputChange}
-                        className={SELECT_CLASSES}
-                      >
-                        {INDUSTRY_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                      <SelectInput
+        id="industry"
+        name="industry"
+        value={formData.industry}
+        onChange={handleInputChange}
+        options={INDUSTRY_OPTIONS}
+      />
                     </div>
                     <div>
                       <label
@@ -978,19 +956,13 @@ const NDAGeneratorForm = React.memo(
                       >
                         Governing Law
                       </label>
-                      <select
-                        id="jurisdiction"
-                        name="jurisdiction"
-                        value={formData.jurisdiction}
-                        onChange={handleInputChange}
-                        className={SELECT_CLASSES}
-                      >
-                        {JURISDICTIONS.map((state) => (
-                          <option key={state} value={state}>
-                            {state}
-                          </option>
-                        ))}
-                      </select>
+                      <SelectInput
+        id="jurisdiction"
+        name="jurisdiction"
+        value={formData.jurisdiction}
+        onChange={handleInputChange}
+        options={JURISDICTIONS.map(state => ({ value: state, label: state }))}
+      />
                     </div>
                   </div>
 
@@ -1019,18 +991,16 @@ const NDAGeneratorForm = React.memo(
                           <SafeIcon icon={FiHelpCircle} size={16} />
                         </button>
                       </div>
-                      <select
-                        id="strictness"
-                        name="strictness"
-                        value={formData.strictness}
-                        onChange={handleInputChange}
-                        className={SELECT_CLASSES}
-                      >
-                        <option value="standard">Standard Protection</option>
-                        <option value="robust">
-                          Enhanced (with Penalties)
-                        </option>
-                      </select>
+                      <SelectInput
+        id="strictness"
+        name="strictness"
+        value={formData.strictness}
+        onChange={handleInputChange}
+        options={[
+          { value: "standard", label: "Standard Protection" },
+          { value: "robust", label: "Enhanced (with Penalties)" }
+        ]}
+      />
                     </div>
                     <div>
                       <label
@@ -1039,132 +1009,38 @@ const NDAGeneratorForm = React.memo(
                       >
                         Confidentiality Term
                       </label>
-                      <select
-                        id="term"
-                        name="term"
-                        value={formData.term}
-                        onChange={handleInputChange}
-                        className={SELECT_CLASSES}
-                      >
-                        <option value="1">1 Year</option>
-                        <option value="2">2 Years</option>
-                        <option value="3">3 Years</option>
-                        <option value="5">5 Years</option>
-                        <option value="10">10 Years</option>
-                        <option value="Indefinitely">Indefinitely</option>
-                      </select>
+                      <SelectInput
+        id="term"
+        name="term"
+        value={formData.term}
+        onChange={handleInputChange}
+        options={[
+          { value: "1", label: "1 Year" },
+          { value: "2", label: "2 Years" },
+          { value: "3", label: "3 Years" },
+          { value: "5", label: "5 Years" },
+          { value: "10", label: "10 Years" },
+          { value: "Indefinitely", label: "Indefinitely" }
+        ]}
+      />
                     </div>
                   </div>
 
                   {/* Additional Options */}
-                  <div className="flex items-center gap-3 p-4 bg-black/50 border border-white/10 rounded-xl">
-                    <input
-                      id="includeReturn"
-                      type="checkbox"
-                      name="includeReturn"
-                      checked={formData.includeReturn}
-                      onChange={handleInputChange}
-                      className="w-4 h-4 text-axim-teal border-zinc-600 rounded focus:ring-axim-teal bg-black"
-                    />
-                    <label
-                      htmlFor="includeReturn"
-                      className="text-sm font-medium text-zinc-300"
-                    >
-                      Include document return clause
-                    </label>
-                  </div>
-                  <div className="flex items-center gap-3 p-4 bg-black/50 border border-white/10 rounded-xl mt-3">
-                    <input
-                      id="includeNonSolicitation"
-                      type="checkbox"
-                      name="includeNonSolicitation"
-                      checked={formData.includeNonSolicitation || false}
-                      onChange={handleInputChange}
-                      className="w-4 h-4 text-axim-teal border-zinc-600 rounded focus:ring-axim-teal bg-black"
-                    />
-                    <div className="flex-1 flex justify-between items-center">
-                      <label
-                        htmlFor="includeNonSolicitation"
-                        className="text-sm font-medium text-zinc-300"
-                      >
-                        Include Non-Solicitation Clause
-                      </label>
-                      <button
-                          type="button"
-                          disabled={isOffline}
-                          onClick={() =>
-                            openAdvisor(
-                            "Non-Solicitation",
-                            "non-solicitation clause",
-                          )
-                        }
-                        className="text-axim-teal hover:text-teal-300 transition"
-                        title="AI Clause Advisor"
-                      >
-                        <SafeIcon icon={FiHelpCircle} size={16} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Document Theme */}
-                  <div className="mt-4">
-                    <label htmlFor="theme" className={`${LABEL_CLASSES} block`}>
-                      Document Theme
-                    </label>
-                    <select
-                      id="theme"
-                      name="theme"
-                      value={formData.theme || "classic"}
-                      onChange={handleInputChange}
-                      className={SELECT_CLASSES}
-                    >
-                      <option value="classic">Classic (Serif)</option>
-                      <option value="modern">Modern (Sans)</option>
-                      <option value="minimal">Minimal</option>
-                    </select>
-                  </div>
-
-
-                  {/* Proactive AI Clarity Layer */}
-                  <div className="mt-8 bg-black/40 border border-axim-teal/30 rounded-xl p-5 relative overflow-hidden">
-                     <div className="absolute top-0 right-0 p-2 opacity-10 pointer-events-none">
-                       <SafeIcon icon={FiCpu} size={64} />
-                     </div>
-                     <h3 className="text-sm font-bold text-axim-teal flex items-center gap-2 mb-3">
-                       <SafeIcon icon={FiCpu} size={16} /> AI Review Summary
-                     </h3>
-                     {isAiSearching ? (
-                        <div className="flex items-center gap-2 text-zinc-400 text-sm animate-pulse">
-                           <div className="w-4 h-4 border-2 border-axim-teal border-t-transparent rounded-full animate-spin"></div>
-                           Generating Plain English Summary...
-                        </div>
-                     ) : (
-                        <ul className="space-y-2">
-                           {aiSummary.map((bullet, idx) => (
-                             <li key={idx} className="flex items-start gap-2 text-sm text-zinc-300">
-                               <span className="text-axim-teal mt-0.5">•</span> {bullet}
-                             </li>
-                           ))}
-                        </ul>
-                     )}
-                  </div>
-
-                  <div className="flex justify-between mt-6">
-                    <button
-                      onClick={prevStep}
-                      disabled={isOffline}
-                      className="bg-transparent border border-white/20 text-zinc-200 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-white/10 transition"
-                    >
-                      <SafeIcon icon={FiChevronLeft} size={18} /> Back
-                    </button>
-                    <button
-                      onClick={nextStep}
-                      disabled={!formData.effectiveDate || isOffline}
-                      className={`bg-axim-teal text-black font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 hover:bg-axim-teal/90 transition transform active:scale-95 ${!formData.effectiveDate ? "opacity-50 cursor-not-allowed" : ""}`}
-                    >
-                      Review <SafeIcon icon={FiChevronRight} size={18} />
-                    </button>
-                  </div>
+                  <ToggleInput
+        id="includeReturn"
+        name="includeReturn"
+        checked={formData.includeReturn}
+        onChange={handleInputChange}
+        label="Include document return clause"
+      />
+                  <ToggleInput
+        id="includeNonSolicitation"
+        name="includeNonSolicitation"
+        checked={formData.includeNonSolicitation || false}
+        onChange={handleInputChange}
+        label="Include Non-Solicitation (No Poaching)"
+      />
                 </div>
               </section>
             </motion.div>
