@@ -201,8 +201,12 @@ export const flushTelemetry = async (isUnloading = false) => {
     };
 
     if (isUnloading && typeof navigator !== 'undefined' && navigator.sendBeacon) {
-        const blob = new Blob([JSON.stringify(bulkPayload)], { type: 'application/json' });
-        navigator.sendBeacon(url, blob);
+        try {
+            const blob = new Blob([JSON.stringify(bulkPayload)], { type: 'application/json' });
+            navigator.sendBeacon(url, blob);
+        } catch(e) {
+            console.error("Beacon failure", e);
+        }
         return;
     }
 
@@ -213,6 +217,8 @@ export const flushTelemetry = async (isUnloading = false) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(bulkPayload)
+        }).catch(err => {
+            console.error("Telemetry fetch failed, swallowing error", err);
         });
     } catch (e) {
         console.error("Telemetry failed to flush", e);

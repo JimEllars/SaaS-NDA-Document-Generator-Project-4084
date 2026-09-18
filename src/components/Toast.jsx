@@ -18,7 +18,7 @@ const ToastItem = React.memo(({ toast, onClose }) => {
   }
 
   return (
-    <div className={`flex items-start gap-3 p-4 rounded-xl shadow-lg border ${color} w-80 animate-in slide-in-from-right-full duration-300`}>
+    <div role="status" aria-live="polite" className={`flex items-start gap-3 p-4 rounded-xl shadow-lg border ${color} w-80 animate-in slide-in-from-right-full duration-300`}>
       <div className="mt-0.5 shrink-0">
         <SafeIcon icon={icon} size={20} />
       </div>
