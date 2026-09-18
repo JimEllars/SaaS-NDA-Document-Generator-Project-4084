@@ -1,8 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 
 export const useAximAuth = () => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        try {
+            return sessionStorage.getItem('axim_auth_status') === 'true';
+        } catch {
+            return false;
+        }
+    });
+
+    const [user, setUser] = useState(() => {
+        try {
+            const cachedUser = sessionStorage.getItem('axim_auth_user');
+            return cachedUser ? JSON.parse(cachedUser) : null;
+        } catch {
+            return null;
+        }
+    });
 
     const checkAuth = useCallback(async () => {
         const cookies = document.cookie.split(';');
@@ -18,25 +32,47 @@ export const useAximAuth = () => {
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    setUser({
+                    const userData = {
                         email: data.email || 'user@example.com',
                         full_name: data.full_name || 'Enterprise User',
                         company: data.company || 'ACME Corp',
                         role: data.role || 'user'
-                    });
+                    };
+                    setUser(userData);
                     setIsAuthenticated(true);
+                    try {
+                        sessionStorage.setItem('axim_auth_user', JSON.stringify(userData));
+                        sessionStorage.setItem('axim_auth_status', 'true');
+                    } catch (e) {
+                        console.error('Session storage failed', e);
+                    }
                 } else {
-                     setIsAuthenticated(false);
-                     setUser(null);
+                     // Fallback to cache if request fails but we have session state, otherwise clear
+                     if (res.status === 401 || res.status === 403) {
+                         setIsAuthenticated(false);
+                         setUser(null);
+                         try {
+                             sessionStorage.removeItem('axim_auth_user');
+                             sessionStorage.removeItem('axim_auth_status');
+                         } catch(e) {
+                             console.error("Session storage clear failed", e);
+                         }
+                     }
                 }
             } catch (e) {
                 console.error("Failed to verify axim_session cookie", e);
-                setIsAuthenticated(false);
-                setUser(null);
+                // On network failure, retain cached authentication credentials if available
+                // We rely on the initial state hydrated from sessionStorage
             }
         } else {
             setIsAuthenticated(false);
             setUser(null);
+            try {
+                sessionStorage.removeItem('axim_auth_user');
+                sessionStorage.removeItem('axim_auth_status');
+            } catch(e) {
+                             console.error("Session storage clear failed", e);
+                         }
         }
     }, []);
 
@@ -53,6 +89,12 @@ export const useAximAuth = () => {
         document.cookie = 'axim_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.axim.us.com;';
         setIsAuthenticated(false);
         setUser(null);
+        try {
+            sessionStorage.removeItem('axim_auth_user');
+            sessionStorage.removeItem('axim_auth_status');
+        } catch(e) {
+                             console.error("Session storage clear failed", e);
+                         }
     };
 
     return { isAuthenticated, user, login, logout, checkAuth };

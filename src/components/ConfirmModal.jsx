@@ -4,15 +4,27 @@ import SafeIcon from '../common/SafeIcon';
 
 const ConfirmModal = React.memo(({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", isDestructive = false }) => {
 
+  const modalRef = React.useRef(null);
+  const previousFocusRef = React.useRef(null);
+
   React.useEffect(() => {
     if (isOpen) {
+      previousFocusRef.current = document.activeElement;
+      if (modalRef.current) {
+        modalRef.current.focus();
+      }
       const handleKeyDown = (e) => {
         if (e.key === 'Escape') {
           onCancel();
         }
       };
       document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        if (previousFocusRef.current) {
+          previousFocusRef.current.focus();
+        }
+      };
     }
   }, [isOpen, onCancel]);
 
@@ -24,6 +36,7 @@ const ConfirmModal = React.memo(({ isOpen, title, message, onConfirm, onCancel, 
       onClick={onCancel}
     >
       <div
+        ref={modalRef}
         className="bg-white/5 border border-white/10 rounded-3xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => { if (e.key === "Tab") { const focusableElements = e.currentTarget.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])"); const firstElement = focusableElements[0]; const lastElement = focusableElements[focusableElements.length - 1]; if (e.shiftKey) { if (document.activeElement === firstElement) { lastElement.focus(); e.preventDefault(); } } else { if (document.activeElement === lastElement) { firstElement.focus(); e.preventDefault(); } } } }} tabIndex="-1"

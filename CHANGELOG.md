@@ -14,3 +14,19 @@
 - **Added:** Telemetry integration in `ErrorBoundary.jsx`, `VerificationPortal.jsx`, and `worker.js` (for PDF compilation errors) using `logException`.
 - **Updated:** Modern UI/UX implementation applied to `UpsellCard.jsx` and `IntelligenceHub.jsx` utilizing `backdrop-blur-md` and cohesive shadow metrics aligned with the AXiM cyberpunk design system.
 - **Security:** Added input sanitization to the `useVectorSearch.js` semantic search queries to mitigate prompt injection to the Onyx Mk3 bridge.
+
+## [Unreleased]
+### Added
+- Auth & Session Persistence: added session-storage persistence logic in \`src/hooks/useAximAuth.js\` to ensure seamless reload recovery, fallback logic for offline state, and cross-tab zero-disruption auth management.
+
+### Changed
+- Telemetry & Analytics Hardening (\`src/utils/telemetry.js\`):
+  - Refactored queue batching.
+  - Implemented \`navigator.sendBeacon\` on \`beforeunload\`.
+  - Suppressed unhandled promise rejections on fetch network dropouts.
+- Worker Edge Sanitization & Error Contract (\`worker.js\`):
+  - Injected strict data presence requirements for 'disclosing' and 'receiving' entity attributes.
+  - Aligned edge-return responses uniformly into \`{ success: false, error: { code, message, details } }\` payloads for UI ingestion.
+- Accessibility Polish:
+  - Ensured \`ConfirmModal\` focus lock & traps on activation (\`src/components/ConfirmModal.jsx\`).
+  - Improved \`Toast\` announcements with \`aria-live="polite"\` & \`role="status"\` for better accessibility tools detection (\`src/components/Toast.jsx\`).

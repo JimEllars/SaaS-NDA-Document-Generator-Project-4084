@@ -353,7 +353,7 @@ export default {
              console.error("Failed to enqueue perimeter alert", e);
           }
 
-          return new Response(JSON.stringify({ error: "Too Many Requests. Please slow down." }), {
+          return new Response(JSON.stringify({ success: false, error: { code: "RATE_LIMITED", message: "Too Many Requests. Please slow down."  } }), {
             status: 429,
             headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
           });
@@ -363,7 +363,7 @@ export default {
         if (request.method === "POST" && url.pathname === "/api/v1/generate-headless-legacy") {
       const authHeader = request.headers.get("Authorization");
       if (!authHeader || authHeader !== `Bearer ${env.AXIM_CORE_API_KEY}`) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        return new Response(JSON.stringify({ success: false, error: { code: "UNAUTHORIZED", message: "Unauthorized"  } }), {
           status: 401,
           headers: { "Content-Type": "application/json" }
         });
@@ -376,7 +376,7 @@ export default {
           const isValid = await verifyTurnstileToken(turnstileToken, env.TURNSTILE_SECRET_KEY, request.headers.get('CF-Connecting-IP'));
           if (!isValid) {
             ctx.waitUntil(reportToCore(env, 'turnstile_failed', { ip: request.headers.get('CF-Connecting-IP') }));
-            return new Response(JSON.stringify({ error: 'Turnstile verification failed' }), {
+            return new Response(JSON.stringify({ success: false, error: { code: "VERIFICATION_FAILED", message: 'Turnstile verification failed'  } }), {
               status: 403,
               headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
             });
@@ -405,7 +405,7 @@ export default {
           headers: { "Content-Type": "application/json" }
         });
       } catch (e) {
-        return new Response(JSON.stringify({ error: "Generation failed", details: e.message }), {
+        return new Response(JSON.stringify({ success: false, error: { code: "ERROR", message: "Generation failed", details: e.message  } }), {
           status: 500,
           headers: { "Content-Type": "application/json" }
         });
@@ -417,7 +417,7 @@ export default {
     if (request.method === "GET" && url.pathname === "/api/v1/onyx/hydrate") {
         const id = url.searchParams.get("id");
         if (!id) {
-            return new Response(JSON.stringify({ error: "Missing id parameter" }), {
+            return new Response(JSON.stringify({ success: false, error: { code: "ERROR", message: "Missing id parameter"  } }), {
                 status: 400,
                 headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
             });
@@ -433,7 +433,7 @@ export default {
             });
 
             if (!onyxResponse.ok) {
-                 return new Response(JSON.stringify({ error: "Failed to hydrate from Onyx" }), {
+                 return new Response(JSON.stringify({ success: false, error: { code: "ERROR", message: "Failed to hydrate from Onyx"  } }), {
                      status: onyxResponse.status,
                      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
                  });
@@ -445,7 +445,7 @@ export default {
             });
         } catch (err) {
              console.error("Onyx Hydration Error:", err);
-             return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+             return new Response(JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error"  } }), {
                  status: 500,
                  headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
              });
@@ -456,7 +456,7 @@ export default {
       const expectedToken = env.AXIM_CORE_API_KEY ? `Bearer ${env.AXIM_CORE_API_KEY}` : null;
 
       if (!authHeader || !expectedToken || authHeader !== expectedToken) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        return new Response(JSON.stringify({ success: false, error: { code: "UNAUTHORIZED", message: "Unauthorized"  } }), {
             status: 401,
             headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
         });
@@ -629,12 +629,15 @@ export default {
       try {
         let formData = await request.json();
         formData = sanitizeFormData(formData, ctx, env);
+        if (!formData.disclosing || !formData.receiving) {
+            return new Response(JSON.stringify({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Missing required fields: disclosing or receiving party' } }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
 
         // Skip payment validation for preview
         const docData = generateDocument({ ...formData, isPaid: true }); // We still pass isPaid: true so it generates
         if (!docData) {
           return new Response(
-            JSON.stringify({ error: "Failed to generate document data" }),
+            JSON.stringify({ success: false, error: { code: "ERROR", message: "Failed to generate document data"  } }),
             { status: 400, headers: { "Content-Type": "application/json" } },
           );
         }
@@ -769,7 +772,7 @@ export default {
         );
 
         return new Response(
-          JSON.stringify({ error: "Internal Server Error" }),
+          JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error"  } }),
           { status: 500, headers: { "Content-Type": "application/json" } },
         );
       }
@@ -781,7 +784,7 @@ export default {
       try {
 
         if (!env.AXIM_CRYPTO_KEY) {
-          return new Response(JSON.stringify({ error: "Cryptographic sealing engine unavailable. Ecosystem misconfiguration." }), {
+          return new Response(JSON.stringify({ success: false, error: { code: "SYSTEM_MISCONFIGURED", message: "Cryptographic sealing engine unavailable. Ecosystem misconfiguration."  } }), {
             status: 500,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
           });
@@ -798,6 +801,9 @@ export default {
 
         let formData = await request.json();
         formData = sanitizeFormData(formData, ctx, env);
+        if (!formData.disclosing || !formData.receiving) {
+            return new Response(JSON.stringify({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Missing required fields: disclosing or receiving party' } }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
 
         const start = Date.now();
         const docId = crypto.randomUUID();
@@ -990,7 +996,7 @@ try {
         );
 
         return new Response(
-          JSON.stringify({ error: "Internal Server Error", details: err.message }),
+          JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error", details: err.message  } }),
           { status: 500, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" } }
         );
       }
@@ -1000,19 +1006,22 @@ try {
       try {
 
         if (!env.AXIM_CRYPTO_KEY) {
-          return new Response(JSON.stringify({ error: "Cryptographic sealing engine unavailable. Ecosystem misconfiguration." }), {
+          return new Response(JSON.stringify({ success: false, error: { code: "SYSTEM_MISCONFIGURED", message: "Cryptographic sealing engine unavailable. Ecosystem misconfiguration."  } }), {
             status: 500,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
           });
         }
         let formData = await request.json();
         formData = sanitizeFormData(formData, ctx, env);
+        if (!formData.disclosing || !formData.receiving) {
+            return new Response(JSON.stringify({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Missing required fields: disclosing or receiving party' } }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
         if (env.TURNSTILE_SECRET_KEY) {
           const turnstileToken = formData['cf-turnstile-response'];
           const isValid = await verifyTurnstileToken(turnstileToken, env.TURNSTILE_SECRET_KEY, request.headers.get('CF-Connecting-IP'));
           if (!isValid) {
             ctx.waitUntil(reportToCore(env, 'turnstile_failed', { ip: request.headers.get('CF-Connecting-IP') }));
-            return new Response(JSON.stringify({ error: 'Turnstile verification failed' }), {
+            return new Response(JSON.stringify({ success: false, error: { code: "VERIFICATION_FAILED", message: 'Turnstile verification failed'  } }), {
               status: 403,
               headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
             });
@@ -1022,7 +1031,7 @@ try {
 
         if (!sessionId) {
           return new Response(
-            JSON.stringify({ error: "Unauthorized: Missing sessionId" }),
+            JSON.stringify({ success: false, error: { code: "UNAUTHORIZED", message: "Unauthorized: Missing sessionId"  } }),
             { status: 401, headers: { "Content-Type": "application/json" } },
           );
         }
@@ -1044,7 +1053,7 @@ try {
 
         if (!verifyRes.ok) {
           return new Response(
-            JSON.stringify({ error: "Unauthorized: Invalid session" }),
+            JSON.stringify({ success: false, error: { code: "UNAUTHORIZED", message: "Unauthorized: Invalid session"  } }),
             { status: 401, headers: { "Content-Type": "application/json" } },
           );
         }
@@ -1052,7 +1061,7 @@ try {
         const sessionData = await verifyRes.json();
         if (!sessionData.isPaid) {
           return new Response(
-            JSON.stringify({ error: "Unauthorized: Session not paid" }),
+            JSON.stringify({ success: false, error: { code: "UNAUTHORIZED", message: "Unauthorized: Session not paid"  } }),
             { status: 401, headers: { "Content-Type": "application/json" } },
           );
         }
@@ -1074,7 +1083,7 @@ try {
         const docData = generateDocument({ ...formData, isPaid: true });
         if (!docData) {
           return new Response(
-            JSON.stringify({ error: "Failed to generate document data" }),
+            JSON.stringify({ success: false, error: { code: "ERROR", message: "Failed to generate document data"  } }),
             { status: 400, headers: { "Content-Type": "application/json" } },
           );
         }
@@ -1346,7 +1355,7 @@ try {
         );
 
         return new Response(
-          JSON.stringify({ error: "Internal Server Error" }),
+          JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error"  } }),
           { status: 500, headers: { "Content-Type": "application/json" } },
         );
       }
@@ -1362,12 +1371,12 @@ try {
         try {
           payload = JSON.parse(rawBody);
         } catch (err) {
-          return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400, headers: { "Content-Type": "application/json" } });
+          return new Response(JSON.stringify({ success: false, error: { code: "ERROR", message: "Invalid JSON"  } }), { status: 400, headers: { "Content-Type": "application/json" } });
         }
 
         // HMAC-SHA256 Webhook Verification natively at the Edge
         if (!signature || !env.STRIPE_WEBHOOK_SECRET) {
-          return new Response(JSON.stringify({ error: "Missing signature or secret" }), { status: 401, headers: { "Content-Type": "application/json" } });
+          return new Response(JSON.stringify({ success: false, error: { code: "BAD_REQUEST", message: "Missing signature or secret"  } }), { status: 401, headers: { "Content-Type": "application/json" } });
         }
 
         const sigPairs = signature.split(',').map(part => part.split('='));
@@ -1375,7 +1384,7 @@ try {
         const v1s = sigPairs.filter(([key]) => key === 'v1').map(([, value]) => value);
 
         if (!t || v1s.length === 0) {
-           return new Response(JSON.stringify({ error: "Invalid signature format" }), { status: 401, headers: { "Content-Type": "application/json" } });
+           return new Response(JSON.stringify({ success: false, error: { code: "ERROR", message: "Invalid signature format"  } }), { status: 401, headers: { "Content-Type": "application/json" } });
         }
 
         const signedPayload = `${t}.${rawBody}`;
@@ -1399,12 +1408,12 @@ try {
           .join('');
 
         if (!v1s.includes(expectedSigHex)) {
-          return new Response(JSON.stringify({ error: "Invalid Stripe Signature" }), { status: 401, headers: { "Content-Type": "application/json" } });
+          return new Response(JSON.stringify({ success: false, error: { code: "ERROR", message: "Invalid Stripe Signature"  } }), { status: 401, headers: { "Content-Type": "application/json" } });
         }
 
         const eventId = payload.id;
         if (!eventId) {
-          return new Response(JSON.stringify({ error: "Missing event ID" }), {
+          return new Response(JSON.stringify({ success: false, error: { code: "ERROR", message: "Missing event ID"  } }), {
             status: 400,
             headers: { "Content-Type": "application/json" }
           });
@@ -1494,7 +1503,7 @@ try {
       } catch (err) {
         console.error("Stripe Webhook Error:", err);
         return new Response(
-          JSON.stringify({ error: "Internal Server Error" }),
+          JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error"  } }),
           { status: 500, headers: { "Content-Type": "application/json" } },
         );
       }
@@ -1534,7 +1543,7 @@ try {
         });
       } catch (err) {
         console.error("Webhook processing error:", err);
-        return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+        return new Response(JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error"  } }), {
           status: 500,
           headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" },
         });
@@ -1625,7 +1634,7 @@ try {
         }); } catch (err) {
         console.error("Email proxy error:", err);
         return new Response(
-          JSON.stringify({ error: "Internal Server Error" }),
+          JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error"  } }),
           { status: 500, headers: { "Content-Type": "application/json" } },
         );
       }
@@ -1636,7 +1645,7 @@ try {
       try {
         const traceId = url.searchParams.get("trace_id");
         if (!traceId) {
-          return new Response(JSON.stringify({ error: "Missing trace_id" }), {
+          return new Response(JSON.stringify({ success: false, error: { code: "BAD_REQUEST", message: "Missing trace_id"  } }), {
             status: 400,
             headers: { "Content-Type": "application/json" },
           });
@@ -1659,7 +1668,7 @@ try {
 
         if (!response.ok) {
           return new Response(
-            JSON.stringify({ error: "Verification failed or document not found" }),
+            JSON.stringify({ success: false, error: { code: "ERROR", message: "Verification failed or document not found"  } }),
             {
               status: response.status,
               headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" },
@@ -1675,7 +1684,7 @@ try {
       } catch (err) {
         console.error("Verification proxy error:", err);
         return new Response(
-          JSON.stringify({ error: "Internal Server Error" }),
+          JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error"  } }),
           { status: 500, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" } },
         );
       }
@@ -1688,7 +1697,7 @@ try {
         const { trace_id, signatureImage } = payload;
 
         if (!trace_id || !signatureImage) {
-          return new Response(JSON.stringify({ error: "Missing trace_id or signature" }), {
+          return new Response(JSON.stringify({ success: false, error: { code: "BAD_REQUEST", message: "Missing trace_id or signature"  } }), {
             status: 400,
             headers: { "Content-Type": "application/json" },
           });
@@ -1696,7 +1705,7 @@ try {
 
         const base64Regex = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/;
         if (!base64Regex.test(signatureImage)) {
-          return new Response(JSON.stringify({ error: "Invalid signatureImage format" }), {
+          return new Response(JSON.stringify({ success: false, error: { code: "ERROR", message: "Invalid signatureImage format"  } }), {
             status: 400,
             headers: { "Content-Type": "application/json" },
           });
@@ -1720,7 +1729,7 @@ try {
 
         if (!downloadResponse.ok) {
           return new Response(
-            JSON.stringify({ error: "Failed to fetch original document from vault" }),
+            JSON.stringify({ success: false, error: { code: "ERROR", message: "Failed to fetch original document from vault"  } }),
             {
               status: downloadResponse.status,
               headers: { "Content-Type": "application/json" },
@@ -1799,7 +1808,7 @@ try {
       } catch (err) {
         console.error("Vault Execute Error:", err);
         return new Response(
-          JSON.stringify({ error: "Internal Server Error" }),
+          JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error"  } }),
           { status: 500, headers: { "Content-Type": "application/json" } },
         );
       }
@@ -1812,7 +1821,7 @@ try {
         const { trace_id } = payload;
 
         if (!trace_id) {
-          return new Response(JSON.stringify({ error: "Missing trace_id" }), {
+          return new Response(JSON.stringify({ success: false, error: { code: "BAD_REQUEST", message: "Missing trace_id"  } }), {
             status: 400,
             headers: { "Content-Type": "application/json" },
           });
@@ -1837,7 +1846,7 @@ try {
 
         if (!response.ok) {
           return new Response(
-            JSON.stringify({ error: "Failed to revoke document" }),
+            JSON.stringify({ success: false, error: { code: "ERROR", message: "Failed to revoke document"  } }),
             {
               status: response.status,
               headers: { "Content-Type": "application/json" },
@@ -1854,7 +1863,7 @@ try {
       } catch (err) {
         console.error("Vault Revoke Error:", err);
         return new Response(
-          JSON.stringify({ error: "Internal Server Error" }),
+          JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error"  } }),
           { status: 500, headers: { "Content-Type": "application/json" } }
         );
       }
@@ -1891,7 +1900,7 @@ try {
       } catch (err) {
         console.error("Telemetry Diagnostics Error:", err);
         return new Response(
-          JSON.stringify({ error: "Internal Server Error" }),
+          JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error"  } }),
           { status: 500, headers: { "Content-Type": "application/json" } }
         );
       }
@@ -1901,7 +1910,7 @@ try {
       try {
         const traceId = url.searchParams.get("trace_id");
         if (!traceId) {
-          return new Response(JSON.stringify({ error: "Missing trace_id" }), {
+          return new Response(JSON.stringify({ success: false, error: { code: "BAD_REQUEST", message: "Missing trace_id"  } }), {
             status: 400,
             headers: { "Content-Type": "application/json" },
           });
@@ -1923,7 +1932,7 @@ try {
 
         if (!response.ok) {
           return new Response(
-            JSON.stringify({ error: "Failed to download from vault" }),
+            JSON.stringify({ success: false, error: { code: "ERROR", message: "Failed to download from vault"  } }),
             {
               status: response.status,
               headers: { "Content-Type": "application/json" },
@@ -1940,7 +1949,7 @@ try {
       } catch (err) {
         console.error("Vault Download Error:", err);
         return new Response(
-          JSON.stringify({ error: "Internal Server Error" }),
+          JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error"  } }),
           { status: 500, headers: { "Content-Type": "application/json" } },
         );
       }
@@ -1986,9 +1995,9 @@ try {
            ctx.waitUntil(cache.put(cacheKey, finalResponseToCache));
            return configResponse;
         }
-        return new Response(JSON.stringify({ error: "Failed to load config" }), { status: 502, headers: { "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ success: false, error: { code: "ERROR", message: "Failed to load config"  } }), { status: 502, headers: { "Content-Type": "application/json" } });
       } catch (e) {
-         return new Response(JSON.stringify({ error: "Config proxy error" }), { status: 502, headers: { "Content-Type": "application/json" } });
+         return new Response(JSON.stringify({ success: false, error: { code: "ERROR", message: "Config proxy error"  } }), { status: 502, headers: { "Content-Type": "application/json" } });
       }
     }
 
@@ -2091,7 +2100,7 @@ try {
                }).catch(e => console.error("Telemetry failure", e)));
             } catch (e) { /* ignore */ }
 
-            return new Response(JSON.stringify({ error: "Internal Server Error: Missing Service Key" }), {
+            return new Response(JSON.stringify({ success: false, error: { code: "INTERNAL_ERROR", message: "Internal Server Error: Missing Service Key"  } }), {
               status: 500,
               headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "https://axim.us.com" }
             });
@@ -2165,7 +2174,7 @@ try {
 
         return newResponse;
       } catch (err) {
-        return new Response(JSON.stringify({ error: "Proxy error" }), {
+        return new Response(JSON.stringify({ success: false, error: { code: "ERROR", message: "Proxy error"  } }), {
           status: 502,
           headers: { "Content-Type": "application/json" },
         });
