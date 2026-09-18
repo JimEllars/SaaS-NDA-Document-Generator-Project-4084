@@ -1,16 +1,14 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "axim-nda-worker",
+  "name": "axim-nda-generator-worker",
   "main": "worker.js",
-  "compatibility_date": "2025-06-30",
+  "compatibility_date": "2026-09-15",
   "compatibility_flags": [
     "nodejs_compat"
   ],
   "vars": {
-    "VITE_ENABLE_WEB3": "false",
-    "VITE_PAYMENT_API_URL": "https://api.axim.us.com",
-    "BACKEND_URL": "https://api.axim.us.com",
-    "AXIM_ENV": "production"
+    "ENVIRONMENT": "production",
+    "BACKEND_URL": "https://axim-payment-backend.jrellars.workers.dev",
+    "AXIM_TELEMETRY_URL": "https://core.axim.us.com/api/v1/telemetry/ingest"
   },
   "assets": {
     "directory": "dist",
