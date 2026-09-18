@@ -178,36 +178,40 @@ const AdminDashboard = () => {
               <FiShield size={18} />
               <span className="font-medium">Security Audit</span>
             </button>
-            <button
-              onClick={() => setActiveTab('intelligence')}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                activeTab === 'intelligence'
-                  ? 'bg-axim-teal/10 text-axim-teal border border-axim-teal/20'
-                  : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200 border border-transparent'
-              }`}
-            >
-              <FiCpu size={18} />
-              <span className="font-medium">Intelligence Hub</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('fleet')}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                activeTab === 'fleet'
-                  ? 'bg-axim-teal/10 text-axim-teal border border-axim-teal/20'
-                  : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200 border border-transparent'
-              }`}
-            >
-              <FiActivity size={18} />
-              <span className="font-medium">Fleet Heatmap</span>
-            </button>
+            {import.meta.env.VITE_ENABLE_WEB3 === 'true' && (
+                <>
+                    <button
+                      onClick={() => setActiveTab('intelligence')}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                        activeTab === 'intelligence'
+                          ? 'bg-axim-teal/10 text-axim-teal border border-axim-teal/20'
+                          : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200 border border-transparent'
+                      }`}
+                    >
+                      <FiCpu size={18} />
+                      <span className="font-medium">Intelligence Hub</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('fleet')}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                        activeTab === 'fleet'
+                          ? 'bg-axim-teal/10 text-axim-teal border border-axim-teal/20'
+                          : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200 border border-transparent'
+                      }`}
+                    >
+                      <FiActivity size={18} />
+                      <span className="font-medium">Fleet Heatmap</span>
+                    </button>
+                </>
+            )}
           </nav>
         </aside>
 
         <main className="flex-1 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 md:p-8 min-h-[500px]">
           {activeTab === 'audit' && <SecurityAudit />}
-          {activeTab === 'intelligence' && <IntelligenceHub />}
-          {activeTab === 'fleet' && <FleetHeatmap />}
-          <CryptoSealFeed />
+          {import.meta.env.VITE_ENABLE_WEB3 === 'true' && activeTab === 'intelligence' && <IntelligenceHub />}
+          {import.meta.env.VITE_ENABLE_WEB3 === 'true' && activeTab === 'fleet' && <FleetHeatmap />}
+          {import.meta.env.VITE_ENABLE_WEB3 === 'true' && <CryptoSealFeed />}
         </main>
       </div>
     </div>

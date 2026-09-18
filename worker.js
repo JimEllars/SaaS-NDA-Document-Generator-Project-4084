@@ -1,4 +1,26 @@
 
+
+async function reportToCore(env, eventType, payload) {
+  try {
+    if (!env.AXIM_TELEMETRY_URL) return;
+    await fetch(env.AXIM_TELEMETRY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${env.AXIM_TELEMETRY_KEY || ''}`
+      },
+      body: JSON.stringify({
+        app_id: "axim-nda-generator",
+        event_type: eventType,
+        timestamp: new Date().toISOString(),
+        metadata: payload
+      })
+    });
+  } catch (err) {
+    // Prevent telemetry failures from blocking execution
+  }
+}
+
 async function verifyTurnstileToken(token, secret, ip) {
   try {
     const formData = new FormData();
@@ -353,7 +375,8 @@ export default {
           const turnstileToken = formData['cf-turnstile-response'];
           const isValid = await verifyTurnstileToken(turnstileToken, env.TURNSTILE_SECRET_KEY, request.headers.get('CF-Connecting-IP'));
           if (!isValid) {
-            return new Response(JSON.stringify({ error: 'Bot verification failed. Please try again.' }), {
+            ctx.waitUntil(reportToCore(env, 'turnstile_failed', { ip: request.headers.get('CF-Connecting-IP') }));
+            return new Response(JSON.stringify({ error: 'Turnstile verification failed' }), {
               status: 403,
               headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
             });
@@ -988,7 +1011,8 @@ try {
           const turnstileToken = formData['cf-turnstile-response'];
           const isValid = await verifyTurnstileToken(turnstileToken, env.TURNSTILE_SECRET_KEY, request.headers.get('CF-Connecting-IP'));
           if (!isValid) {
-            return new Response(JSON.stringify({ error: 'Bot verification failed. Please try again.' }), {
+            ctx.waitUntil(reportToCore(env, 'turnstile_failed', { ip: request.headers.get('CF-Connecting-IP') }));
+            return new Response(JSON.stringify({ error: 'Turnstile verification failed' }), {
               status: 403,
               headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': 'https://axim.us.com' }
             });
@@ -1521,34 +1545,84 @@ try {
       try {
         const payload = await request.json();
 
-        const response = await fetch(
-          `${env.VITE_PAYMENT_API_URL || "https://api.axim.us.com"}/v1/functions/document-orchestrator`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${env.AXIM_CORE_API_KEY}`,
-            },
-            body: JSON.stringify(payload),
-          },
-        );
+        // 1. Compile the NDA PDF completely in RAM
+        const docData = generateDocument({ ...payload.formData, isPaid: true });
+        const pdfBytes = await generatePdfBytes(docData.plainText, { ...payload.formData, isPaid: true });
 
-        if (!response.ok) {
-          return new Response(
-            JSON.stringify({ error: "Failed to send email" }),
-            {
-              status: response.status,
-              headers: { "Content-Type": "application/json" },
-            },
-          );
+        let binary = '';
+        const len = pdfBytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(pdfBytes[i]);
+        }
+        const base64Pdf = btoa(binary);
+
+        const emailOptions = {
+           from: "AXiM Legal Desk <deliveries@emailit.axim.us.com>",
+           to: [payload.email, payload.counterpartyEmail].filter(Boolean),
+           subject: "Your AXiM NDA Document",
+           html: "<p>Please find your requested Non-Disclosure Agreement attached.</p>",
+           attachments: [{
+               filename: "NDA_Agreement.pdf",
+               content: base64Pdf,
+               content_type: "application/pdf"
+           }]
+        };
+
+        let provider = 'emailit';
+        let emailRes;
+
+        // Try EmailIt
+        if (env.EMAILIT_API_KEY) {
+            emailRes = await fetch('https://api.emailit.com/v2/emails', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${env.EMAILIT_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(emailOptions)
+            });
         }
 
-        const data = await response.json();
-        return new Response(JSON.stringify(data), {
+        if (!env.EMAILIT_API_KEY || !emailRes || !emailRes.ok) {
+            // Failover to Resend
+            provider = 'resend';
+            ctx.waitUntil(reportToCore(env, 'delivery_fallback', { reason: 'EmailIt failed or unconfigured', payload: emailOptions.to }));
+
+            if (env.RESEND_API_KEY) {
+                const resendOptions = {
+                   from: emailOptions.from,
+                   to: emailOptions.to,
+                   subject: emailOptions.subject,
+                   html: emailOptions.html,
+                   attachments: [{
+                       filename: "NDA_Agreement.pdf",
+                       content: base64Pdf
+                   }]
+                };
+
+                emailRes = await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(resendOptions)
+                });
+            }
+        }
+
+        if (!emailRes || !emailRes.ok) {
+            throw new Error("Failed to send email through all providers");
+        }
+
+        const data = await emailRes.json();
+
+        ctx.waitUntil(reportToCore(env, 'nda_created', { email: payload.email }));
+
+        return new Response(JSON.stringify({ success: true, provider, id: data.id, downloadToken: data.id }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
-        });
-      } catch (err) {
+        }); } catch (err) {
         console.error("Email proxy error:", err);
         return new Response(
           JSON.stringify({ error: "Internal Server Error" }),
@@ -2060,6 +2134,13 @@ try {
 
       try {
         const response = await fetch(proxyRequest);
+        if (request.method === "POST" && url.pathname === "/api/create-checkout-session") {
+             if (response.ok) {
+                 ctx.waitUntil(reportToCore(env, 'checkout_initiated', { url: url.pathname }));
+             } else {
+                 ctx.waitUntil(reportToCore(env, 'payment_failed', { reason: 'checkout proxy failed', status: response.status }));
+             }
+        }
 
         let newResponse;
         if (isHistoryRequest && response.status === 200) {

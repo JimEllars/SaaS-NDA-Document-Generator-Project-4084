@@ -1,6 +1,8 @@
 import { TextInput, SelectInput, ToggleInput, ButtonGroup } from "./form-inputs";
 import { fetchWithTimeout } from "../utils/fetchWithTimeout";
 import { logTelemetryEvent as flushGlobalTelemetry } from "../utils/telemetry";
+import { useAximAuth } from '../hooks/useAximAuth';
+import { Turnstile } from '@marsidev/react-turnstile';
 import SignatureCanvas from "react-signature-canvas";
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { useDebounce } from "use-debounce";
@@ -64,8 +66,10 @@ const NDAGeneratorForm = React.memo(
 
 
     const [debouncedFormData] = useDebounce(formData, 1000);
+    const { isAuthenticated, user } = useAximAuth();
     const [showSaveIndicator, setShowSaveIndicator] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState(null);
+    const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
     useEffect(() => {
       window.onTurnstileSuccess = (token) => {
         setTurnstileToken(token);
@@ -933,6 +937,28 @@ const NDAGeneratorForm = React.memo(
                   </div>
 
                   {/* Industry and Jurisdiction */}
+                  {isAuthenticated && user && (
+                      <div className="bg-axim-teal/10 border border-axim-teal/30 rounded-xl p-4 mb-4 mt-4 flex items-center justify-between">
+                          <div>
+                              <p className="text-sm text-axim-teal font-semibold">Enterprise Profile Detected</p>
+                              <p className="text-xs text-zinc-400">Pre-fill Discloser details from AXiM Passport.</p>
+                          </div>
+                          <button
+                              type="button"
+                              onClick={() => {
+                                  setFormData(prev => ({
+                                      ...prev,
+                                      discloserName: user.company || '',
+                                      discloserEmail: user.email || '',
+                                      discloserAddress: 'Enterprise Address'
+                                  }));
+                              }}
+                              className="bg-axim-teal/20 text-axim-teal text-xs font-bold py-2 px-3 rounded hover:bg-axim-teal/30 transition"
+                          >
+                              Auto-Fill Profile
+                          </button>
+                      </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label
@@ -1249,7 +1275,16 @@ const NDAGeneratorForm = React.memo(
                   <div className="flex flex-col gap-4">
                     {/* High-Stakes Upsell / Notification can go here, removing old UpsellCard invocation for robust strictness */}
 
-                    <div className="cf-turnstile mb-4 self-center" data-sitekey="1x00000000000000000000AA" data-callback="onTurnstileSuccess"></div>
+                    {import.meta.env.DEV ? (
+                      <div className="mb-4 self-center text-xs text-yellow-500 bg-yellow-500/10 p-2 rounded border border-yellow-500/20">
+                          Dev Mode: Turnstile Bypassed.
+                          <button type="button" onClick={() => window.onTurnstileSuccess && window.onTurnstileSuccess('dev_mock_token')} className="ml-2 underline">Mock Verify</button>
+                      </div>
+                    ) : (
+                      <div className="mb-4 self-center flex justify-center">
+    <Turnstile siteKey={siteKey} onSuccess={(token) => { setTurnstileToken(token); setFormData(prev => ({ ...prev, 'cf-turnstile-response': token })); }} />
+   </div>
+                    )}
                     <div className="flex flex-col md:flex-row gap-4">
                       <button
                       onClick={prevStep}
